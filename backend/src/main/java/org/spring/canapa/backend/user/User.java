@@ -37,6 +37,11 @@ public class User {
         this.email = Objects.requireNonNull(email, "email must not be null");
     }
 
+    void updateProfile(String name, String email) {
+        this.name = Objects.requireNonNull(name, "name must not be null");
+        this.email = Objects.requireNonNull(email, "email must not be null");
+    }
+
     @PrePersist
     private void initializeCreatedAt() {
         if (createdAt == null) {
