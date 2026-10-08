@@ -74,6 +74,10 @@ public class Room {
         participants.add(Objects.requireNonNull(participant, "participant must not be null"));
     }
 
+    void changeStatus(RoomStatus status) {
+        this.status = Objects.requireNonNull(status, "status must not be null");
+    }
+
     public UUID getId() {
         return id;
     }
