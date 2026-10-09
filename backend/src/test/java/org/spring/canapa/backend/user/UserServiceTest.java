@@ -2,6 +2,10 @@ package org.spring.canapa.backend.user;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,12 +21,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,31 +49,67 @@ class UserServiceTest {
                 .thenAnswer(invocation -> persisted(invocation.getArgument(0), userId));
 
         UserData result = userService.createUser(
-                new CreateUserCommand("  Alice  ", "  Alice@Example.COM ")
+                new CreateUserCommand("  Alice  Smith  ", "  Alice@Example.COM ")
         );
 
+        ArgumentCaptor<User> savedUser = ArgumentCaptor.forClass(User.class);
         assertThat(result.id()).isEqualTo(userId);
-        assertThat(result.name()).isEqualTo("Alice");
+        assertThat(result.name()).isEqualTo("Alice  Smith");
         assertThat(result.email()).isEqualTo("alice@example.com");
         assertThat(result.createdAt()).isNotNull();
+        verify(userRepository).findByEmailIgnoreCase("alice@example.com");
+        verify(userRepository).saveAndFlush(savedUser.capture());
+        assertThat(savedUser.getValue().getName()).isEqualTo("Alice  Smith");
+        assertThat(savedUser.getValue().getEmail()).isEqualTo("alice@example.com");
     }
 
     @Test
-    void rejectsInvalidCreateData() {
-        assertThatThrownBy(() -> userService.createUser(
-                new CreateUserCommand("   ", "not-an-email")
-        )).isInstanceOf(InvalidUserDataException.class)
-                .hasMessage("Invalid name: must not be blank");
+    void rejectsNullCreateCommand() {
+        assertThatThrownBy(() -> userService.createUser(null))
+                .isInstanceOf(InvalidUserDataException.class)
+                .hasMessage("Invalid request: must not be null");
 
-        verify(userRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(userRepository);
+    }
+
+    @ParameterizedTest(name = "[{index}] name={0}")
+    @MethodSource("invalidNameCases")
+    void rejectsInvalidName(String name, String expectedReason) {
+        assertThatThrownBy(() -> userService.createUser(
+                new CreateUserCommand(name, "alice@example.com")
+        )).isInstanceOf(InvalidUserDataException.class)
+                .hasMessage("Invalid name: " + expectedReason);
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @ParameterizedTest(name = "[{index}] email={0}")
+    @MethodSource("invalidEmailCases")
+    void rejectsInvalidEmail(String email, String expectedReason) {
+        assertThatThrownBy(() -> userService.createUser(
+                new CreateUserCommand("Alice", email)
+        )).isInstanceOf(InvalidUserDataException.class)
+                .hasMessage("Invalid email: " + expectedReason);
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test
-    void rejectsInvalidEmail() {
-        assertThatThrownBy(() -> userService.createUser(
-                new CreateUserCommand("Alice", "not-an-email")
-        )).isInstanceOf(InvalidUserDataException.class)
-                .hasMessage("Invalid email: must be a valid email address");
+    void acceptsMaximumNameAndEmailLengths() {
+        String maximumName = "n".repeat(100);
+        String maximumEmail = "a".repeat(308) + "@example.com";
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findByEmailIgnoreCase(maximumEmail))
+                .thenReturn(Optional.empty());
+        when(userRepository.saveAndFlush(any(User.class)))
+                .thenAnswer(invocation -> persisted(invocation.getArgument(0), userId));
+
+        UserData result = userService.createUser(
+                new CreateUserCommand(maximumName, maximumEmail)
+        );
+
+        assertThat(result.name()).hasSize(100);
+        assertThat(result.email()).hasSize(320);
     }
 
     @Test
@@ -94,6 +136,32 @@ class UserServiceTest {
                 new CreateUserCommand("Alice", "alice@example.com")
         )).isInstanceOf(DuplicateUserEmailException.class)
                 .hasCauseInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private static Stream<Arguments> invalidNameCases() {
+        return Stream.of(
+                Arguments.of((String) null, "must not be null"),
+                Arguments.of("", "must not be blank"),
+                Arguments.of(" \t\n ", "must not be blank"),
+                Arguments.of("n".repeat(101), "must not exceed 100 characters")
+        );
+    }
+
+    private static Stream<Arguments> invalidEmailCases() {
+        String tooLongEmail = "a".repeat(309) + "@example.com";
+        return Stream.of(
+                Arguments.of((String) null, "must not be null"),
+                Arguments.of("", "must not be blank"),
+                Arguments.of(" \t\n ", "must not be blank"),
+                Arguments.of(tooLongEmail, "must not exceed 320 characters"),
+                Arguments.of("alice.example.com", "must be a valid email address"),
+                Arguments.of("@example.com", "must be a valid email address"),
+                Arguments.of("alice@", "must be a valid email address"),
+                Arguments.of("alice@example", "must be a valid email address"),
+                Arguments.of("alice@@example.com", "must be a valid email address"),
+                Arguments.of("alice @example.com", "must be a valid email address"),
+                Arguments.of("alice@exa mple.com", "must be a valid email address")
+        );
     }
 
     @Test
