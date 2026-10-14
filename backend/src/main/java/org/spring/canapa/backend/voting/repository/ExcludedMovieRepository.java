@@ -1,6 +1,7 @@
 
-package org.spring.canapa.backend.voting;
+package org.spring.canapa.backend.voting.repository;
 
+import org.spring.canapa.backend.voting.entity.ExcludedMovie;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,6 +1,12 @@
 
-package org.spring.canapa.backend.voting;
+package org.spring.canapa.backend.voting.service;
 
+import org.spring.canapa.backend.voting.entity.ExcludedMovie;
+import org.spring.canapa.backend.voting.repository.ExcludedMovieRepository;
+import org.spring.canapa.backend.voting.repository.VoteRepository;
+import org.spring.canapa.backend.voting.repository.VotingResultRepository;
+import org.spring.canapa.backend.voting.entity.Vote;
+import org.spring.canapa.backend.voting.entity.VotingResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,4 +1,4 @@
-package org.spring.canapa.backend.voting;
+package org.spring.canapa.backend.voting.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

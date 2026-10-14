@@ -3,6 +3,13 @@ package org.spring.canapa.backend.voting;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.spring.canapa.backend.voting.entity.ExcludedMovie;
+import org.spring.canapa.backend.voting.entity.Vote;
+import org.spring.canapa.backend.voting.entity.VotingResult;
+import org.spring.canapa.backend.voting.repository.ExcludedMovieRepository;
+import org.spring.canapa.backend.voting.repository.VoteRepository;
+import org.spring.canapa.backend.voting.repository.VotingResultRepository;
+import org.spring.canapa.backend.voting.service.VotingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -14,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-class VotingIntegrationTest {
+class VotingServiceRepositoryIntegrationTest {
 
     @Autowired
     private VotingService votingService;
