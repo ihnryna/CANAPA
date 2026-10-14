@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -26,10 +27,10 @@ public class Vote {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(name = "room_id", nullable = false)
-    private Long roomId;
+    private UUID roomId;
 
     @Column(name = "movie_id", nullable = false)
     private Long movieId;

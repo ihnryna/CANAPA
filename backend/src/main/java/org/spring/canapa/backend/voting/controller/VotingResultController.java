@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/rooms/{roomId}/voting-result")
@@ -28,7 +29,7 @@ public class VotingResultController {
 
     @PostMapping
     public ResponseEntity<VotingResultResponse> finishVoting(
-            @PathVariable Long roomId
+            @PathVariable UUID roomId
     ) {
         VotingResult result = votingService.finishVoting(roomId);
 
@@ -37,7 +38,7 @@ public class VotingResultController {
 
     @GetMapping
     public ResponseEntity<VotingResultResponse> getVotingResult(
-            @PathVariable Long roomId
+            @PathVariable UUID roomId
     ) {
         VotingResult result = votingResultRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new ResponseStatusException(

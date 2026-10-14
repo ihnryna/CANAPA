@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/rooms/{roomId}/votes")
@@ -21,7 +22,7 @@ public class VotingController {
 
     @PostMapping
     public ResponseEntity<VoteResponse> addVote(
-            @PathVariable Long roomId,
+            @PathVariable UUID roomId,
             @RequestBody VoteRequest request
     ) {
         if (request.userId() == null || request.movieId() == null) {
@@ -41,9 +42,9 @@ public class VotingController {
 
     @DeleteMapping("/{movieId}")
     public ResponseEntity<Void> removeVote(
-            @PathVariable Long roomId,
+            @PathVariable UUID roomId,
             @PathVariable Long movieId,
-            @RequestParam Long userId
+            @RequestParam UUID userId
     ) {
         votingService.removeVote(userId, roomId, movieId);
         return ResponseEntity.noContent().build();
@@ -51,7 +52,7 @@ public class VotingController {
 
     @GetMapping
     public ResponseEntity<List<VoteResponse>> getRoomVotes(
-            @PathVariable Long roomId
+            @PathVariable UUID roomId
     ) {
         List<VoteResponse> votes = votingService.getRoomVotes(roomId)
                 .stream()
@@ -63,8 +64,8 @@ public class VotingController {
 
     @GetMapping("/me")
     public ResponseEntity<List<VoteResponse>> getUserVotes(
-            @PathVariable Long roomId,
-            @RequestParam Long userId
+            @PathVariable UUID roomId,
+            @RequestParam UUID userId
     ) {
         List<VoteResponse> votes = votingService
                 .getUserVotes(userId, roomId)

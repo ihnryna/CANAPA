@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -26,13 +27,13 @@ public class ExcludedMovie {
     private Long id;
 
     @Column(name = "room_id", nullable = false)
-    private Long roomId;
+    private UUID roomId;
 
     @Column(name = "movie_id", nullable = false)
     private Long movieId;
 
     @Column(name = "excluded_by_user_id", nullable = false)
-    private Long excludedByUserId;
+    private UUID excludedByUserId;
 
     @Column(name = "excluded_at", nullable = false, updatable = false)
     private LocalDateTime excludedAt;

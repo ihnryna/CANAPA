@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/rooms/{roomId}/excluded-movies")
@@ -21,7 +22,7 @@ public class ExcludedMovieController {
 
     @GetMapping
     public ResponseEntity<List<ExcludedMovieResponse>> getExcludedMovies(
-            @PathVariable Long roomId
+            @PathVariable UUID roomId
     ) {
         List<ExcludedMovieResponse> movies = votingService
                 .getExcludedMovies(roomId)
@@ -34,7 +35,7 @@ public class ExcludedMovieController {
 
     @PostMapping
     public ResponseEntity<ExcludedMovieResponse> excludeMovie(
-            @PathVariable Long roomId,
+            @PathVariable UUID roomId,
             @RequestBody ExcludeMovieRequest request
     ) {
         if (request.userId() == null || request.movieId() == null) {
@@ -54,9 +55,9 @@ public class ExcludedMovieController {
 
     @DeleteMapping("/{movieId}")
     public ResponseEntity<Void> restoreMovie(
-            @PathVariable Long roomId,
+            @PathVariable UUID roomId,
             @PathVariable Long movieId,
-            @RequestParam Long userId
+            @RequestParam UUID userId
     ) {
         votingService.restoreMovie(userId, roomId, movieId);
         return ResponseEntity.noContent().build();

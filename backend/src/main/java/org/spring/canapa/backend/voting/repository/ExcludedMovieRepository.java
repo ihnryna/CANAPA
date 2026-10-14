@@ -6,19 +6,20 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ExcludedMovieRepository
         extends JpaRepository<ExcludedMovie, Long> {
 
-    List<ExcludedMovie> findAllByRoomId(Long roomId);
+    List<ExcludedMovie> findAllByRoomId(UUID roomId);
 
     Optional<ExcludedMovie> findByRoomIdAndMovieId(
-            Long roomId,
+            UUID roomId,
             Long movieId
     );
 
     boolean existsByRoomIdAndMovieId(
-            Long roomId,
+            UUID roomId,
             Long movieId
     );
 }

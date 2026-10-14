@@ -31,7 +31,7 @@ public class VotingService {
     }
 
     @Transactional
-    public Vote addVote(Long userId, Long roomId, Long movieId) {
+    public Vote addVote(UUID userId, UUID roomId, Long movieId) {
         ensureVotingIsOpen(roomId);
 
         if (excludedMovieRepository.existsByRoomIdAndMovieId(
@@ -53,7 +53,7 @@ public class VotingService {
     }
 
     @Transactional
-    public void removeVote(Long userId, Long roomId, Long movieId) {
+    public void removeVote(UUID userId, UUID roomId, Long movieId) {
         ensureVotingIsOpen(roomId);
 
         voteRepository.deleteByUserIdAndRoomIdAndMovieId(
@@ -62,24 +62,24 @@ public class VotingService {
     }
 
     @Transactional(readOnly = true)
-    public List<Vote> getRoomVotes(Long roomId) {
+    public List<Vote> getRoomVotes(UUID roomId) {
         return voteRepository.findAllByRoomId(roomId);
     }
 
     @Transactional(readOnly = true)
-    public List<Vote> getUserVotes(Long userId, Long roomId) {
+    public List<Vote> getUserVotes(UUID userId, UUID roomId) {
         return voteRepository.findAllByUserIdAndRoomId(userId, roomId);
     }
 
     @Transactional(readOnly = true)
-    public List<ExcludedMovie> getExcludedMovies(Long roomId) {
+    public List<ExcludedMovie> getExcludedMovies(UUID roomId) {
         return excludedMovieRepository.findAllByRoomId(roomId);
     }
 
     @Transactional
     public ExcludedMovie excludeMovie(
-            Long userId,
-            Long roomId,
+            UUID userId,
+            UUID roomId,
             Long movieId
     ) {
         ensureVotingIsOpen(roomId);
@@ -99,8 +99,8 @@ public class VotingService {
 
     @Transactional
     public void restoreMovie(
-            Long userId,
-            Long roomId,
+            UUID userId,
+            UUID roomId,
             Long movieId
     ) {
         ensureVotingIsOpen(roomId);
@@ -120,7 +120,7 @@ public class VotingService {
         excludedMovieRepository.delete(excludedMovie);
     }
 
-    private void ensureVotingIsOpen(Long roomId) {
+    private void ensureVotingIsOpen(UUID roomId) {
         if (votingResultRepository.existsByRoomId(roomId)) {
             throw new IllegalStateException(
                     "Voting has already finished for this room"
@@ -129,7 +129,7 @@ public class VotingService {
     }
 
     @Transactional
-    public VotingResult finishVoting(Long roomId) {
+    public VotingResult finishVoting(UUID roomId) {
         ensureVotingIsOpen(roomId);
 
         Set<Long> excludedMovieIds = excludedMovieRepository

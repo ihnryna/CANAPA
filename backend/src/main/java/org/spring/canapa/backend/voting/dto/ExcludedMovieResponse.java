@@ -1,12 +1,13 @@
 package org.spring.canapa.backend.voting.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record ExcludedMovieResponse(
         Long id,
-        Long roomId,
+        UUID roomId,
         Long movieId,
-        Long excludedByUserId,
+        UUID excludedByUserId,
         LocalDateTime excludedAt
 ) {
 }

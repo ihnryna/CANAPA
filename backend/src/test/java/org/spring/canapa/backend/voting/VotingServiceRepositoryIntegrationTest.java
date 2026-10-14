@@ -1,4 +1,3 @@
-
 package org.spring.canapa.backend.voting;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +15,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,10 +35,20 @@ class VotingServiceRepositoryIntegrationTest {
     @Autowired
     private ExcludedMovieRepository excludedMovieRepository;
 
-    private static final Long ROOM_ID = 1L;
-    private static final Long USER_1 = 101L;
-    private static final Long USER_2 = 102L;
-    private static final Long USER_3 = 103L;
+    private static final UUID ROOM_ID =
+            UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+
+    private static final UUID ROOM_2 =
+            UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
+
+    private static final UUID USER_1 =
+            UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+
+    private static final UUID USER_2 =
+            UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
+
+    private static final UUID USER_3 =
+            UUID.fromString("123e4567-e89b-12d3-a456-426614174002");
 
     private static final Long MOVIE_1 = 11L;
     private static final Long MOVIE_2 = 22L;
@@ -106,7 +116,7 @@ class VotingServiceRepositoryIntegrationTest {
     void getRoomVotes_shouldReturnOnlyVotesFromRequestedRoom() {
         votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
         votingService.addVote(USER_2, ROOM_ID, MOVIE_2);
-        votingService.addVote(USER_3, 2L, MOVIE_3);
+        votingService.addVote(USER_3, ROOM_2, MOVIE_3);
 
         List<Vote> votes = votingService.getRoomVotes(ROOM_ID);
 
@@ -120,7 +130,7 @@ class VotingServiceRepositoryIntegrationTest {
     void getUserVotes_shouldReturnOnlyUsersVotesInRequestedRoom() {
         votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
         votingService.addVote(USER_1, ROOM_ID, MOVIE_2);
-        votingService.addVote(USER_1, 2L, MOVIE_3);
+        votingService.addVote(USER_1, ROOM_2, MOVIE_3);
         votingService.addVote(USER_2, ROOM_ID, MOVIE_3);
 
         List<Vote> votes = votingService.getUserVotes(USER_1, ROOM_ID);
@@ -353,7 +363,7 @@ class VotingServiceRepositoryIntegrationTest {
     }
 
     private VotingResult saveVotingResult(
-            Long roomId,
+            UUID roomId,
             List<Long> winnerMovieIds,
             int voteCount
     ) {

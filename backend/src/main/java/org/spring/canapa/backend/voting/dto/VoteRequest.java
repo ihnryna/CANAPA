@@ -1,7 +1,9 @@
 package org.spring.canapa.backend.voting.dto;
 
+import java.util.UUID;
+
 public record VoteRequest(
-        Long userId,
+        UUID userId,
         Long movieId
 ) {
 }

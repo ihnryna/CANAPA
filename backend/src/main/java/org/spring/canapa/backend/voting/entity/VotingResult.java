@@ -8,6 +8,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -27,7 +28,7 @@ public class VotingResult {
     private Long id;
 
     @Column(name = "room_id", nullable = false)
-    private Long roomId;
+    private UUID roomId;
 
     @ElementCollection
     @CollectionTable(
