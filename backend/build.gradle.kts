@@ -26,6 +26,7 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     testRuntimeOnly("com.h2database:h2")
     testImplementation("org.mockito:mockito-junit-jupiter")
