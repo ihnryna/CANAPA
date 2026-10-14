@@ -4,7 +4,8 @@ package org.spring.canapa.backend.voting;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class VotingService {
@@ -119,5 +120,50 @@ public class VotingService {
                     "Voting has already finished for this room"
             );
         }
+    }
+
+    @Transactional
+    public VotingResult finishVoting(Long roomId) {
+        ensureVotingIsOpen(roomId);
+
+        Set<Long> excludedMovieIds = excludedMovieRepository
+                .findAllByRoomId(roomId)
+                .stream()
+                .map(ExcludedMovie::getMovieId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Integer> voteCounts = new HashMap<>();
+
+        voteRepository.findAllByRoomId(roomId).stream()
+                .filter(vote -> !excludedMovieIds.contains(vote.getMovieId()))
+                .forEach(vote -> voteCounts.merge(
+                        vote.getMovieId(),
+                        1,
+                        Integer::sum
+                ));
+
+        VotingResult result = new VotingResult();
+        result.setRoomId(roomId);
+
+        if (voteCounts.isEmpty()) {
+            result.setWinnerMovieIds(new ArrayList<>());
+            result.setVoteCount(0);
+            return votingResultRepository.save(result);
+        }
+
+        int maxVotes = voteCounts.values().stream()
+                .max(Integer::compareTo)
+                .orElseThrow();
+
+        List<Long> winnerMovieIds = voteCounts.entrySet().stream()
+                .filter(entry -> entry.getValue() == maxVotes)
+                .map(Map.Entry::getKey)
+                .sorted()
+                .toList();
+
+        result.setWinnerMovieIds(winnerMovieIds);
+        result.setVoteCount(maxVotes);
+
+        return votingResultRepository.save(result);
     }
 }

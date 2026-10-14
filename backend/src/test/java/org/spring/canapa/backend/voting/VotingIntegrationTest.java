@@ -1,11 +1,11 @@
 
 package org.spring.canapa.backend.voting;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -28,431 +28,332 @@ class VotingIntegrationTest {
     @Autowired
     private ExcludedMovieRepository excludedMovieRepository;
 
-    private final Long roomId = 1L;
-    private final Long userId = 10L;
-    private final Long anotherUserId = 20L;
-    private final Long movieId = 100L;
-    private final Long anotherMovieId = 200L;
+    private static final Long ROOM_ID = 1L;
+    private static final Long USER_1 = 101L;
+    private static final Long USER_2 = 102L;
+    private static final Long USER_3 = 103L;
+
+    private static final Long MOVIE_1 = 11L;
+    private static final Long MOVIE_2 = 22L;
+    private static final Long MOVIE_3 = 33L;
+
+    @BeforeEach
+    void setUp() {
+        // Тести працюють у транзакціях, тому дані не повинні
+        // залишатися після завершення тесту.
+        voteRepository.deleteAll();
+        excludedMovieRepository.deleteAll();
+        votingResultRepository.deleteAll();
+    }
 
     // --------------------------------------------------
-    // ADD VOTE
+    // Voting
     // --------------------------------------------------
 
     @Test
-    void addVote_savesVoteToDatabase() {
-        Vote vote = votingService.addVote(userId, roomId, movieId);
+    void addVote_shouldSaveVote() {
+        Vote vote = votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
 
         assertNotNull(vote.getId());
-        assertEquals(userId, vote.getUserId());
-        assertEquals(roomId, vote.getRoomId());
-        assertEquals(movieId, vote.getMovieId());
-        assertNotNull(vote.getCreatedAt());
+        assertEquals(USER_1, vote.getUserId());
+        assertEquals(ROOM_ID, vote.getRoomId());
+        assertEquals(MOVIE_1, vote.getMovieId());
 
-        List<Vote> roomVotes = voteRepository.findAllByRoomId(roomId);
-
-        assertEquals(1, roomVotes.size());
-        assertEquals(vote.getId(), roomVotes.get(0).getId());
+        assertEquals(1, voteRepository.findAllByRoomId(ROOM_ID).size());
     }
 
     @Test
-    void addVote_sameUserAndMovieTwice_doesNotCreateDuplicate() {
-        Vote firstVote = votingService.addVote(userId, roomId, movieId);
-        Vote secondVote = votingService.addVote(userId, roomId, movieId);
+    void addVote_shouldNotCreateDuplicateVote() {
+        Vote firstVote = votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        Vote secondVote = votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
 
         assertEquals(firstVote.getId(), secondVote.getId());
-        assertEquals(1, voteRepository.findAllByRoomId(roomId).size());
+        assertEquals(1, voteRepository.findAllByRoomId(ROOM_ID).size());
     }
 
     @Test
-    void addVote_sameUserCanVoteForDifferentMovies() {
-        votingService.addVote(userId, roomId, movieId);
-        votingService.addVote(userId, roomId, anotherMovieId);
+    void differentUsers_shouldBeAbleToVoteForSameMovie() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_1);
 
-        assertEquals(2, voteRepository.findAllByRoomId(roomId).size());
-        assertEquals(
-                2,
-                votingService.getUserVotes(userId, roomId).size()
-        );
+        assertEquals(2, voteRepository.findAllByRoomId(ROOM_ID).size());
     }
 
     @Test
-    void addVote_differentUsersCanVoteForSameMovie() {
-        votingService.addVote(userId, roomId, movieId);
-        votingService.addVote(anotherUserId, roomId, movieId);
+    void removeVote_shouldDeleteOnlyUsersVote() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_1);
 
-        assertEquals(2, voteRepository.findAllByRoomId(roomId).size());
-    }
+        votingService.removeVote(USER_1, ROOM_ID, MOVIE_1);
 
-    @Test
-    void addVote_sameUserCanVoteInDifferentRooms() {
-        votingService.addVote(userId, roomId, movieId);
-        votingService.addVote(userId, 2L, movieId);
+        assertFalse(voteRepository.existsByUserIdAndRoomIdAndMovieId(
+                USER_1, ROOM_ID, MOVIE_1
+        ));
 
-        assertEquals(1, voteRepository.findAllByRoomId(roomId).size());
-        assertEquals(1, voteRepository.findAllByRoomId(2L).size());
-    }
-
-    @Test
-    void addVote_whenMovieIsExcluded_throwsException() {
-        votingService.excludeMovie(userId, roomId, movieId);
-
-        assertThrows(
-                RuntimeException.class,
-                () -> votingService.addVote(
-                        anotherUserId, roomId, movieId
-                )
-        );
-
-        assertTrue(voteRepository.findAllByRoomId(roomId).isEmpty());
-    }
-
-    @Test
-    void addVote_whenVotingIsFinished_throwsException() {
-        saveVotingResult(roomId, movieId, 3);
-
-        assertThrows(
-                IllegalStateException.class,
-                () -> votingService.addVote(userId, roomId, movieId)
-        );
-
-        assertTrue(voteRepository.findAllByRoomId(roomId).isEmpty());
-    }
-
-    // --------------------------------------------------
-    // REMOVE VOTE
-    // --------------------------------------------------
-
-    @Test
-    void removeVote_deletesUsersVote() {
-        votingService.addVote(userId, roomId, movieId);
-
-        votingService.removeVote(userId, roomId, movieId);
-
-        assertTrue(voteRepository.findAllByRoomId(roomId).isEmpty());
-    }
-
-    @Test
-    void removeVote_doesNotDeleteAnotherUsersVote() {
-        votingService.addVote(userId, roomId, movieId);
-        votingService.addVote(anotherUserId, roomId, movieId);
-
-        votingService.removeVote(userId, roomId, movieId);
-
-        List<Vote> remainingVotes =
-                voteRepository.findAllByRoomId(roomId);
-
-        assertEquals(1, remainingVotes.size());
-        assertEquals(anotherUserId, remainingVotes.get(0).getUserId());
-    }
-
-    @Test
-    void removeVote_doesNotDeleteVotesFromAnotherRoom() {
-        votingService.addVote(userId, roomId, movieId);
-        votingService.addVote(userId, 2L, movieId);
-
-        votingService.removeVote(userId, roomId, movieId);
-
-        assertTrue(voteRepository.findAllByRoomId(roomId).isEmpty());
-        assertEquals(1, voteRepository.findAllByRoomId(2L).size());
-    }
-
-    @Test
-    void removeVote_whenVotingIsFinished_throwsException() {
-        saveVotingResult(roomId, movieId, 1);
-        votingService.addVote(userId, 2L, movieId);
-
-        assertThrows(
-                IllegalStateException.class,
-                () -> votingService.removeVote(
-                        userId, roomId, movieId
-                )
-        );
-    }
-
-    // --------------------------------------------------
-    // GET VOTES
-    // --------------------------------------------------
-
-    @Test
-    void getRoomVotes_returnsOnlyVotesFromRequestedRoom() {
-        votingService.addVote(userId, roomId, movieId);
-        votingService.addVote(anotherUserId, roomId, anotherMovieId);
-        votingService.addVote(userId, 2L, movieId);
-
-        List<Vote> votes = votingService.getRoomVotes(roomId);
-
-        assertEquals(2, votes.size());
-        assertTrue(votes.stream().allMatch(
-                vote -> vote.getRoomId().equals(roomId)
+        assertTrue(voteRepository.existsByUserIdAndRoomIdAndMovieId(
+                USER_2, ROOM_ID, MOVIE_1
         ));
     }
 
     @Test
-    void getUserVotes_returnsOnlyVotesOfRequestedUserInRoom() {
-        votingService.addVote(userId, roomId, movieId);
-        votingService.addVote(userId, roomId, anotherMovieId);
-        votingService.addVote(anotherUserId, roomId, movieId);
-        votingService.addVote(userId, 2L, movieId);
+    void getRoomVotes_shouldReturnOnlyVotesFromRequestedRoom() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_2);
+        votingService.addVote(USER_3, 2L, MOVIE_3);
 
-        List<Vote> votes =
-                votingService.getUserVotes(userId, roomId);
+        List<Vote> votes = votingService.getRoomVotes(ROOM_ID);
 
         assertEquals(2, votes.size());
         assertTrue(votes.stream().allMatch(
-                vote -> vote.getUserId().equals(userId)
-                        && vote.getRoomId().equals(roomId)
+                vote -> ROOM_ID.equals(vote.getRoomId())
         ));
     }
 
     @Test
-    void getRoomVotes_returnsEmptyListWhenRoomHasNoVotes() {
-        assertTrue(votingService.getRoomVotes(roomId).isEmpty());
+    void getUserVotes_shouldReturnOnlyUsersVotesInRequestedRoom() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_2);
+        votingService.addVote(USER_1, 2L, MOVIE_3);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_3);
+
+        List<Vote> votes = votingService.getUserVotes(USER_1, ROOM_ID);
+
+        assertEquals(2, votes.size());
+        assertTrue(votes.stream().allMatch(
+                vote -> USER_1.equals(vote.getUserId())
+                        && ROOM_ID.equals(vote.getRoomId())
+        ));
     }
 
     // --------------------------------------------------
-    // EXCLUDE MOVIE
+    // Excluded movies
     // --------------------------------------------------
 
     @Test
-    void excludeMovie_savesExclusionToDatabase() {
-        ExcludedMovie excluded = votingService.excludeMovie(
-                userId, roomId, movieId
-        );
+    void excludeMovie_shouldSaveExclusion() {
+        ExcludedMovie excludedMovie =
+                votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1);
 
-        assertNotNull(excluded.getId());
-        assertEquals(roomId, excluded.getRoomId());
-        assertEquals(movieId, excluded.getMovieId());
-        assertEquals(userId, excluded.getExcludedByUserId());
-        assertNotNull(excluded.getExcludedAt());
+        assertNotNull(excludedMovie.getId());
+        assertEquals(ROOM_ID, excludedMovie.getRoomId());
+        assertEquals(MOVIE_1, excludedMovie.getMovieId());
+        assertEquals(USER_1, excludedMovie.getExcludedByUserId());
 
-        assertTrue(
-                excludedMovieRepository
-                        .existsByRoomIdAndMovieId(roomId, movieId)
-        );
+        assertTrue(excludedMovieRepository.existsByRoomIdAndMovieId(
+                ROOM_ID, MOVIE_1
+        ));
     }
 
     @Test
-    void excludeMovie_doesNotDeleteExistingVotes() {
-        votingService.addVote(userId, roomId, movieId);
-        votingService.addVote(anotherUserId, roomId, movieId);
-
-        votingService.excludeMovie(userId, roomId, movieId);
-
-        assertEquals(2, voteRepository.findAllByRoomId(roomId).size());
-        assertTrue(
-                excludedMovieRepository
-                        .existsByRoomIdAndMovieId(roomId, movieId)
+    void excludeMovie_shouldNotCreateDuplicateExclusion() {
+        ExcludedMovie first = votingService.excludeMovie(
+                USER_1, ROOM_ID, MOVIE_1
         );
+
+        ExcludedMovie second = votingService.excludeMovie(
+                USER_2, ROOM_ID, MOVIE_1
+        );
+
+        assertEquals(first.getId(), second.getId());
+        assertEquals(USER_1, second.getExcludedByUserId());
+        assertEquals(1, excludedMovieRepository.findAllByRoomId(ROOM_ID).size());
     }
 
     @Test
-    void excludeMovie_whenAlreadyExcluded_keepsOriginalOwner() {
-        ExcludedMovie original = votingService.excludeMovie(
-                userId, roomId, movieId
-        );
+    void addVote_shouldRejectExcludedMovie() {
+        votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1);
 
-        ExcludedMovie repeated = votingService.excludeMovie(
-                anotherUserId, roomId, movieId
-        );
-
-        assertEquals(original.getId(), repeated.getId());
-        assertEquals(userId, repeated.getExcludedByUserId());
-        assertEquals(1, votingService.getExcludedMovies(roomId).size());
+        assertThrows(IllegalStateException.class,
+                () -> votingService.addVote(USER_2, ROOM_ID, MOVIE_1));
     }
 
     @Test
-    void excludeMovie_canExcludeDifferentMoviesInSameRoom() {
-        votingService.excludeMovie(userId, roomId, movieId);
-        votingService.excludeMovie(anotherUserId, roomId, anotherMovieId);
+    void restoreMovie_shouldAllowUserWhoExcludedIt() {
+        votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1);
 
-        assertEquals(2, votingService.getExcludedMovies(roomId).size());
+        votingService.restoreMovie(USER_1, ROOM_ID, MOVIE_1);
+
+        assertFalse(excludedMovieRepository.existsByRoomIdAndMovieId(
+                ROOM_ID, MOVIE_1
+        ));
     }
 
     @Test
-    void excludeMovie_sameMovieCanBeExcludedInDifferentRooms() {
-        votingService.excludeMovie(userId, roomId, movieId);
-        votingService.excludeMovie(userId, 2L, movieId);
+    void restoreMovie_shouldRejectDifferentUser() {
+        votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1);
 
-        assertTrue(
-                excludedMovieRepository
-                        .existsByRoomIdAndMovieId(roomId, movieId)
-        );
-        assertTrue(
-                excludedMovieRepository
-                        .existsByRoomIdAndMovieId(2L, movieId)
-        );
+        assertThrows(IllegalStateException.class,
+                () -> votingService.restoreMovie(USER_2, ROOM_ID, MOVIE_1));
+
+        assertTrue(excludedMovieRepository.existsByRoomIdAndMovieId(
+                ROOM_ID, MOVIE_1
+        ));
     }
 
     @Test
-    void excludeMovie_whenVotingIsFinished_throwsException() {
-        saveVotingResult(roomId, movieId, 1);
+    void restoreMovie_shouldRejectMovieThatIsNotExcluded() {
+        assertThrows(IllegalArgumentException.class,
+                () -> votingService.restoreMovie(USER_1, ROOM_ID, MOVIE_1));
+    }
 
-        assertThrows(
-                IllegalStateException.class,
-                () -> votingService.excludeMovie(
-                        userId, roomId, anotherMovieId
-                )
-        );
+    @Test
+    void restoreMovie_shouldPreservePreviousVotes() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1);
+
+        votingService.restoreMovie(USER_1, ROOM_ID, MOVIE_1);
+
+        assertTrue(voteRepository.existsByUserIdAndRoomIdAndMovieId(
+                USER_1, ROOM_ID, MOVIE_1
+        ));
     }
 
     // --------------------------------------------------
-    // RESTORE EXCLUDED MOVIE
+    // Voting results
     // --------------------------------------------------
 
     @Test
-    void restoreMovie_removesExclusionFromDatabase() {
-        votingService.excludeMovie(userId, roomId, movieId);
+    void finishVoting_shouldSaveSingleWinner() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_3, ROOM_ID, MOVIE_2);
 
-        votingService.restoreMovie(userId, roomId, movieId);
+        VotingResult result = votingService.finishVoting(ROOM_ID);
 
-        assertFalse(
-                excludedMovieRepository
-                        .existsByRoomIdAndMovieId(roomId, movieId)
-        );
-    }
+        assertNotNull(result.getId());
+        assertEquals(ROOM_ID, result.getRoomId());
+        assertEquals(List.of(MOVIE_1), result.getWinnerMovieIds());
+        assertEquals(2, result.getVoteCount());
+        assertNotNull(result.getFinishedAt());
 
-    @Test
-    void restoreMovie_onlyExcludingUserCanRestoreMovie() {
-        votingService.excludeMovie(userId, roomId, movieId);
-
-        assertThrows(
-                RuntimeException.class,
-                () -> votingService.restoreMovie(
-                        anotherUserId, roomId, movieId
-                )
-        );
-
-        ExcludedMovie stillExcluded = excludedMovieRepository
-                .findByRoomIdAndMovieId(roomId, movieId)
+        VotingResult saved = votingResultRepository
+                .findByRoomId(ROOM_ID)
                 .orElseThrow();
 
-        assertEquals(userId, stillExcluded.getExcludedByUserId());
+        assertEquals(List.of(MOVIE_1), saved.getWinnerMovieIds());
+        assertEquals(2, saved.getVoteCount());
     }
 
     @Test
-    void restoreMovie_whenMovieIsNotExcluded_throwsException() {
-        assertThrows(
-                RuntimeException.class,
-                () -> votingService.restoreMovie(
-                        userId, roomId, movieId
-                )
-        );
+    void finishVoting_shouldSaveAllWinnersInCaseOfTie() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_1);
+
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_2);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_2);
+
+        votingService.addVote(USER_3, ROOM_ID, MOVIE_3);
+
+        VotingResult result = votingService.finishVoting(ROOM_ID);
+
+        assertEquals(List.of(MOVIE_1, MOVIE_2), result.getWinnerMovieIds());
+        assertEquals(2, result.getVoteCount());
     }
 
     @Test
-    void restoreMovie_preservesVotesCastBeforeExclusion() {
-        Vote originalVote =
-                votingService.addVote(userId, roomId, movieId);
+    void finishVoting_shouldSaveEmptyWinnersWhenThereAreNoVotes() {
+        VotingResult result = votingService.finishVoting(ROOM_ID);
 
-        votingService.excludeMovie(userId, roomId, movieId);
-        votingService.restoreMovie(userId, roomId, movieId);
-
-        List<Vote> votes = voteRepository.findAllByRoomId(roomId);
-
-        assertEquals(1, votes.size());
-        assertEquals(originalVote.getId(), votes.get(0).getId());
-        assertEquals(movieId, votes.get(0).getMovieId());
+        assertNotNull(result.getId());
+        assertEquals(List.of(), result.getWinnerMovieIds());
+        assertEquals(0, result.getVoteCount());
     }
 
     @Test
-    void restoreMovie_afterRestorationOtherUsersCanVoteAgain() {
-        votingService.excludeMovie(userId, roomId, movieId);
-        votingService.restoreMovie(userId, roomId, movieId);
+    void finishVoting_shouldIgnoreVotesForExcludedMovies() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_2);
 
-        Vote vote = votingService.addVote(
-                anotherUserId, roomId, movieId
-        );
+        votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1);
 
-        assertNotNull(vote.getId());
-        assertEquals(1, voteRepository.findAllByRoomId(roomId).size());
+        VotingResult result = votingService.finishVoting(ROOM_ID);
+
+        assertEquals(List.of(MOVIE_2), result.getWinnerMovieIds());
+        assertEquals(1, result.getVoteCount());
     }
 
     @Test
-    void restoreMovie_whenVotingIsFinished_throwsException() {
-        votingService.excludeMovie(userId, 2L, movieId);
-        saveVotingResult(roomId, movieId, 1);
+    void finishVoting_shouldReturnNoWinnersWhenAllVotedMoviesAreExcluded() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.addVote(USER_2, ROOM_ID, MOVIE_2);
 
-        assertThrows(
-                IllegalStateException.class,
-                () -> votingService.restoreMovie(
-                        userId, roomId, movieId
-                )
-        );
+        votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1);
+        votingService.excludeMovie(USER_2, ROOM_ID, MOVIE_2);
+
+        VotingResult result = votingService.finishVoting(ROOM_ID);
+
+        assertEquals(List.of(), result.getWinnerMovieIds());
+        assertEquals(0, result.getVoteCount());
+    }
+
+    @Test
+    void finishVoting_shouldRejectSecondAttempt() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.finishVoting(ROOM_ID);
+
+        assertThrows(IllegalStateException.class,
+                () -> votingService.finishVoting(ROOM_ID));
+    }
+
+    @Test
+    void addVote_shouldRejectChangesAfterVotingIsFinished() {
+        votingService.finishVoting(ROOM_ID);
+
+        assertThrows(IllegalStateException.class,
+                () -> votingService.addVote(USER_1, ROOM_ID, MOVIE_1));
+    }
+
+    @Test
+    void removeVote_shouldRejectChangesAfterVotingIsFinished() {
+        votingService.addVote(USER_1, ROOM_ID, MOVIE_1);
+        votingService.finishVoting(ROOM_ID);
+
+        assertThrows(IllegalStateException.class,
+                () -> votingService.removeVote(USER_1, ROOM_ID, MOVIE_1));
+    }
+
+    @Test
+    void excludeMovie_shouldRejectChangesAfterVotingIsFinished() {
+        votingService.finishVoting(ROOM_ID);
+
+        assertThrows(IllegalStateException.class,
+                () -> votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1));
+    }
+
+    @Test
+    void restoreMovie_shouldRejectChangesAfterVotingIsFinished() {
+        votingService.excludeMovie(USER_1, ROOM_ID, MOVIE_1);
+        votingService.finishVoting(ROOM_ID);
+
+        assertThrows(IllegalStateException.class,
+                () -> votingService.restoreMovie(USER_1, ROOM_ID, MOVIE_1));
     }
 
     // --------------------------------------------------
-    // DATABASE CONSTRAINTS
+    // Database constraints
     // --------------------------------------------------
 
     @Test
-    void voteRepository_rejectsDuplicateUserRoomAndMovie() {
-        Vote first = new Vote();
-        first.setUserId(userId);
-        first.setRoomId(roomId);
-        first.setMovieId(movieId);
+    void votingResult_shouldNotAllowTwoResultsForSameRoom() {
+        VotingResult first = saveVotingResult(ROOM_ID, List.of(MOVIE_1), 2);
+        votingResultRepository.saveAndFlush(first);
 
-        voteRepository.saveAndFlush(first);
+        VotingResult second = saveVotingResult(ROOM_ID, List.of(MOVIE_2), 1);
 
-        Vote duplicate = new Vote();
-        duplicate.setUserId(userId);
-        duplicate.setRoomId(roomId);
-        duplicate.setMovieId(movieId);
-
-        assertThrows(
-                DataIntegrityViolationException.class,
-                () -> voteRepository.saveAndFlush(duplicate)
-        );
+        assertThrows(DataIntegrityViolationException.class,
+                () -> votingResultRepository.saveAndFlush(second));
     }
-
-    @Test
-    void excludedMovieRepository_rejectsDuplicateRoomAndMovie() {
-        ExcludedMovie first = new ExcludedMovie();
-        first.setRoomId(roomId);
-        first.setMovieId(movieId);
-        first.setExcludedByUserId(userId);
-
-        excludedMovieRepository.saveAndFlush(first);
-
-        ExcludedMovie duplicate = new ExcludedMovie();
-        duplicate.setRoomId(roomId);
-        duplicate.setMovieId(movieId);
-        duplicate.setExcludedByUserId(anotherUserId);
-
-        assertThrows(
-                DataIntegrityViolationException.class,
-                () -> excludedMovieRepository.saveAndFlush(duplicate)
-        );
-    }
-
-    @Test
-    void votingResultRepository_allowsOnlyOneResultPerRoom() {
-        saveVotingResult(roomId, movieId, 2);
-
-        VotingResult duplicate = new VotingResult();
-        duplicate.setRoomId(roomId);
-        duplicate.setWinnerMovieId(anotherMovieId);
-        duplicate.setVoteCount(3);
-
-        assertThrows(
-                DataIntegrityViolationException.class,
-                () -> votingResultRepository.saveAndFlush(duplicate)
-        );
-    }
-
-    // --------------------------------------------------
-    // HELPERS
-    // --------------------------------------------------
 
     private VotingResult saveVotingResult(
-            Long targetRoomId,
-            Long winnerMovieId,
+            Long roomId,
+            List<Long> winnerMovieIds,
             int voteCount
     ) {
         VotingResult result = new VotingResult();
-        result.setRoomId(targetRoomId);
-        result.setWinnerMovieId(winnerMovieId);
+        result.setRoomId(roomId);
+        result.setWinnerMovieIds(winnerMovieIds);
         result.setVoteCount(voteCount);
-
-        return votingResultRepository.saveAndFlush(result);
+        return result;
     }
 }

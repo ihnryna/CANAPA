@@ -1,4 +1,3 @@
-
 package org.spring.canapa.backend.voting;
 
 import jakarta.persistence.*;
@@ -7,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -28,8 +29,17 @@ public class VotingResult {
     @Column(name = "room_id", nullable = false)
     private Long roomId;
 
-    @Column(name = "winner_movie_id")
-    private Long winnerMovieId;
+    @ElementCollection
+    @CollectionTable(
+            name = "voting_result_winners",
+            joinColumns = @JoinColumn(name = "voting_result_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_voting_result_winner",
+                    columnNames = {"voting_result_id", "movie_id"}
+            )
+    )
+    @Column(name = "movie_id", nullable = false)
+    private List<Long> winnerMovieIds = new ArrayList<>();
 
     @Column(name = "vote_count", nullable = false)
     private int voteCount;
