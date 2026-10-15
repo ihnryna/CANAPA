@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17
+    container_name: canapa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: canapa
+      POSTGRES_USER: ${CANAPA_DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${CANAPA_DB_PASSWORD:?Set CANAPA_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - canapa_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CANAPA_DB_USERNAME:-postgres} -d canapa"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  canapa_pgdata:
