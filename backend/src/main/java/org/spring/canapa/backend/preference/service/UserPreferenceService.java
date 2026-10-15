@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class UserPreferenceService {
@@ -24,8 +25,8 @@ public class UserPreferenceService {
 
     @Transactional
     public UserPreferenceResponse createOrUpdatePreference(
-            Long userId,
-            Long roomId,
+            UUID userId,
+            UUID roomId,
             UserPreferenceRequest request
     ) {
         validateIds(userId, roomId);
@@ -62,7 +63,7 @@ public class UserPreferenceService {
     }
 
     @Transactional(readOnly = true)
-    public UserPreferenceResponse getPreference(Long userId, Long roomId) {
+    public UserPreferenceResponse getPreference(UUID userId, UUID roomId) {
         validateIds(userId, roomId);
 
         UserPreference preference = preferenceRepository
@@ -76,10 +77,8 @@ public class UserPreferenceService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserPreferenceResponse> getRoomPreferences(Long roomId) {
-        if (roomId == null || roomId <= 0) {
-            throw new IllegalArgumentException("Room ID must be positive");
-        }
+    public List<UserPreferenceResponse> getRoomPreferences(UUID roomId) {
+        requireId(roomId, "Room");
 
         return preferenceRepository.findAllByRoomId(roomId)
                 .stream()
@@ -88,10 +87,8 @@ public class UserPreferenceService {
     }
 
     @Transactional(readOnly = true)
-    public GroupPreferenceSummary getGroupPreferenceSummary(Long roomId) {
-        if (roomId == null || roomId <= 0) {
-            throw new IllegalArgumentException("Room ID must be positive");
-        }
+    public GroupPreferenceSummary getGroupPreferenceSummary(UUID roomId) {
+        requireId(roomId, "Room");
 
         List<UserPreference> preferences =
                 preferenceRepository.findAllByRoomId(roomId);
@@ -144,7 +141,7 @@ public class UserPreferenceService {
     }
 
     @Transactional
-    public void deletePreference(Long userId, Long roomId) {
+    public void deletePreference(UUID userId, UUID roomId) {
         validateIds(userId, roomId);
 
         if (!preferenceRepository.existsByUserIdAndRoomId(userId, roomId)) {
@@ -157,13 +154,14 @@ public class UserPreferenceService {
         preferenceRepository.deleteByUserIdAndRoomId(userId, roomId);
     }
 
-    private void validateIds(Long userId, Long roomId) {
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("User ID must be positive");
-        }
+    private void validateIds(UUID userId, UUID roomId) {
+        requireId(userId, "User");
+        requireId(roomId, "Room");
+    }
 
-        if (roomId == null || roomId <= 0) {
-            throw new IllegalArgumentException("Room ID must be positive");
+    private void requireId(UUID id, String entityName) {
+        if (id == null) {
+            throw new IllegalArgumentException(entityName + " ID is required");
         }
     }
 
@@ -256,7 +254,7 @@ public class UserPreferenceService {
     }
 
     public record GroupPreferenceSummary(
-            Long roomId,
+            UUID roomId,
             int participantCount,
             Set<String> likedGenres,
             Set<String> dislikedGenres,

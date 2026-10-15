@@ -5,14 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface UserPreferenceRepository extends JpaRepository<UserPreference, Long> {
 
-    Optional<UserPreference> findByUserIdAndRoomId(Long userId, Long roomId);
+    Optional<UserPreference> findByUserIdAndRoomId(UUID userId, UUID roomId);
 
-    List<UserPreference> findAllByRoomId(Long roomId);
+    List<UserPreference> findAllByRoomId(UUID roomId);
 
-    boolean existsByUserIdAndRoomId(Long userId, Long roomId);
+    boolean existsByUserIdAndRoomId(UUID userId, UUID roomId);
 
-    void deleteByUserIdAndRoomId(Long userId, Long roomId);
+    void deleteByUserIdAndRoomId(UUID userId, UUID roomId);
 }

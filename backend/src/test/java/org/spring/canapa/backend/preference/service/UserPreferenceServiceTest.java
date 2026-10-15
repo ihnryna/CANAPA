@@ -12,6 +12,7 @@ import org.spring.canapa.backend.preference.repository.UserPreferenceRepository;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,6 +20,10 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserPreferenceServiceTest {
+
+    private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID SECOND_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID ROOM_ID = UUID.fromString("00000000-0000-0000-0000-000000000010");
 
     @Mock
     private UserPreferenceRepository preferenceRepository;
@@ -41,20 +46,20 @@ class UserPreferenceServiceTest {
                 "Something funny"
         );
 
-        when(preferenceRepository.findByUserIdAndRoomId(1L, 10L))
+        when(preferenceRepository.findByUserIdAndRoomId(USER_ID, ROOM_ID))
                 .thenReturn(Optional.empty());
 
         when(preferenceRepository.save(any(UserPreference.class)))
                 .thenAnswer(invocation -> invocation.<UserPreference>getArgument(0));
 
         var response = preferenceService.createOrUpdatePreference(
-                1L,
-                10L,
+                USER_ID,
+                ROOM_ID,
                 request
         );
 
-        assertEquals(1L, response.userId());
-        assertEquals(10L, response.roomId());
+        assertEquals(USER_ID, response.userId());
+        assertEquals(ROOM_ID, response.roomId());
         assertEquals(Set.of("Action", "Comedy"), response.likedGenres());
         assertEquals(Set.of("Horror"), response.dislikedGenres());
         assertEquals(7.0, response.minRating());
@@ -74,7 +79,7 @@ class UserPreferenceServiceTest {
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> preferenceService.createOrUpdatePreference(1L, 10L, request)
+                () -> preferenceService.createOrUpdatePreference(USER_ID, ROOM_ID, request)
         );
 
         verify(preferenceRepository, never()).save(any());
@@ -83,8 +88,8 @@ class UserPreferenceServiceTest {
     @Test
     void calculatesGroupPreferences() {
         UserPreference first = new UserPreference();
-        first.setUserId(1L);
-        first.setRoomId(10L);
+        first.setUserId(USER_ID);
+        first.setRoomId(ROOM_ID);
         first.setLikedGenres(Set.of("Action", "Comedy"));
         first.setDislikedGenres(Set.of("Horror"));
         first.setMinRating(7.0);
@@ -92,18 +97,18 @@ class UserPreferenceServiceTest {
         first.setPreferredLanguage("en-us");
 
         UserPreference second = new UserPreference();
-        second.setUserId(2L);
-        second.setRoomId(10L);
+        second.setUserId(SECOND_USER_ID);
+        second.setRoomId(ROOM_ID);
         second.setLikedGenres(Set.of("Comedy", "Drama"));
         second.setDislikedGenres(Set.of("Comedy"));
         second.setMinRating(8.0);
         second.setMaxRuntime(100);
         second.setPreferredLanguage("uk");
 
-        when(preferenceRepository.findAllByRoomId(10L))
+        when(preferenceRepository.findAllByRoomId(ROOM_ID))
                 .thenReturn(java.util.List.of(first, second));
 
-        var summary = preferenceService.getGroupPreferenceSummary(10L);
+        var summary = preferenceService.getGroupPreferenceSummary(ROOM_ID);
 
         assertEquals(2, summary.participantCount());
         assertEquals(Set.of("Action", "Drama"), summary.likedGenres());
@@ -124,15 +129,15 @@ class UserPreferenceServiceTest {
                 null
         );
 
-        when(preferenceRepository.findByUserIdAndRoomId(1L, 10L))
+        when(preferenceRepository.findByUserIdAndRoomId(USER_ID, ROOM_ID))
                 .thenReturn(Optional.empty());
 
         when(preferenceRepository.save(any(UserPreference.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         var response = preferenceService.createOrUpdatePreference(
-                1L,
-                10L,
+                USER_ID,
+                ROOM_ID,
                 request
         );
 
