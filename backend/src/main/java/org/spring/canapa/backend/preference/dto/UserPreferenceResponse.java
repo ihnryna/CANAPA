@@ -3,11 +3,12 @@ package org.spring.canapa.backend.preference.dto;
 import org.spring.canapa.backend.preference.entity.UserPreference;
 
 import java.util.Set;
+import java.util.UUID;
 
 public record UserPreferenceResponse(
         Long id,
-        Long userId,
-        Long roomId,
+        UUID userId,
+        UUID roomId,
         Set<String> likedGenres,
         Set<String> dislikedGenres,
         Double minRating,

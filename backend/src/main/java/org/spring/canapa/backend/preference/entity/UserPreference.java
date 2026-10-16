@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -26,10 +27,10 @@ public class UserPreference {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(name = "room_id", nullable = false)
-    private Long roomId;
+    private UUID roomId;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(

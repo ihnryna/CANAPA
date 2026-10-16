@@ -1,4 +1,4 @@
-package org.spring.canapa.backend.config;
+package org.spring.canapa.backend.config.http;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

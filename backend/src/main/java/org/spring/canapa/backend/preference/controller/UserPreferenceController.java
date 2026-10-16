@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,8 +20,8 @@ public class UserPreferenceController {
 
     @PutMapping("/users/{userId}")
     public UserPreferenceResponse createOrUpdatePreference(
-            @PathVariable Long roomId,
-            @PathVariable Long userId,
+            @PathVariable UUID roomId,
+            @PathVariable UUID userId,
             @Valid @RequestBody UserPreferenceRequest request
     ) {
         return preferenceService.createOrUpdatePreference(
@@ -32,22 +33,22 @@ public class UserPreferenceController {
 
     @GetMapping("/users/{userId}")
     public UserPreferenceResponse getPreference(
-            @PathVariable Long roomId,
-            @PathVariable Long userId
+            @PathVariable UUID roomId,
+            @PathVariable UUID userId
     ) {
         return preferenceService.getPreference(userId, roomId);
     }
 
     @GetMapping
     public List<UserPreferenceResponse> getRoomPreferences(
-            @PathVariable Long roomId
+            @PathVariable UUID roomId
     ) {
         return preferenceService.getRoomPreferences(roomId);
     }
 
     @GetMapping("/summary")
     public UserPreferenceService.GroupPreferenceSummary getGroupPreferenceSummary(
-            @PathVariable Long roomId
+            @PathVariable UUID roomId
     ) {
         return preferenceService.getGroupPreferenceSummary(roomId);
     }
@@ -55,8 +56,8 @@ public class UserPreferenceController {
     @DeleteMapping("/users/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePreference(
-            @PathVariable Long roomId,
-            @PathVariable Long userId
+            @PathVariable UUID roomId,
+            @PathVariable UUID userId
     ) {
         preferenceService.deletePreference(userId, roomId);
     }
