@@ -74,6 +74,33 @@ class UserControllerTest {
     }
 
     @Test
+    void retrievesUserByEmail() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(userService.getUserByEmail("Alice@Example.COM"))
+                .thenReturn(new UserData(userId, "Alice", "alice@example.com", CREATED_AT));
+
+        mockMvc.perform(get("/api/users/by-email")
+                        .queryParam("email", "Alice@Example.COM"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userId.toString()))
+                .andExpect(jsonPath("$.name").value("Alice"))
+                .andExpect(jsonPath("$.email").value("alice@example.com"));
+    }
+
+    @Test
+    void mapsMissingEmailUserToNotFound() throws Exception {
+        when(userService.getUserByEmail("missing@example.com"))
+                .thenThrow(new UserNotFoundException("missing@example.com"));
+
+        mockMvc.perform(get("/api/users/by-email")
+                        .queryParam("email", "missing@example.com"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.path").value("/api/users/by-email"));
+    }
+
+    @Test
     void updatesUser() throws Exception {
         UUID userId = UUID.randomUUID();
         when(userService.updateUser(

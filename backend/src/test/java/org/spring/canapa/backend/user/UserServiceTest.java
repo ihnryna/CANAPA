@@ -178,6 +178,40 @@ class UserServiceTest {
     }
 
     @Test
+    void retrievesExistingUserByNormalizedEmail() {
+        UUID userId = UUID.randomUUID();
+        User user = persisted(new User("Alice", "alice@example.com"), userId);
+        when(userRepository.findByEmailIgnoreCase("alice@example.com"))
+                .thenReturn(Optional.of(user));
+
+        UserData result = userService.getUserByEmail("  Alice@Example.COM ");
+
+        assertThat(result.id()).isEqualTo(userId);
+        assertThat(result.name()).isEqualTo("Alice");
+        assertThat(result.email()).isEqualTo("alice@example.com");
+        verify(userRepository).findByEmailIgnoreCase("alice@example.com");
+    }
+
+    @Test
+    void failsWhenUserEmailDoesNotExist() {
+        when(userRepository.findByEmailIgnoreCase("missing@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserByEmail("missing@example.com"))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found for email: missing@example.com");
+    }
+
+    @Test
+    void rejectsInvalidEmailLookup() {
+        assertThatThrownBy(() -> userService.getUserByEmail("not-an-email"))
+                .isInstanceOf(InvalidUserDataException.class)
+                .hasMessage("Invalid email: must be a valid email address");
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
     void failsWhenUserDoesNotExist() {
         UUID userId = UUID.randomUUID();
         when(userRepository.findById(userId)).thenReturn(Optional.empty());

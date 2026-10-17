@@ -49,6 +49,14 @@ public class UserService {
         return toData(findUser(userId));
     }
 
+    @Transactional(readOnly = true)
+    public UserData getUserByEmail(String email) {
+        String normalizedEmail = normalizeAndValidateEmail(email);
+        return userRepository.findByEmailIgnoreCase(normalizedEmail)
+                .map(this::toData)
+                .orElseThrow(() -> new UserNotFoundException(normalizedEmail));
+    }
+
     @Transactional
     public UserData updateUser(UUID userId, UpdateUserCommand command) {
         if (command == null) {
