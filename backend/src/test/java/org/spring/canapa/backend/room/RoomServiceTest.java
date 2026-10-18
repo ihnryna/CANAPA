@@ -19,6 +19,7 @@ import org.spring.canapa.backend.user.exception.UserNotFoundException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -110,6 +111,37 @@ class RoomServiceTest {
         assertThat(result.participants())
                 .extracting(participant -> participant.name())
                 .containsExactly("alice", "Alice", "Zoe");
+    }
+
+    @Test
+    void listsRoomsForExistingParticipantInRepositoryOrder() {
+        User participant = persistedUser("Alice", "alice@example.com");
+        User otherCreator = persistedUser("Bob", "bob@example.com");
+        Room newest = persistedRoom(new Room("Newest", participant), UUID.randomUUID());
+        Room older = persistedRoom(new Room("Older", otherCreator), UUID.randomUUID());
+        older.addParticipant(participant);
+        when(userRepository.findById(participant.getId())).thenReturn(Optional.of(participant));
+        when(roomRepository.findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(participant.getId()))
+                .thenReturn(List.of(newest, older));
+
+        List<RoomData> result = roomService.getRoomsForUser(participant.getId());
+
+        assertThat(result).extracting(RoomData::name).containsExactly("Newest", "Older");
+        verify(roomRepository)
+                .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(participant.getId());
+    }
+
+    @Test
+    void rejectsRoomListForUnknownUser() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> roomService.getRoomsForUser(userId))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found: " + userId);
+
+        verify(roomRepository, never())
+                .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(any());
     }
 
     @Test

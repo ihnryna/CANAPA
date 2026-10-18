@@ -20,7 +20,7 @@ function errorMessage(error: unknown): string {
 
 function safeReturnTo(value: string | null): string {
   if (value?.startsWith('/') && !value.startsWith('//')) return value
-  return '/setup'
+  return '/rooms'
 }
 
 export function UserSetupPage() {
@@ -101,7 +101,7 @@ export function UserSetupPage() {
         <section className="welcome">
           <div className="eyebrow"><span className="tiny-line" /> ВАШ НАСТУПНИЙ КІНОВЕЧІР</div>
           <h1>Знайдіть фільм,<br />який захочуть<br />подивитися <em>всі.</em></h1>
-          <p className="welcome-description">Створіть профіль, щоб почати спільний вибір фільму.</p>
+          <p className="welcome-description">Створіть кімнату, запросіть друзів та знайдіть варіант, який підійде всій компанії.</p>
           <div className="cinema-card" aria-hidden="true">
             <span className="cinema-reel"><Icon name="film" size={28} /></span>
             <p>Кіновечір без<br /><strong>нескінченних суперечок.</strong></p>
