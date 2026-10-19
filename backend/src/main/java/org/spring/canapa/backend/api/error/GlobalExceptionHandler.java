@@ -18,7 +18,8 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
+import org.spring.canapa.backend.invitation.exception.InvitationExpiredException;
+import org.spring.canapa.backend.invitation.exception.InvitationNotFoundException;
 import java.time.Instant;
 
 @RestControllerAdvice
@@ -189,6 +190,32 @@ public class GlobalExceptionHandler {
                 ApiErrorCode.INVALID_REQUEST,
                 "Request validation failed",
                 HttpStatus.BAD_REQUEST,
+                request
+        );
+    }
+
+    @ExceptionHandler(InvitationNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvitationNotFound(
+            InvitationNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                ApiErrorCode.INVITATION_NOT_FOUND,
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND,
+                request
+        );
+    }
+
+    @ExceptionHandler(InvitationExpiredException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvitationExpired(
+            InvitationExpiredException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                ApiErrorCode.INVITATION_EXPIRED,
+                exception.getMessage(),
+                HttpStatus.GONE,
                 request
         );
     }
