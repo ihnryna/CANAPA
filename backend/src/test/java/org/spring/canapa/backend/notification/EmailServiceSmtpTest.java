@@ -1,5 +1,7 @@
+// DO NOT DELETE,
+// but uncomment if you REALLY need to check sending notifications on email
 
-package org.spring.canapa.backend.notification;
+/*package org.spring.canapa.backend.notification;
 
 import org.junit.jupiter.api.Test;
 import org.spring.canapa.backend.notification.service.EmailService;
@@ -68,3 +70,4 @@ class EmailServiceSmtpTest {
         ));
     }
 }
+*/
