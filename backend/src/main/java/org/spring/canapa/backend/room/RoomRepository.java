@@ -20,4 +20,8 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select room from Room room where room.id = :roomId")
     Optional<Room> findByIdForUpdate(@Param("roomId") UUID roomId);
+
+    @EntityGraph(attributePaths = {"creator", "participants"})
+    @Query("select distinct room from Room room where room.id = :roomId")
+    Optional<Room> findWithParticipantsById(@Param("roomId") UUID roomId);
 }
