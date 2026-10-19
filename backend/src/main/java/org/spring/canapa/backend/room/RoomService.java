@@ -15,6 +15,8 @@ import org.spring.canapa.backend.user.exception.UserNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.spring.canapa.backend.notification.event.VotingStartedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Comparator;
 import java.util.List;
@@ -30,10 +32,12 @@ public class RoomService {
 
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public RoomService(RoomRepository roomRepository, UserRepository userRepository) {
+    public RoomService(RoomRepository roomRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
         this.roomRepository = roomRepository;
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -102,7 +106,14 @@ public class RoomService {
         }
 
         room.changeStatus(targetStatus);
-        return toData(roomRepository.saveAndFlush(room));
+
+        Room savedRoom = roomRepository.saveAndFlush(room);
+
+        if (targetStatus == RoomStatus.VOTING) {
+            eventPublisher.publishEvent(new VotingStartedEvent(savedRoom.getId()));
+        }
+
+        return toData(savedRoom);
     }
 
     private Room findRoom(UUID roomId) {

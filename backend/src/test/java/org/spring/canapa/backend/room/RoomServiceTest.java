@@ -16,6 +16,7 @@ import org.spring.canapa.backend.room.exception.RoomParticipantAlreadyExistsExce
 import org.spring.canapa.backend.user.User;
 import org.spring.canapa.backend.user.UserRepository;
 import org.spring.canapa.backend.user.exception.UserNotFoundException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -38,6 +39,9 @@ class RoomServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private RoomService roomService;

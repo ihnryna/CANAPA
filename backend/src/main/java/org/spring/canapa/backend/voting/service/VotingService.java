@@ -15,6 +15,8 @@ import org.spring.canapa.backend.voting.repository.VoteRepository;
 import org.spring.canapa.backend.voting.repository.VotingResultRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.spring.canapa.backend.notification.event.VotingResultsReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,7 @@ public class VotingService {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final MovieRepository movieRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public VotingService(
             VoteRepository voteRepository,
@@ -40,6 +43,7 @@ public class VotingService {
             RoomRepository roomRepository,
             UserRepository userRepository,
             MovieRepository movieRepository
+            ApplicationEventPublisher eventPublisher
     ) {
         this.voteRepository = voteRepository;
         this.votingResultRepository = votingResultRepository;
@@ -47,6 +51,7 @@ public class VotingService {
         this.roomRepository = roomRepository;
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -177,6 +182,13 @@ public class VotingService {
             return votingResultRepository.save(
                     new VotingResult(room, List.of(), 0)
             );
+        VotingResult result = new VotingResult();
+        result.setRoomId(roomId);
+
+        if (voteCounts.isEmpty()) {
+            result.setWinnerMovieIds(new ArrayList<>());
+            result.setVoteCount(0);
+            return saveResultAndPublishEvent(result);
         }
 
         long maxVotes = votesByMovie.values()
@@ -199,7 +211,7 @@ public class VotingService {
                 Math.toIntExact(maxVotes)
         );
 
-        return votingResultRepository.save(result);
+        return saveResultAndPublishEvent(result);
     }
 
     private User getUser(UUID userId) {
@@ -222,4 +234,16 @@ public class VotingService {
                         "Movie not found: " + movieId
                 ));
     }
+    private VotingResult saveResultAndPublishEvent(VotingResult result) {
+        VotingResult savedResult = votingResultRepository.save(result);
+
+        eventPublisher.publishEvent(new VotingResultsReadyEvent(
+                savedResult.getRoomId(),
+                savedResult.getWinnerMovieIds(),
+                savedResult.getVoteCount()
+        ));
+
+        return savedResult;
+    }
+
 }

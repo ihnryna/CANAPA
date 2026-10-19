@@ -7,6 +7,7 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { RoomPage } from './pages/RoomPage'
 import { RoomsPage } from './pages/RoomsPage'
 import { UserSetupPage } from './pages/UserSetupPage'
+import { VotingPage } from './pages/VotingPage'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/rooms" element={<RoomsPage />} />
         <Route path="/rooms/new" element={<CreateRoomPage />} />
         <Route path="/rooms/:roomId" element={<RoomPage />} />
+        <Route path="/rooms/:roomId/voting" element={<VotingPage />} />
       </Route>
       <Route path="/home" element={<Navigate to="/rooms" replace />} />
       <Route path="*" element={<NotFoundPage />} />
