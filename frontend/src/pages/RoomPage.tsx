@@ -143,7 +143,14 @@ export function RoomPage() {
           <span className={`status-badge status-${room.status.toLowerCase()}`}>{STATUS_LABELS[room.status]}</span>
         </section>
         <div className="room-meta"><span>ID: <code>{room.id}</code></span><button className="text-button compact" onClick={copyRoomId}><Icon name="copy" size={15} /> Копіювати ID</button><span className="polling-note">{lastUpdatedAt === null ? 'Оновлюємо…' : 'Автоматично оновлюється'}</span></div>
-
+        {room.status === 'VOTING' && (
+            <div className="voting-entry">
+              <Link className="btn primary" to={`/rooms/${room.id}/voting`}>
+                Перейти до голосування
+                <Icon name="arrow" size={17} />
+              </Link>
+            </div>
+        )}
         <nav className="room-steps" aria-label="Етапи кімнати">
           {['Учасники', 'Уподобання', 'Добірка', 'Голосування', 'Результат'].map((step, index) => <button className={index === 0 ? 'active' : ''} disabled={index !== 0} key={step}><span>0{index + 1}</span>{step}</button>)}
         </nav>
