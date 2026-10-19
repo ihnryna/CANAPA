@@ -3,6 +3,7 @@ package org.spring.canapa.backend.voting.service;
 
 import org.spring.canapa.backend.movie.entity.Movie;
 import org.spring.canapa.backend.movie.repository.MovieRepository;
+import org.spring.canapa.backend.notification.event.VotingResultsReadyEvent;
 import org.spring.canapa.backend.room.Room;
 import org.spring.canapa.backend.room.RoomRepository;
 import org.spring.canapa.backend.user.User;
@@ -13,16 +14,13 @@ import org.spring.canapa.backend.voting.entity.VotingResult;
 import org.spring.canapa.backend.voting.repository.ExcludedMovieRepository;
 import org.spring.canapa.backend.voting.repository.VoteRepository;
 import org.spring.canapa.backend.voting.repository.VotingResultRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.spring.canapa.backend.notification.event.VotingResultsReadyEvent;
-import org.springframework.context.ApplicationEventPublisher;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,7 +40,7 @@ public class VotingService {
             ExcludedMovieRepository excludedMovieRepository,
             RoomRepository roomRepository,
             UserRepository userRepository,
-            MovieRepository movieRepository
+            MovieRepository movieRepository,
             ApplicationEventPublisher eventPublisher
     ) {
         this.voteRepository = voteRepository;
@@ -179,16 +177,9 @@ public class VotingService {
                 ));
 
         if (votesByMovie.isEmpty()) {
-            return votingResultRepository.save(
+            return saveResultAndPublishEvent(
                     new VotingResult(room, List.of(), 0)
             );
-        VotingResult result = new VotingResult();
-        result.setRoomId(roomId);
-
-        if (voteCounts.isEmpty()) {
-            result.setWinnerMovieIds(new ArrayList<>());
-            result.setVoteCount(0);
-            return saveResultAndPublishEvent(result);
         }
 
         long maxVotes = votesByMovie.values()
@@ -201,6 +192,7 @@ public class VotingService {
                 .stream()
                 .filter(entry -> entry.getValue() == maxVotes)
                 .map(Map.Entry::getKey)
+                .sorted()
                 .toList();
 
         List<Movie> winners = movieRepository.findAllById(winnerIds);
@@ -234,16 +226,19 @@ public class VotingService {
                         "Movie not found: " + movieId
                 ));
     }
+
     private VotingResult saveResultAndPublishEvent(VotingResult result) {
         VotingResult savedResult = votingResultRepository.save(result);
 
         eventPublisher.publishEvent(new VotingResultsReadyEvent(
-                savedResult.getRoomId(),
-                savedResult.getWinnerMovieIds(),
+                savedResult.getRoom().getId(),
+                savedResult.getWinners().stream()
+                        .map(Movie::getId)
+                        .sorted()
+                        .toList(),
                 savedResult.getVoteCount()
         ));
 
         return savedResult;
     }
-
 }

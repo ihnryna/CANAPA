@@ -78,19 +78,32 @@ class VotingEmailNotificationServiceTest {
                 any(NotificationType.class),
                 anyString()
         )).thenAnswer(invocation -> {
-            Notification notification = new Notification(
-                    invocation.getArgument(0),
-                    invocation.getArgument(1),
-                    invocation.getArgument(2),
-                    invocation.getArgument(3)
-            );
+            UUID recipientId = invocation.getArgument(0);
+            UUID requestedRoomId = invocation.getArgument(1);
+            NotificationType type = invocation.getArgument(2);
+            String message = invocation.getArgument(3);
 
-            ReflectionTestUtils.setField(
-                    notification,
-                    "id",
-                    UUID.randomUUID()
-            );
+            User recipient;
 
+            if (recipientId.equals(alice.getId())) {
+                recipient = alice;
+            } else if (recipientId.equals(bob.getId())) {
+                recipient = bob;
+            } else {
+                throw new AssertionError(
+                        "Unexpected recipient ID: " + recipientId
+                );
+            }
+
+            if (!requestedRoomId.equals(roomId)) {
+                throw new AssertionError(
+                        "Unexpected room ID: " + requestedRoomId
+                );
+            }
+
+            Notification notification = new Notification(recipient, room, type, message);
+
+            ReflectionTestUtils.setField(notification,"id",UUID.randomUUID());
             return notification;
         });
     }
