@@ -47,6 +47,7 @@ public class VotingController {
             @RequestParam UUID userId
     ) {
         votingService.removeVote(userId, roomId, movieId);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -79,9 +80,9 @@ public class VotingController {
     private static VoteResponse toResponse(Vote vote) {
         return new VoteResponse(
                 vote.getId(),
-                vote.getUserId(),
-                vote.getRoomId(),
-                vote.getMovieId(),
+                vote.getUser().getId(),
+                vote.getRoom().getId(),
+                vote.getMovie().getId(),
                 vote.getCreatedAt()
         );
     }

@@ -11,15 +11,12 @@ import java.util.UUID;
 public interface ExcludedMovieRepository
         extends JpaRepository<ExcludedMovie, Long> {
 
-    List<ExcludedMovie> findAllByRoomId(UUID roomId);
+    List<ExcludedMovie> findAllByRoom_Id(UUID roomId);
 
-    Optional<ExcludedMovie> findByRoomIdAndMovieId(
+    Optional<ExcludedMovie> findByRoom_IdAndMovie_Id(
             UUID roomId,
             Long movieId
     );
 
-    boolean existsByRoomIdAndMovieId(
-            UUID roomId,
-            Long movieId
-    );
+    boolean existsByRoom_IdAndMovie_Id(UUID roomId, Long movieId);
 }
