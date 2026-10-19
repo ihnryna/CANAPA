@@ -1,3 +1,4 @@
+
 package org.spring.canapa.backend.notification;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -7,9 +8,19 @@ import org.spring.canapa.backend.notification.entity.NotificationStatus;
 import org.spring.canapa.backend.notification.entity.NotificationType;
 import org.spring.canapa.backend.notification.repository.NotificationRepository;
 import org.spring.canapa.backend.notification.service.NotificationService;
+import org.spring.canapa.backend.room.Room;
+import org.spring.canapa.backend.room.RoomRepository;
+import org.spring.canapa.backend.user.User;
+import org.spring.canapa.backend.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.UUID;
 
@@ -17,7 +28,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
+@Testcontainers
 class NotificationServiceRepositoryTest {
+
+    @Container
+    static final PostgreSQLContainer POSTGRES =
+            new PostgreSQLContainer("postgres:16-alpine")
+                    .withDatabaseName("canapa_test")
+                    .withUsername("test")
+                    .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureDatabase(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.datasource.driver-class-name",
+                () -> "org.postgresql.Driver");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
+    }
 
     @Autowired
     private NotificationService notificationService;
@@ -25,14 +55,40 @@ class NotificationServiceRepositoryTest {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoomRepository roomRepository;
+
+    private User user;
+    private User anotherUser;
+    private Room room;
     private UUID userId;
     private UUID roomId;
 
     @BeforeEach
     void setUp() {
         notificationRepository.deleteAll();
-        userId = UUID.randomUUID();
-        roomId = UUID.randomUUID();
+
+        user = userRepository.save(
+                new User("Notification Test User", uniqueEmail())
+        );
+
+        anotherUser = userRepository.save(
+                new User("Another Notification User", uniqueEmail())
+        );
+
+        room = roomRepository.save(
+                new Room("Notification Test Room", user)
+        );
+
+        userId = user.getId();
+        roomId = room.getId();
+    }
+
+    private String uniqueEmail() {
+        return "notification-" + UUID.randomUUID() + "@example.com";
     }
 
     @Test
@@ -46,8 +102,8 @@ class NotificationServiceRepositoryTest {
 
         assertNotNull(created.getId());
         assertNotNull(created.getCreatedAt());
-        assertEquals(userId, created.getRecipientUserId());
-        assertEquals(roomId, created.getRoomId());
+        assertEquals(userId, created.getRecipient().getId());
+        assertEquals(roomId, created.getRoom().getId());
         assertEquals(NotificationType.VOTING_STARTED, created.getType());
         assertEquals("Voting has started", created.getMessage());
         assertEquals(NotificationStatus.PENDING, created.getStatus());
@@ -59,6 +115,8 @@ class NotificationServiceRepositoryTest {
 
         assertEquals(created.getId(), saved.getId());
         assertEquals(NotificationStatus.PENDING, saved.getStatus());
+        assertEquals(userId, saved.getRecipient().getId());
+        assertEquals(roomId, saved.getRoom().getId());
     }
 
     @Test
@@ -78,7 +136,7 @@ class NotificationServiceRepositoryTest {
         );
 
         notificationService.createNotification(
-                UUID.randomUUID(),
+                anotherUser.getId(),
                 roomId,
                 NotificationType.VOTE_CAST,
                 "A vote was cast"
@@ -88,8 +146,9 @@ class NotificationServiceRepositoryTest {
                 notificationService.getUserNotifications(userId);
 
         assertEquals(2, notifications.size());
-        assertTrue(notifications.stream()
-                .allMatch(n -> n.getRecipientUserId().equals(userId)));
+        assertTrue(notifications.stream().allMatch(
+                n -> n.getRecipient().getId().equals(userId)
+        ));
     }
 
     @Test
@@ -163,9 +222,13 @@ class NotificationServiceRepositoryTest {
                 "Voting has started"
         );
 
+        Room anotherRoom = roomRepository.save(
+                new Room("Another Notification Room", anotherUser)
+        );
+
         notificationService.createNotification(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+                anotherUser.getId(),
+                anotherRoom.getId(),
                 NotificationType.VOTING_ENDED,
                 "Another voting has ended"
         );
@@ -174,7 +237,7 @@ class NotificationServiceRepositoryTest {
                 notificationService.getRoomNotifications(roomId);
 
         assertEquals(1, notifications.size());
-        assertEquals(roomId, notifications.getFirst().getRoomId());
+        assertEquals(roomId, notifications.getFirst().getRoom().getId());
     }
 
     @Test

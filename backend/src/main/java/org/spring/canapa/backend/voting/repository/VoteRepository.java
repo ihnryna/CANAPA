@@ -1,3 +1,4 @@
+
 package org.spring.canapa.backend.voting.repository;
 
 import org.spring.canapa.backend.voting.entity.Vote;
@@ -9,27 +10,27 @@ import java.util.UUID;
 
 public interface VoteRepository extends JpaRepository<Vote, Long> {
 
-    List<Vote> findAllByRoomId(UUID roomId);
+    List<Vote> findAllByRoom_Id(UUID roomId);
 
-    List<Vote> findAllByUserIdAndRoomId(UUID userId, UUID roomId);
+    List<Vote> findAllByUser_IdAndRoom_Id(UUID userId, UUID roomId);
 
-    Optional<Vote> findByUserIdAndRoomIdAndMovieId(
+    Optional<Vote> findByUser_IdAndRoom_IdAndMovie_Id(
             UUID userId,
             UUID roomId,
             Long movieId
     );
 
-    boolean existsByUserIdAndRoomIdAndMovieId(
+    boolean existsByUser_IdAndRoom_IdAndMovie_Id(
             UUID userId,
             UUID roomId,
             Long movieId
     );
 
-    void deleteByUserIdAndRoomIdAndMovieId(
+    void deleteByUser_IdAndRoom_IdAndMovie_Id(
             UUID userId,
             UUID roomId,
             Long movieId
     );
 
-    void deleteAllByUserIdAndRoomId(UUID userId, UUID roomId);
+    void deleteAllByUser_IdAndRoom_Id(UUID userId, UUID roomId);
 }

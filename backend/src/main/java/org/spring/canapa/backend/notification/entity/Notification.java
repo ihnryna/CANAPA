@@ -2,6 +2,8 @@ package org.spring.canapa.backend.notification.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.spring.canapa.backend.room.Room;
+import org.spring.canapa.backend.user.User;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -16,12 +18,13 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // TEMPORARY: store IDs until Room and User modules are integrated.
-    @Column(name = "recipient_user_id", nullable = false)
-    private UUID recipientUserId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "recipient_user_id", nullable = false)
+    private User recipient;
 
-    @Column(name = "room_id", nullable = false)
-    private UUID roomId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -45,13 +48,13 @@ public class Notification {
     }
 
     public Notification(
-            UUID recipientUserId,
-            UUID roomId,
+            User recipient,
+            Room room,
             NotificationType type,
             String message
     ) {
-        this.recipientUserId = Objects.requireNonNull(recipientUserId);
-        this.roomId = Objects.requireNonNull(roomId);
+        this.recipient = Objects.requireNonNull(recipient);
+        this.room = Objects.requireNonNull(room);
         this.type = Objects.requireNonNull(type);
         this.message = Objects.requireNonNull(message);
         this.status = NotificationStatus.PENDING;

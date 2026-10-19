@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface VotingResultRepository
         extends JpaRepository<VotingResult, Long> {
 
-    Optional<VotingResult> findByRoomId(UUID roomId);
+    Optional<VotingResult> findByRoom_Id(UUID roomId);
 
-    boolean existsByRoomId(UUID roomId);
+    boolean existsByRoom_Id(UUID roomId);
 }

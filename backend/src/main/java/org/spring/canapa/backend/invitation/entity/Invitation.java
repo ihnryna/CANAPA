@@ -2,16 +2,14 @@ package org.spring.canapa.backend.invitation.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.spring.canapa.backend.room.Room;
+import org.spring.canapa.backend.user.User;
 
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-/*
- * TEMPORARY: roomId and createdByUserId are stored as UUIDs instead of
- * Room and User relationships until the room and user modules are merged.
- * Replace these fields with entity relationships after integration.
- */
+
 @Getter
 @Entity
 @Table(name = "invitations")
@@ -21,11 +19,13 @@ public class Invitation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "room_id", nullable = false)
-    private UUID roomId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
 
-    @Column(name = "created_by_user_id", nullable = false)
-    private UUID createdByUserId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "created_by_user_id", nullable = false)
+    private User createdBy;
 
     @Column(nullable = false, unique = true, length = 64)
     private String code;
@@ -43,13 +43,13 @@ public class Invitation {
     protected Invitation() {}
 
     public Invitation(
-            UUID roomId,
-            UUID createdByUserId,
+            Room room,
+            User createdBy,
             String code,
             Instant expiresAt
     ) {
-        this.roomId = Objects.requireNonNull(roomId);
-        this.createdByUserId = Objects.requireNonNull(createdByUserId);
+        this.room = Objects.requireNonNull(room);
+        this.createdBy = Objects.requireNonNull(createdBy);
         this.code = Objects.requireNonNull(code);
         this.expiresAt = Objects.requireNonNull(expiresAt);
         this.status = InvitationStatus.ACTIVE;

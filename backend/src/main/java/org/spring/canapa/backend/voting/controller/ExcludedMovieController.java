@@ -60,17 +60,16 @@ public class ExcludedMovieController {
             @RequestParam UUID userId
     ) {
         votingService.restoreMovie(userId, roomId, movieId);
+
         return ResponseEntity.noContent().build();
     }
 
-    private static ExcludedMovieResponse toResponse(
-            ExcludedMovie movie
-    ) {
+    private static ExcludedMovieResponse toResponse(ExcludedMovie movie) {
         return new ExcludedMovieResponse(
                 movie.getId(),
-                movie.getRoomId(),
-                movie.getMovieId(),
-                movie.getExcludedByUserId(),
+                movie.getRoom().getId(),
+                movie.getMovie().getId(),
+                movie.getExcludedBy().getId(),
                 movie.getExcludedAt()
         );
     }

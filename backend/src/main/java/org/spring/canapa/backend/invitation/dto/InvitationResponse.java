@@ -22,8 +22,8 @@ public record InvitationResponse(
     ) {
         return new InvitationResponse(
                 invitation.getId(),
-                invitation.getRoomId(),
-                invitation.getCreatedByUserId(),
+                invitation.getRoom().getId(),
+                invitation.getCreatedBy().getId(),
                 invitation.getCode(),
                 link,
                 invitation.getCreatedAt(),

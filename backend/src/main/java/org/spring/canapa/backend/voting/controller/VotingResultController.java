@@ -1,5 +1,6 @@
 package org.spring.canapa.backend.voting.controller;
 
+import org.spring.canapa.backend.movie.entity.Movie;
 import org.spring.canapa.backend.voting.dto.VotingResultResponse;
 import org.spring.canapa.backend.voting.entity.VotingResult;
 import org.spring.canapa.backend.voting.repository.VotingResultRepository;
@@ -40,7 +41,7 @@ public class VotingResultController {
     public ResponseEntity<VotingResultResponse> getVotingResult(
             @PathVariable UUID roomId
     ) {
-        VotingResult result = votingResultRepository.findByRoomId(roomId)
+        VotingResult result = votingResultRepository.findByRoom_Id(roomId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Voting result not found for this room"
@@ -49,13 +50,16 @@ public class VotingResultController {
         return ResponseEntity.ok(toResponse(result));
     }
 
-    private static VotingResultResponse toResponse(
-            VotingResult result
-    ) {
+    private static VotingResultResponse toResponse(VotingResult result) {
+        List<Long> winnerMovieIds = result.getWinners()
+                .stream()
+                .map(Movie::getId)
+                .toList();
+
         return new VotingResultResponse(
                 result.getId(),
-                result.getRoomId(),
-                List.copyOf(result.getWinnerMovieIds()),
+                result.getRoom().getId(),
+                winnerMovieIds,
                 result.getVoteCount(),
                 result.getFinishedAt()
         );

@@ -5,8 +5,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.util.List;
 
 import java.util.UUID;
 
@@ -20,7 +30,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@ActiveProfiles("test")
+@Testcontainers
 class VotingAllControllersIntegrationTest {
+
+
+    @Container
+    static final PostgreSQLContainer POSTGRES =
+            new PostgreSQLContainer("postgres:16-alpine")
+                    .withDatabaseName("canapa_test")
+                    .withUsername("test")
+                    .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureDatabase(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.datasource.driver-class-name",
+                () -> "org.postgresql.Driver");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
+    }
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private MockMvc mockMvc;
@@ -56,6 +89,52 @@ class VotingAllControllersIntegrationTest {
             UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
     private static final UUID USER_3 =
             UUID.fromString("123e4567-e89b-12d3-a456-426614174002");
+
+    @BeforeEach
+    void setUp() {
+        // Create users required by voting requests.
+        jdbcTemplate.update("""
+                        INSERT INTO users (id, name, email, created_at)
+                        VALUES
+                            (?, 'Test User 1', 'voting-test-1@example.com', CURRENT_TIMESTAMP),
+                            (?, 'Test User 2', 'voting-test-2@example.com', CURRENT_TIMESTAMP),
+                            (?, 'Test User 3', 'voting-test-3@example.com', CURRENT_TIMESTAMP)
+                        """,
+                USER_1, USER_2, USER_3
+        );
+
+        // Create rooms used by the controller tests.
+        for (UUID roomId : List.of(
+                ROOM_1, ROOM_2, ROOM_3, ROOM_4,
+                ROOM_5, ROOM_6, ROOM_7, ROOM_8,
+                ROOM_9, ROOM_10, ROOM_11, ROOM_12
+        )) {
+            jdbcTemplate.update("""
+                            INSERT INTO rooms (
+                                id, name, creator_id, status, created_at
+                            )
+                            VALUES (?, ?, ?, 'VOTING', CURRENT_TIMESTAMP)
+                            """,
+                    roomId,
+                    "Test Room " + roomId,
+                    USER_1
+            );
+        }
+
+        jdbcTemplate.update("""
+                INSERT INTO movies (id, title)
+                VALUES
+                    (15, 'Test Movie 15'),
+                    (16, 'Test Movie 16')
+                """);
+
+        jdbcTemplate.execute("""
+                SELECT setval(
+                    pg_get_serial_sequence('movies', 'id'),
+                    GREATEST((SELECT COALESCE(MAX(id), 1) FROM movies), 1)
+                )
+                """);
+    }
 
     @Test
     void addVote_shouldReturnCreatedVote() throws Exception {
