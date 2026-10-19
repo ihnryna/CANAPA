@@ -11,6 +11,11 @@ public class UserNotFoundException extends RuntimeException {
         this.userId = userId;
     }
 
+    public UserNotFoundException(String email) {
+        super("User not found for email: " + email);
+        this.userId = null;
+    }
+
     public UUID getUserId() {
         return userId;
     }

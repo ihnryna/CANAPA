@@ -50,6 +50,13 @@ class UserApiIntegrationTest {
                 .andExpect(jsonPath("$.id").value(userId))
                 .andExpect(jsonPath("$.name").value("Alice"));
 
+        mockMvc.perform(get("/api/users/by-email")
+                        .queryParam("email", " ALICE@EXAMPLE.COM "))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userId))
+                .andExpect(jsonPath("$.name").value("Alice"))
+                .andExpect(jsonPath("$.email").value("alice@example.com"));
+
         mockMvc.perform(put("/api/users/{userId}", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

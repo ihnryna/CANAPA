@@ -85,6 +85,24 @@ class RoomControllerTest {
     }
 
     @Test
+    void listsRoomsForCurrentUser() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID firstRoomId = UUID.randomUUID();
+        UUID secondRoomId = UUID.randomUUID();
+        when(roomService.getRoomsForUser(userId)).thenReturn(List.of(
+                roomData(firstRoomId, userId, RoomStatus.CREATED),
+                roomData(secondRoomId, UUID.randomUUID(), RoomStatus.VOTING)
+        ));
+
+        mockMvc.perform(get("/api/rooms").header(USER_ID_HEADER, userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(firstRoomId.toString()))
+                .andExpect(jsonPath("$[1].id").value(secondRoomId.toString()))
+                .andExpect(jsonPath("$[1].status").value("VOTING"));
+    }
+
+    @Test
     void joinsRoom() throws Exception {
         UUID roomId = UUID.randomUUID();
         UUID creatorId = UUID.randomUUID();

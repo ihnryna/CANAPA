@@ -61,6 +61,13 @@ class RoomApiIntegrationTest {
 
         String roomId = JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
 
+        mockMvc.perform(get("/api/rooms")
+                        .header(USER_ID_HEADER, creator.id()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(roomId))
+                .andExpect(jsonPath("$[0].creator.id").value(creator.id().toString()));
+
         mockMvc.perform(get("/api/rooms/{roomId}", roomId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(roomId));
@@ -70,6 +77,12 @@ class RoomApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.participants.length()").value(2))
                 .andExpect(jsonPath("$.participants[1].id").value(participant.id().toString()));
+
+        mockMvc.perform(get("/api/rooms")
+                        .header(USER_ID_HEADER, participant.id()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(roomId));
 
         mockMvc.perform(post("/api/rooms/{roomId}/participants", roomId)
                         .header(USER_ID_HEADER, participant.id()))

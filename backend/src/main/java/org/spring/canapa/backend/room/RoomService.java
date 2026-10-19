@@ -52,6 +52,16 @@ public class RoomService {
         return toData(findRoom(roomId));
     }
 
+    @Transactional(readOnly = true)
+    public List<RoomData> getRoomsForUser(UUID userId) {
+        findUser(userId, "userId");
+        return roomRepository
+                .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(userId)
+                .stream()
+                .map(this::toData)
+                .toList();
+    }
+
     @Transactional
     public RoomData joinRoom(UUID roomId, UUID userId) {
         validateId(userId, "userId");
