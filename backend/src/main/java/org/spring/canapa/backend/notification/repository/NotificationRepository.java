@@ -10,16 +10,11 @@ import java.util.UUID;
 public interface NotificationRepository
         extends JpaRepository<Notification, UUID> {
 
-    List<Notification> findByRecipientUserIdOrderByCreatedAtDesc(
-            UUID recipientUserId
-    );
+    List<Notification> findByRecipient_IdOrderByCreatedAtDesc(UUID userId);
 
-    List<Notification> findByRoomIdOrderByCreatedAtDesc(UUID roomId);
+    List<Notification> findByRoom_IdOrderByCreatedAtDesc(UUID roomId);
 
     List<Notification> findByStatus(NotificationStatus status);
 
-    long countByRecipientUserIdAndStatus(
-            UUID recipientUserId,
-            NotificationStatus status
-    );
+    long countByRecipient_IdAndStatus(UUID userId, NotificationStatus status);
 }

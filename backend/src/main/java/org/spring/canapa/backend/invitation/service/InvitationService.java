@@ -5,6 +5,10 @@ import org.spring.canapa.backend.invitation.entity.InvitationStatus;
 import org.spring.canapa.backend.invitation.exception.InvitationExpiredException;
 import org.spring.canapa.backend.invitation.exception.InvitationNotFoundException;
 import org.spring.canapa.backend.invitation.repository.InvitationRepository;
+import org.spring.canapa.backend.room.Room;
+import org.spring.canapa.backend.room.RoomRepository;
+import org.spring.canapa.backend.user.User;
+import org.spring.canapa.backend.user.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,15 +26,21 @@ public class InvitationService {
     private static final long DEFAULT_EXPIRATION_HOURS = 24;
 
     private final InvitationRepository invitationRepository;
+    private final RoomRepository roomRepository;
+    private final UserRepository userRepository;
     private final SecureRandom secureRandom = new SecureRandom();
     private final String frontendBaseUrl;
 
     public InvitationService(
             InvitationRepository invitationRepository,
+            RoomRepository roomRepository,
+            UserRepository userRepository,
             @Value("${canapa.frontend.base-url:http://localhost:5173}")
             String frontendBaseUrl
     ) {
         this.invitationRepository = invitationRepository;
+        this.roomRepository = roomRepository;
+        this.userRepository = userRepository;
         this.frontendBaseUrl = frontendBaseUrl.replaceAll("/+$", "");
     }
 
@@ -53,9 +63,17 @@ public class InvitationService {
         String code = generateUniqueCode();
         Instant expiresAt = Instant.now().plusSeconds(hours * 3600);
 
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Room not found: " + roomId));
+
+        User createdBy = userRepository.findById(createdByUserId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found: " + createdByUserId));
+
         Invitation invitation = new Invitation(
-                roomId,
-                createdByUserId,
+                room,
+                createdBy,
                 code,
                 expiresAt
         );
