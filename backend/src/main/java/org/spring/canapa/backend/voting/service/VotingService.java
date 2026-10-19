@@ -9,6 +9,8 @@ import org.spring.canapa.backend.voting.entity.Vote;
 import org.spring.canapa.backend.voting.entity.VotingResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.spring.canapa.backend.notification.event.VotingResultsReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,15 +21,18 @@ public class VotingService {
     private final VoteRepository voteRepository;
     private final VotingResultRepository votingResultRepository;
     private final ExcludedMovieRepository excludedMovieRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public VotingService(
             VoteRepository voteRepository,
             VotingResultRepository votingResultRepository,
-            ExcludedMovieRepository excludedMovieRepository
+            ExcludedMovieRepository excludedMovieRepository,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.voteRepository = voteRepository;
         this.votingResultRepository = votingResultRepository;
         this.excludedMovieRepository = excludedMovieRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -154,7 +159,7 @@ public class VotingService {
         if (voteCounts.isEmpty()) {
             result.setWinnerMovieIds(new ArrayList<>());
             result.setVoteCount(0);
-            return votingResultRepository.save(result);
+            return saveResultAndPublishEvent(result);
         }
 
         int maxVotes = voteCounts.values().stream()
@@ -170,6 +175,19 @@ public class VotingService {
         result.setWinnerMovieIds(winnerMovieIds);
         result.setVoteCount(maxVotes);
 
-        return votingResultRepository.save(result);
+        return saveResultAndPublishEvent(result);
     }
+
+    private VotingResult saveResultAndPublishEvent(VotingResult result) {
+        VotingResult savedResult = votingResultRepository.save(result);
+
+        eventPublisher.publishEvent(new VotingResultsReadyEvent(
+                savedResult.getRoomId(),
+                savedResult.getWinnerMovieIds(),
+                savedResult.getVoteCount()
+        ));
+
+        return savedResult;
+    }
+
 }
