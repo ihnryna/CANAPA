@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { createInvitation, type Invitation } from '../api/invitations'
 import { useCurrentUser } from '../auth/current-user-context'
 import { isUuid } from '../auth/user-id'
@@ -88,6 +88,7 @@ function InvitationDialog({ roomId, userId, onClose, onNotice }: InvitationDialo
 }
 
 export function RoomPage() {
+  const navigate = useNavigate()
   const { roomId } = useParams()
   const validRoomId = roomId !== undefined && isUuid(roomId) ? roomId : undefined
   const { user } = useCurrentUser()
@@ -152,7 +153,28 @@ export function RoomPage() {
             </div>
         )}
         <nav className="room-steps" aria-label="Етапи кімнати">
-          {['Учасники', 'Уподобання', 'Добірка', 'Голосування', 'Результат'].map((step, index) => <button className={index === 0 ? 'active' : ''} disabled={index !== 0} key={step}><span>0{index + 1}</span>{step}</button>)}
+          {[
+            'Учасники',
+            'Уподобання',
+            'Добірка',
+            'Голосування',
+            'Результат',
+          ].map((step, index) => (
+              <button
+                  key={step}
+                  type="button"
+                  className={index === 0 ? 'active' : ''}
+                  disabled={index !== 0 && (index !== 2 || !member)}
+                  onClick={
+                    index === 2 && member
+                        ? () => navigate(`/rooms/${room.id}/recommendations`)
+                        : undefined
+                  }
+              >
+                <span>0{index + 1}</span>
+                {step}
+              </button>
+          ))}
         </nav>
 
         <section className="rooms-heading lobby-heading">
@@ -183,7 +205,11 @@ export function RoomPage() {
               <h3>Усе для кіновечора</h3>
               <p><Icon name="users" /> {room.participants.length} учасників</p>
               <p><Icon name="film" /> Статус: {STATUS_LABELS[room.status]}</p>
-              <p className="subtle-note">Спільні вподобання, добірка й голосування не входять до поточного frontend scope.</p>
+              <p className="subtle-note">
+                Перейдіть до вкладки «Добірка», щоб переглянути
+                рекомендації фільмів для вашої компанії.
+              </p>
+
             </section>
           </div>
         </div>
