@@ -1,0 +1,179 @@
+.preferences-panel {
+    padding: clamp(22px, 4vw, 36px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+}
+
+.preferences-header {
+    margin-bottom: 30px;
+}
+
+.preferences-header h2 {
+    margin: 12px 0;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.preferences-header > p {
+    max-width: 650px;
+    font-size: 0.8rem;
+}
+
+.preferences-loading {
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.preferences-loading p {
+    font-size: 0.8rem;
+}
+
+.preference-fieldset {
+    min-width: 0;
+    margin: 0 0 30px;
+    padding: 0;
+    border: 0;
+}
+
+.preference-fieldset legend {
+    margin-bottom: 10px;
+    color: var(--navy);
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.preference-hint {
+    margin-bottom: 15px;
+    font-size: 0.72rem;
+}
+
+.genre-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 13px;
+}
+
+.genre-chip {
+    padding: 9px 13px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--navy);
+    font-size: 0.73rem;
+    font-weight: 650;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.genre-chip:hover {
+    border-color: var(--pink);
+}
+
+.genre-chip.selected {
+    border-color: var(--navy);
+    background: var(--navy);
+    color: #fff;
+}
+
+.genre-chip-disliked.selected {
+    border-color: #c6878f;
+    background: var(--pink-soft);
+    color: #8a535c;
+}
+
+.preference-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.preference-label {
+    display: block;
+    min-width: 0;
+    color: var(--navy);
+    font-size: 0.78rem;
+    font-weight: 750;
+}
+
+.preference-label input,
+.preference-label select,
+.preference-label textarea {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.preference-input-with-suffix {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.preference-input-with-suffix input {
+    min-width: 0;
+}
+
+.preference-input-with-suffix > span {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.preference-text-label textarea {
+    resize: vertical;
+    min-height: 90px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 13px 14px;
+    background: #fff;
+    outline: none;
+}
+
+.preference-text-label textarea:focus {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px #253d5b12;
+}
+
+.preference-character-count {
+    display: block;
+    margin-top: 6px;
+    color: var(--quiet);
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-align: right;
+}
+
+.preferences-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.preferences-success {
+    margin-top: 15px;
+    color: var(--success);
+    font-size: 0.76rem;
+}
+
+@media (max-width: 760px) {
+    .preference-fields-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .preferences-actions {
+        flex-direction: column-reverse;
+    }
+
+    .preferences-actions .btn {
+        width: 100%;
+    }
+}

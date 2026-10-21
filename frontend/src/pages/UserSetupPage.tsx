@@ -91,20 +91,22 @@ export function UserSetupPage() {
   }
 
   if (status === 'loading') {
-    return <main className="centered-state" aria-busy="true"><span className="spinner" /><h1>Відновлюємо профіль</h1></main>
+    return <main className="centered-state" aria-busy="true"><span className="spinner"/><h1>Відновлюємо профіль</h1>
+    </main>
   }
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader/>
       <main className="onboarding">
         <section className="welcome">
-          <div className="eyebrow"><span className="tiny-line" /> ВАШ НАСТУПНИЙ КІНОВЕЧІР</div>
-          <h1>Знайдіть фільм,<br />який захочуть<br />подивитися <em>всі.</em></h1>
-          <p className="welcome-description">Створіть кімнату, запросіть друзів та знайдіть варіант, який підійде всій компанії.</p>
+          <div className="eyebrow"><span className="tiny-line"/> ВАШ НАСТУПНИЙ КІНОВЕЧІР</div>
+          <h1>Знайдіть фільм,<br/>який захочуть<br/>подивитися <em>всі.</em></h1>
+          <p className="welcome-description">Створіть кімнату, запросіть друзів та знайдіть варіант, який підійде всій
+            компанії.</p>
           <div className="cinema-card" aria-hidden="true">
-            <span className="cinema-reel"><Icon name="film" size={28} /></span>
-            <p>Кіновечір без<br /><strong>нескінченних суперечок.</strong></p>
+            <span className="cinema-reel"><Icon name="film" size={28}/></span>
+            <p>Кіновечір без<br/><strong>нескінченних суперечок.</strong></p>
           </div>
           <div className="welcome-bottom"><span>Гарне кіно. Ваша компанія.</span><span>Один спільний вибір.</span></div>
         </section>
@@ -112,7 +114,8 @@ export function UserSetupPage() {
         <section className="profile-side" aria-label="Налаштування профілю">
           <div className="onboard-steps" aria-label="Етапи CANAPA">
             {['Профіль', 'Кімната', 'Вибір'].map((label, index) => (
-              <div className={index === 0 ? 'current' : ''} key={label}><span>0{index + 1}</span>{label}{index < 2 && <i />}</div>
+              <div className={index === 0 ? 'current' : ''} key={label}><span>0{index + 1}</span>{label}{index < 2 &&
+                  <i/>}</div>
             ))}
           </div>
 
@@ -126,37 +129,53 @@ export function UserSetupPage() {
 
             {user !== null ? (
               <div className="returning-profile">
-                <span className="form-symbol"><Icon name="check" size={26} /></span>
+                <span className="form-symbol"><Icon name="check" size={26}/></span>
                 <h2>Раді бачити знову</h2>
                 <p>Зараз вибрано</p>
-                <div className="saved-profile"><span className="avatar">{user.name.charAt(0).toUpperCase()}</span><div><strong>{user.name}</strong><small>{user.email}</small></div></div>
-                <button className="btn primary full" onClick={() => navigate(destination)}>Продовжити <Icon name="arrow" size={18} /></button>
+                <div className="saved-profile"><span className="avatar">{user.name.charAt(0).toUpperCase()}</span>
+                  <div><strong>{user.name}</strong><small>{user.email}</small></div>
+                </div>
+                <button className="btn primary full" onClick={() => navigate(destination)}>Продовжити <Icon name="arrow"
+                                                                                                            size={18}/>
+                </button>
                 <button className="text-button centered" onClick={clearUser}>Змінити користувача</button>
               </div>
             ) : (
               <>
-                <span className="form-symbol"><Icon name="users" size={26} /></span>
+                <span className="form-symbol"><Icon name="users" size={26}/></span>
                 <h2>Створити профіль</h2>
                 <p>Це займе лише кілька секунд</p>
                 <form onSubmit={handleCreate} aria-busy={pendingAction === 'create'} noValidate>
-                  <label>Ваше ім’я<input required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Наприклад, Софія" autoComplete="name" disabled={pendingAction !== null} /></label>
-                  <label>Email<input required maxLength={320} type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="sofia@example.com" autoComplete="email" disabled={pendingAction !== null} /></label>
+                  <label>Ваше ім’я<input required maxLength={100} value={name}
+                                         onChange={(event) => setName(event.target.value)}
+                                         placeholder="Наприклад, Софія" autoComplete="name"
+                                         disabled={pendingAction !== null}/></label>
+                  <label>Email<input required maxLength={320} type="email" value={email}
+                                     onChange={(event) => setEmail(event.target.value)} placeholder="sofia@example.com"
+                                     autoComplete="email" disabled={pendingAction !== null}/></label>
                   {createError !== null && <p className="form-error" role="alert">{createError}</p>}
-                  <button className="btn primary full" disabled={pendingAction !== null}>{pendingAction === 'create' ? 'Створюємо…' : 'Створити профіль'} <Icon name="arrow" size={18} /></button>
+                  <button className="btn primary full"
+                          disabled={pendingAction !== null}>{pendingAction === 'create' ? 'Створюємо…' : 'Створити профіль'}
+                    <Icon name="arrow" size={18}/></button>
                 </form>
                 <div className="divider"><span>Або увійти до наявного профілю</span></div>
                 <form onSubmit={handleSelect} aria-busy={pendingAction === 'select'} noValidate>
-                  <label>Email<input type="email" value={existingUserEmail} onChange={(event) => setExistingUserEmail(event.target.value)} placeholder="sofia@example.com" autoComplete="email" disabled={pendingAction !== null} /></label>
+                  <label>Email<input type="email" value={existingUserEmail}
+                                     onChange={(event) => setExistingUserEmail(event.target.value)}
+                                     placeholder="sofia@example.com" autoComplete="email"
+                                     disabled={pendingAction !== null}/></label>
                   {selectError !== null && <p className="form-error" role="alert">{selectError}</p>}
-                  <button className="btn secondary full" disabled={pendingAction !== null}>{pendingAction === 'select' ? 'Перевіряємо…' : 'Увійти за email'}</button>
+                  <button className="btn secondary full"
+                          disabled={pendingAction !== null}>{pendingAction === 'select' ? 'Перевіряємо…' : 'Увійти за email'}</button>
                 </form>
               </>
             )}
-            <div className="profile-note"><Icon name="users" size={16} /><span>Ваш профіль — початок спільного кіновечора</span></div>
+            <div className="profile-note"><Icon name="users"
+                                                size={16}/><span>Ваш профіль — початок спільного кіновечора</span></div>
           </div>
         </section>
       </main>
-      <PageFooter />
+      <PageFooter/>
     </div>
   )
 }

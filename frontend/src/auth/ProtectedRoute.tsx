@@ -8,7 +8,7 @@ export function ProtectedRoute() {
   if (status === 'loading') {
     return (
       <main className="centered-state" aria-busy="true">
-        <span className="spinner" aria-hidden="true" />
+        <span className="spinner" aria-hidden="true"/>
         <h1>Відновлюємо профіль</h1>
         <p>Ще мить — готуємо ваш простір для кіно.</p>
       </main>
@@ -31,8 +31,8 @@ export function ProtectedRoute() {
 
   if (user === null) {
     const returnTo = `${location.pathname}${location.search}`
-    return <Navigate to={`/?returnTo=${encodeURIComponent(returnTo)}`} replace />
+    return <Navigate to={`/?returnTo=${encodeURIComponent(returnTo)}`} replace/>
   }
 
-  return <Outlet />
+  return <Outlet/>
 }
