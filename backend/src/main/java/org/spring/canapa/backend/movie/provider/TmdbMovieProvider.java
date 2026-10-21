@@ -1,5 +1,6 @@
 package org.spring.canapa.backend.movie.provider;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.spring.canapa.backend.movie.config.MovieApiProperties;
 import org.spring.canapa.backend.movie.dto.MovieSearchResult;
 import org.spring.canapa.backend.movie.entity.Movie;
@@ -255,62 +256,41 @@ public class TmdbMovieProvider implements MovieProvider {
     }
 
     private record TmdbSearchResponse(
-            int page,
-            List<TmdbMovieResponse> results,
-            int totalPages,
-            long totalResults
+            @JsonProperty("page") int page,
+            @JsonProperty("results") List<TmdbMovieResponse> results,
+            @JsonProperty("total_pages") int totalPages,
+            @JsonProperty("total_results") long totalResults
     ) {
     }
 
     private record TmdbFindResponse(
+            @JsonProperty("movie_results")
             List<TmdbMovieResponse> movieResults
     ) {
     }
 
     private record TmdbMovieResponse(
-            Long id,
-            String title,
-            String overview,
-            String posterPath,
-            String releaseDate,
-            Double voteAverage,
-            Integer runtime,
-            String originalLanguage,
-            List<TmdbGenre> genres,
-            TmdbExternalIds externalIds
+            @JsonProperty("id") Long id,
+            @JsonProperty("title") String title,
+            @JsonProperty("overview") String overview,
+            @JsonProperty("poster_path") String posterPath,
+            @JsonProperty("release_date") String releaseDate,
+            @JsonProperty("vote_average") Double voteAverage,
+            @JsonProperty("runtime") Integer runtime,
+            @JsonProperty("original_language") String originalLanguage,
+            @JsonProperty("genres") List<TmdbGenre> genres,
+            @JsonProperty("external_ids") TmdbExternalIds externalIds
     ) {
-        @com.fasterxml.jackson.annotation.JsonProperty("poster_path")
-        public String posterPath() {
-            return posterPath;
-        }
-
-        @com.fasterxml.jackson.annotation.JsonProperty("release_date")
-        public String releaseDate() {
-            return releaseDate;
-        }
-
-        @com.fasterxml.jackson.annotation.JsonProperty("vote_average")
-        public Double voteAverage() {
-            return voteAverage;
-        }
-
-        @com.fasterxml.jackson.annotation.JsonProperty("original_language")
-        public String originalLanguage() {
-            return originalLanguage;
-        }
-
-        @com.fasterxml.jackson.annotation.JsonProperty("external_ids")
-        public TmdbExternalIds externalIds() {
-            return externalIds;
-        }
     }
 
-    private record TmdbGenre(Long id, String name) {
+    private record TmdbGenre(
+            @JsonProperty("id") Long id,
+            @JsonProperty("name") String name
+    ) {
     }
 
     private record TmdbExternalIds(
-            @com.fasterxml.jackson.annotation.JsonProperty("imdb_id")
-            String imdbId
+            @JsonProperty("imdb_id") String imdbId
     ) {
     }
 }
