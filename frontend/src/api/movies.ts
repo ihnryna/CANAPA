@@ -56,3 +56,33 @@ export function searchMovies(
     { signal },
   )
 }
+
+export function getMovieById(
+  id: number,
+  signal?: AbortSignal,
+): Promise<Movie> {
+  return apiRequest<Movie>(
+    `/api/movies/${id}`,
+    { signal },
+  )
+}
+
+export function getMovieByTmdbId(
+  tmdbId: number,
+  signal?: AbortSignal,
+): Promise<Movie> {
+  return apiRequest<Movie>(
+    `/api/movies/tmdb/${tmdbId}`,
+    { signal },
+  )
+}
+
+export function getMovieByImdbId(
+  imdbId: string,
+  signal?: AbortSignal,
+): Promise<Movie> {
+  return apiRequest<Movie>(
+    `/api/movies/imdb/${encodeURIComponent(imdbId)}`,
+    { signal },
+  )
+}

@@ -74,11 +74,12 @@ function toForm(preference?: UserPreference): PreferenceForm {
   }
 }
 
-export function MoviePreferences({
-                                   roomId,
-                                   userId,
-                                   onSaved,
-                                 }: MoviePreferencesProps) {
+export function MoviePreferences(
+  {
+    roomId,
+    userId,
+    onSaved,
+  }: MoviePreferencesProps) {
   const [form, setForm] = useState<PreferenceForm>(DEFAULT_FORM)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -158,8 +159,7 @@ export function MoviePreferences({
     setSaving(true)
 
     try {
-      const saved = await saveRoomPreference(roomId, {
-        userId,
+      const saved = await saveRoomPreference(roomId, userId, {
         likedGenres: form.likedGenres,
         dislikedGenres: form.dislikedGenres,
         minRating: form.minRating,
