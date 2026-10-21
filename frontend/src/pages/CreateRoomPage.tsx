@@ -41,23 +41,30 @@ export function CreateRoomPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader/>
       <main className="main-content narrow-page">
-        <Link className="back-link" to="/rooms"><Icon name="back" size={16} /> Мої кімнати</Link>
+        <Link className="back-link" to="/rooms"><Icon name="back" size={16}/> Мої кімнати</Link>
         <section className="create-room-card">
-          <span className="form-symbol"><Icon name="plus" size={27} /></span>
+          <span className="form-symbol"><Icon name="plus" size={27}/></span>
           <div className="eyebrow">НОВИЙ КІНОВЕЧІР</div>
           <h1>Створити кімнату</h1>
           <p>Ви станете організатором і зможете запросити друзів після створення.</p>
           <form onSubmit={handleSubmit} aria-busy={pending}>
-            <label>Назва кімнати<input autoFocus value={name} onChange={(event) => { setName(event.target.value); setError(null) }} maxLength={100} placeholder="Наприклад, П’ятничний кіновечір" disabled={pending} /></label>
-            <div className="field-meta"><span>Назву можна змінити лише після появи відповідного API.</span><span>{name.length} / 100</span></div>
+            <label>Назва кімнати<input autoFocus value={name} onChange={(event) => {
+              setName(event.target.value);
+              setError(null)
+            }} maxLength={100} placeholder="Наприклад, П’ятничний кіновечір" disabled={pending}/></label>
+            <div className="field-meta">
+              <span>Назву можна змінити лише після появи відповідного API.</span><span>{name.length} / 100</span></div>
             {error !== null && <p className="form-error" role="alert">{error}</p>}
-            <div className="form-actions"><Link className="btn secondary" to="/rooms">Скасувати</Link><button className="btn primary" disabled={pending}>{pending ? 'Створюємо…' : 'Створити кімнату'} <Icon name="arrow" size={17} /></button></div>
+            <div className="form-actions"><Link className="btn secondary" to="/rooms">Скасувати</Link>
+              <button className="btn primary" disabled={pending}>{pending ? 'Створюємо…' : 'Створити кімнату'} <Icon
+                name="arrow" size={17}/></button>
+            </div>
           </form>
         </section>
       </main>
-      <PageFooter />
+      <PageFooter/>
     </div>
   )
 }

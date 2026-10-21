@@ -1,0 +1,90 @@
+.movie-discovery-page {
+    max-width: 1212px;
+}
+
+.discovery-tabs {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border);
+}
+
+.discovery-tabs button {
+    position: relative;
+    padding: 15px 0;
+    color: var(--quiet);
+    font-size: 0.75rem;
+    font-weight: 750;
+}
+
+.discovery-tabs button.active {
+    color: var(--navy);
+}
+
+.discovery-tabs button.active::after {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    background: var(--pink);
+    content: '';
+}
+
+.selected-movies-panel {
+    margin-top: 30px;
+    padding: 25px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.selected-movies-panel h2 {
+    margin-top: 10px;
+    font-size: 1.4rem;
+}
+
+.selected-movies-panel ul {
+    display: grid;
+    gap: 0;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.selected-movies-panel li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+}
+
+.selected-movies-panel li > span {
+    color: var(--navy);
+    font-size: 0.8rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.selected-movies-panel li button {
+    flex-shrink: 0;
+    color: var(--danger);
+    font-size: 0.7rem;
+    font-weight: 750;
+}
+
+@media (max-width: 480px) {
+    .discovery-tabs {
+        gap: 20px;
+    }
+
+    .discovery-tabs button {
+        font-size: 0.68rem;
+    }
+
+    .selected-movies-panel {
+        padding: 18px;
+    }
+}
