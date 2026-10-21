@@ -11,7 +11,7 @@ public interface RecommendationStrategy {
     RecommendationType type();
 
     List<RecommendedMovie> recommend(
-            List<MovieCandidate> movies,
-            List<PreferenceSnapshot> preferences
+        List<MovieCandidate> movies,
+        List<PreferenceSnapshot> preferences
     );
 }

@@ -9,13 +9,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ExcludedMovieRepository
-        extends JpaRepository<ExcludedMovie, Long> {
+    extends JpaRepository<ExcludedMovie, Long> {
 
     List<ExcludedMovie> findAllByRoom_Id(UUID roomId);
 
     Optional<ExcludedMovie> findByRoom_IdAndMovie_Id(
-            UUID roomId,
-            Long movieId
+        UUID roomId,
+        Long movieId
     );
 
     boolean existsByRoom_IdAndMovie_Id(UUID roomId, Long movieId);

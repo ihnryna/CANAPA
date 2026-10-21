@@ -22,32 +22,32 @@ public class ExcludedMovieController {
 
     @GetMapping
     public ResponseEntity<List<ExcludedMovieResponse>> getExcludedMovies(
-            @PathVariable UUID roomId
+        @PathVariable UUID roomId
     ) {
         List<ExcludedMovieResponse> movies = votingService
-                .getExcludedMovies(roomId)
-                .stream()
-                .map(ExcludedMovieController::toResponse)
-                .toList();
+            .getExcludedMovies(roomId)
+            .stream()
+            .map(ExcludedMovieController::toResponse)
+            .toList();
 
         return ResponseEntity.ok(movies);
     }
 
     @PostMapping
     public ResponseEntity<ExcludedMovieResponse> excludeMovie(
-            @PathVariable UUID roomId,
-            @RequestBody ExcludeMovieRequest request
+        @PathVariable UUID roomId,
+        @RequestBody ExcludeMovieRequest request
     ) {
         if (request.userId() == null || request.movieId() == null) {
             throw new IllegalArgumentException(
-                    "userId and movieId are required"
+                "userId and movieId are required"
             );
         }
 
         ExcludedMovie movie = votingService.excludeMovie(
-                request.userId(),
-                roomId,
-                request.movieId()
+            request.userId(),
+            roomId,
+            request.movieId()
         );
 
         return ResponseEntity.ok(toResponse(movie));
@@ -55,9 +55,9 @@ public class ExcludedMovieController {
 
     @DeleteMapping("/{movieId}")
     public ResponseEntity<Void> restoreMovie(
-            @PathVariable UUID roomId,
-            @PathVariable Long movieId,
-            @RequestParam UUID userId
+        @PathVariable UUID roomId,
+        @PathVariable Long movieId,
+        @RequestParam UUID userId
     ) {
         votingService.restoreMovie(userId, roomId, movieId);
 
@@ -66,11 +66,11 @@ public class ExcludedMovieController {
 
     private static ExcludedMovieResponse toResponse(ExcludedMovie movie) {
         return new ExcludedMovieResponse(
-                movie.getId(),
-                movie.getRoom().getId(),
-                movie.getMovie().getId(),
-                movie.getExcludedBy().getId(),
-                movie.getExcludedAt()
+            movie.getId(),
+            movie.getRoom().getId(),
+            movie.getMovie().getId(),
+            movie.getExcludedBy().getId(),
+            movie.getExcludedAt()
         );
     }
 }

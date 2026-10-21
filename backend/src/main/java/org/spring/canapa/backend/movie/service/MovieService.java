@@ -27,9 +27,9 @@ public class MovieService {
     private final OmdbMovieProvider omdbProvider;
 
     public MovieService(
-            MovieRepository movieRepository,
-            TmdbMovieProvider tmdbProvider,
-            OmdbMovieProvider omdbProvider
+        MovieRepository movieRepository,
+        TmdbMovieProvider tmdbProvider,
+        OmdbMovieProvider omdbProvider
     ) {
         this.movieRepository = movieRepository;
         this.tmdbProvider = tmdbProvider;
@@ -38,23 +38,23 @@ public class MovieService {
 
     @Transactional(readOnly = true)
     public MovieSearchResponse searchMovies(
-            String query,
-            int page,
-            int size,
-            String language
+        String query,
+        int page,
+        int size,
+        String language
     ) {
         validatePagination(page, size);
 
         if (!StringUtils.hasText(query)) {
             var results = movieRepository.findAll(
-                    PageRequest.of(page - 1, size, Sort.by("title").ascending())
+                PageRequest.of(page - 1, size, Sort.by("title").ascending())
             );
 
             return new MovieSearchResponse(
-                    page,
-                    results.getTotalPages(),
-                    results.getTotalElements(),
-                    results.getContent().stream().map(MovieResponse::from).toList()
+                page,
+                results.getTotalPages(),
+                results.getTotalElements(),
+                results.getContent().stream().map(MovieResponse::from).toList()
             );
         }
 
@@ -62,63 +62,63 @@ public class MovieService {
 
         if (tmdbProvider.isConfigured()) {
             MovieSearchResult result = tmdbProvider.searchMovies(
-                    normalizedQuery,
-                    page,
-                    normalizeLanguage(language)
+                normalizedQuery,
+                page,
+                normalizeLanguage(language)
             );
 
             List<MovieResponse> movies = result.results().stream()
-                    .map(this::saveSearchResult)
-                    .map(MovieResponse::from)
-                    .toList();
+                .map(this::saveSearchResult)
+                .map(MovieResponse::from)
+                .toList();
 
             return new MovieSearchResponse(
-                    result.page(),
-                    result.totalPages(),
-                    result.totalResults(),
-                    movies
+                result.page(),
+                result.totalPages(),
+                result.totalResults(),
+                movies
             );
         }
 
         if (omdbProvider.isConfigured()) {
             MovieSearchResult result = omdbProvider.searchMovies(
-                    normalizedQuery,
-                    page,
-                    language
+                normalizedQuery,
+                page,
+                language
             );
 
             List<MovieResponse> movies = result.results().stream()
-                    .map(this::saveOmdbSearchResult)
-                    .map(MovieResponse::from)
-                    .toList();
+                .map(this::saveOmdbSearchResult)
+                .map(MovieResponse::from)
+                .toList();
 
             return new MovieSearchResponse(
-                    result.page(),
-                    result.totalPages(),
-                    result.totalResults(),
-                    movies
+                result.page(),
+                result.totalPages(),
+                result.totalResults(),
+                movies
             );
         }
 
         var localResults = movieRepository.findByTitleContainingIgnoreCase(
-                normalizedQuery,
-                PageRequest.of(page - 1, size, Sort.by("title").ascending())
+            normalizedQuery,
+            PageRequest.of(page - 1, size, Sort.by("title").ascending())
         );
 
         return new MovieSearchResponse(
-                page,
-                localResults.getTotalPages(),
-                localResults.getTotalElements(),
-                localResults.getContent().stream().map(MovieResponse::from).toList()
+            page,
+            localResults.getTotalPages(),
+            localResults.getTotalElements(),
+            localResults.getContent().stream().map(MovieResponse::from).toList()
         );
     }
 
     @Transactional
     public MovieResponse getMovieById(Long id) {
         Movie movie = movieRepository.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException(
-                        "Movie not found: " + id
-                ));
+            .orElseThrow(() -> new MovieNotFoundException(
+                "Movie not found: " + id
+            ));
 
         return MovieResponse.from(enrichMovie(movie));
     }
@@ -136,9 +136,9 @@ public class MovieService {
         }
 
         Movie movie = tmdbProvider.getMovieDetails(tmdbId)
-                .orElseThrow(() -> new MovieNotFoundException(
-                        "Movie not found in TMDB: " + tmdbId
-                ));
+            .orElseThrow(() -> new MovieNotFoundException(
+                "Movie not found in TMDB: " + tmdbId
+            ));
 
         return MovieResponse.from(saveMovie(movie));
     }
@@ -168,7 +168,7 @@ public class MovieService {
         }
 
         Movie result = movie.orElseThrow(() -> new MovieNotFoundException(
-                "Movie not found: " + normalizedId
+            "Movie not found: " + normalizedId
         ));
 
         return MovieResponse.from(saveMovie(result));
@@ -181,12 +181,12 @@ public class MovieService {
         }
 
         return movieRepository.findAll(
-                PageRequest.of(
-                        0,
-                        limit,
-                        Sort.by(Sort.Direction.DESC, "rating")
-                                .and(Sort.by(Sort.Direction.ASC, "title"))
-                )
+            PageRequest.of(
+                0,
+                limit,
+                Sort.by(Sort.Direction.DESC, "rating")
+                    .and(Sort.by(Sort.Direction.ASC, "title"))
+            )
         ).getContent().stream().map(MovieResponse::from).toList();
     }
 
@@ -196,7 +196,7 @@ public class MovieService {
         }
 
         Movie movie = movieRepository.findByTmdbId(item.providerId())
-                .orElseGet(Movie::new);
+            .orElseGet(Movie::new);
 
         movie.setTmdbId(item.providerId());
         movie.setTitle(item.title() == null ? "Untitled" : item.title());
@@ -208,7 +208,7 @@ public class MovieService {
         if (item.releaseDate() != null && item.releaseDate().length() >= 4) {
             try {
                 movie.setReleaseYear(
-                        Integer.parseInt(item.releaseDate().substring(0, 4))
+                    Integer.parseInt(item.releaseDate().substring(0, 4))
                 );
             } catch (NumberFormatException ignored) {
                 movie.setReleaseYear(null);
@@ -234,7 +234,7 @@ public class MovieService {
         if (item.releaseDate() != null && item.releaseDate().length() >= 4) {
             try {
                 movie.setReleaseYear(
-                        Integer.parseInt(item.releaseDate().substring(0, 4))
+                    Integer.parseInt(item.releaseDate().substring(0, 4))
                 );
             } catch (NumberFormatException ignored) {
                 movie.setReleaseYear(null);
@@ -248,7 +248,7 @@ public class MovieService {
         if (movie.getTmdbId() != null && tmdbProvider.isConfigured()) {
             try {
                 Movie details = tmdbProvider.getMovieDetails(movie.getTmdbId())
-                        .orElse(null);
+                    .orElse(null);
 
                 if (details != null) {
                     mergeDetails(movie, details);
@@ -260,11 +260,11 @@ public class MovieService {
         }
 
         if (movie.getImdbId() != null && omdbProvider.isConfigured()
-                && (movie.getDirector() == null || movie.getActors() == null)) {
+            && (movie.getDirector() == null || movie.getActors() == null)) {
             try {
                 Movie details = omdbProvider
-                        .getMovieDetailsByImdbId(movie.getImdbId())
-                        .orElse(null);
+                    .getMovieDetailsByImdbId(movie.getImdbId())
+                    .orElse(null);
 
                 if (details != null) {
                     mergeDetails(movie, details);
@@ -315,7 +315,7 @@ public class MovieService {
     private Movie saveMovie(Movie movie) {
         if (movie.getTmdbId() != null) {
             Optional<Movie> existing = movieRepository.findByTmdbId(
-                    movie.getTmdbId()
+                movie.getTmdbId()
             );
 
             if (existing.isPresent()) {
@@ -327,7 +327,7 @@ public class MovieService {
 
         if (StringUtils.hasText(movie.getImdbId())) {
             Optional<Movie> existing = movieRepository.findByImdbId(
-                    movie.getImdbId()
+                movie.getImdbId()
             );
 
             if (existing.isPresent()) {
@@ -346,8 +346,8 @@ public class MovieService {
         }
 
         return language.trim().toLowerCase(Locale.ROOT).contains("-")
-                ? language.trim()
-                : language.trim() + "-US";
+            ? language.trim()
+            : language.trim() + "-US";
     }
 
     private void validatePagination(int page, int size) {

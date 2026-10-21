@@ -35,10 +35,10 @@ class RoomApiIntegrationTest {
 
     @Container
     static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:16-alpine")
-                    .withDatabaseName("canapa_test")
-                    .withUsername("test")
-                    .withPassword("test");
+        new PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("canapa_test")
+            .withUsername("test")
+            .withPassword("test");
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
@@ -46,7 +46,7 @@ class RoomApiIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name",
-                () -> "org.postgresql.Driver");
+            () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 
@@ -61,87 +61,87 @@ class RoomApiIntegrationTest {
     @Test
     void createsRetrievesJoinsAndAdvancesRoomThroughHttp() throws Exception {
         UserData creator = userService.createUser(
-                new CreateUserCommand("Alice", "alice.room.api@example.com")
+            new CreateUserCommand("Alice", "alice.room.api@example.com")
         );
         UserData participant = userService.createUser(
-                new CreateUserCommand("Bob", "bob.room.api@example.com")
+            new CreateUserCommand("Bob", "bob.room.api@example.com")
         );
 
         MvcResult createResult = mockMvc.perform(post("/api/rooms")
-                        .header(USER_ID_HEADER, creator.id())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name": "  Friday movies  "}
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"))
-                .andExpect(jsonPath("$.name").value("Friday movies"))
-                .andExpect(jsonPath("$.creator.id").value(creator.id().toString()))
-                .andExpect(jsonPath("$.participants[0].id").value(creator.id().toString()))
-                .andExpect(jsonPath("$.participants[0].email").doesNotExist())
-                .andExpect(jsonPath("$.status").value("CREATED"))
-                .andReturn();
+                .header(USER_ID_HEADER, creator.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"name": "  Friday movies  "}
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(header().exists("Location"))
+            .andExpect(jsonPath("$.name").value("Friday movies"))
+            .andExpect(jsonPath("$.creator.id").value(creator.id().toString()))
+            .andExpect(jsonPath("$.participants[0].id").value(creator.id().toString()))
+            .andExpect(jsonPath("$.participants[0].email").doesNotExist())
+            .andExpect(jsonPath("$.status").value("CREATED"))
+            .andReturn();
 
         String roomId = JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
 
         mockMvc.perform(get("/api/rooms")
-                        .header(USER_ID_HEADER, creator.id()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(roomId))
-                .andExpect(jsonPath("$[0].creator.id").value(creator.id().toString()));
+                .header(USER_ID_HEADER, creator.id()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].id").value(roomId))
+            .andExpect(jsonPath("$[0].creator.id").value(creator.id().toString()));
 
         mockMvc.perform(get("/api/rooms/{roomId}", roomId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(roomId));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(roomId));
 
         mockMvc.perform(post("/api/rooms/{roomId}/participants", roomId)
-                        .header(USER_ID_HEADER, participant.id()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.participants.length()").value(2))
-                .andExpect(jsonPath("$.participants[1].id").value(participant.id().toString()));
+                .header(USER_ID_HEADER, participant.id()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.participants.length()").value(2))
+            .andExpect(jsonPath("$.participants[1].id").value(participant.id().toString()));
 
         mockMvc.perform(get("/api/rooms")
-                        .header(USER_ID_HEADER, participant.id()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(roomId));
+                .header(USER_ID_HEADER, participant.id()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].id").value(roomId));
 
         mockMvc.perform(post("/api/rooms/{roomId}/participants", roomId)
-                        .header(USER_ID_HEADER, participant.id()))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("ROOM_PARTICIPANT_ALREADY_EXISTS"));
+                .header(USER_ID_HEADER, participant.id()))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("ROOM_PARTICIPANT_ALREADY_EXISTS"));
 
         mockMvc.perform(put("/api/rooms/{roomId}/status", roomId)
-                        .header(USER_ID_HEADER, creator.id())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"status": "VOTING"}
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("VOTING"));
+                .header(USER_ID_HEADER, creator.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"status": "VOTING"}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("VOTING"));
 
         mockMvc.perform(put("/api/rooms/{roomId}/status", roomId)
-                        .header(USER_ID_HEADER, participant.id())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"status": "FINISHED"}
-                                """))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("ROOM_ACTION_NOT_ALLOWED"));
+                .header(USER_ID_HEADER, participant.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"status": "FINISHED"}
+                    """))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("ROOM_ACTION_NOT_ALLOWED"));
 
         mockMvc.perform(put("/api/rooms/{roomId}/status", roomId)
-                        .header(USER_ID_HEADER, creator.id())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"status": "FINISHED"}
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("FINISHED"));
+                .header(USER_ID_HEADER, creator.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"status": "FINISHED"}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("FINISHED"));
 
         mockMvc.perform(get("/api/rooms/{roomId}", roomId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("FINISHED"))
-                .andExpect(jsonPath("$.participants.length()").value(2));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("FINISHED"))
+            .andExpect(jsonPath("$.participants.length()").value(2));
     }
 }

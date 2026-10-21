@@ -14,11 +14,11 @@ import java.util.UUID;
 
 @Entity
 @Table(
-        name = "voting_results",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_voting_result_room",
-                columnNames = "room_id"
-        )
+    name = "voting_results",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_voting_result_room",
+        columnNames = "room_id"
+    )
 )
 @Getter
 @Setter
@@ -35,9 +35,9 @@ public class VotingResult {
 
     @ManyToMany
     @JoinTable(
-            name = "voting_result_winners",
-            joinColumns = @JoinColumn(name = "voting_result_id"),
-            inverseJoinColumns = @JoinColumn(name = "movie_id")
+        name = "voting_result_winners",
+        joinColumns = @JoinColumn(name = "voting_result_id"),
+        inverseJoinColumns = @JoinColumn(name = "movie_id")
     )
     private List<Movie> winners = new ArrayList<>();
 

@@ -40,9 +40,9 @@ public class Room {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "room_participants",
-            joinColumns = @JoinColumn(name = "room_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
+        name = "room_participants",
+        joinColumns = @JoinColumn(name = "room_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> participants = new LinkedHashSet<>();
 

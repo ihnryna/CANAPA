@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.UUID;
 
 public record RoomResponse(
-        UUID id,
-        String name,
-        RoomMemberResponse creator,
-        List<RoomMemberResponse> participants,
-        RoomStatus status,
-        Instant createdAt
+    UUID id,
+    String name,
+    RoomMemberResponse creator,
+    List<RoomMemberResponse> participants,
+    RoomStatus status,
+    Instant createdAt
 ) {
 
     public RoomResponse {

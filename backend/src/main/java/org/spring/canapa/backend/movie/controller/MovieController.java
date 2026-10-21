@@ -17,10 +17,10 @@ public class MovieController {
 
     @GetMapping("/search")
     public MovieSearchResponse searchMovies(
-            @RequestParam(required = false) String query,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "en-US") String language
+        @RequestParam(required = false) String query,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(defaultValue = "en-US") String language
     ) {
         return movieService.searchMovies(query, page, size, language);
     }
@@ -42,7 +42,7 @@ public class MovieController {
 
     @GetMapping("/popular")
     public List<MovieResponse> getPopularMovies(
-            @RequestParam(defaultValue = "20") int limit
+        @RequestParam(defaultValue = "20") int limit
     ) {
         return movieService.getPopularLocalMovies(limit);
     }

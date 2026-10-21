@@ -48,10 +48,10 @@ public class Notification {
     }
 
     public Notification(
-            User recipient,
-            Room room,
-            NotificationType type,
-            String message
+        User recipient,
+        Room room,
+        NotificationType type,
+        String message
     ) {
         this.recipient = Objects.requireNonNull(recipient);
         this.room = Objects.requireNonNull(room);

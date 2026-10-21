@@ -20,35 +20,35 @@ public class UserPreferenceController {
 
     @PutMapping("/users/{userId}")
     public UserPreferenceResponse createOrUpdatePreference(
-            @PathVariable UUID roomId,
-            @PathVariable UUID userId,
-            @Valid @RequestBody UserPreferenceRequest request
+        @PathVariable UUID roomId,
+        @PathVariable UUID userId,
+        @Valid @RequestBody UserPreferenceRequest request
     ) {
         return preferenceService.createOrUpdatePreference(
-                userId,
-                roomId,
-                request
+            userId,
+            roomId,
+            request
         );
     }
 
     @GetMapping("/users/{userId}")
     public UserPreferenceResponse getPreference(
-            @PathVariable UUID roomId,
-            @PathVariable UUID userId
+        @PathVariable UUID roomId,
+        @PathVariable UUID userId
     ) {
         return preferenceService.getPreference(userId, roomId);
     }
 
     @GetMapping
     public List<UserPreferenceResponse> getRoomPreferences(
-            @PathVariable UUID roomId
+        @PathVariable UUID roomId
     ) {
         return preferenceService.getRoomPreferences(roomId);
     }
 
     @GetMapping("/summary")
     public UserPreferenceService.GroupPreferenceSummary getGroupPreferenceSummary(
-            @PathVariable UUID roomId
+        @PathVariable UUID roomId
     ) {
         return preferenceService.getGroupPreferenceSummary(roomId);
     }
@@ -56,8 +56,8 @@ public class UserPreferenceController {
     @DeleteMapping("/users/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePreference(
-            @PathVariable UUID roomId,
-            @PathVariable UUID userId
+        @PathVariable UUID roomId,
+        @PathVariable UUID userId
     ) {
         preferenceService.deletePreference(userId, roomId);
     }

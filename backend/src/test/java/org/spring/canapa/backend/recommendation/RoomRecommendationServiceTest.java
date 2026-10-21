@@ -28,19 +28,19 @@ class RoomRecommendationServiceTest {
     private final RoomService roomService = mock(RoomService.class);
     private final MovieService movieService = mock(MovieService.class);
     private final UserPreferenceService preferenceService =
-            mock(UserPreferenceService.class);
+        mock(UserPreferenceService.class);
 
     private final RoomRecommendationService service =
-            new RoomRecommendationService(
-                    roomService,
-                    movieService,
-                    preferenceService,
-                    new RecommendationService(List.of(
-                            new ConsensusStrategy(),
-                            new AverageRatingStrategy(),
-                            new GenreFocusedStrategy()
-                    ))
-            );
+        new RoomRecommendationService(
+            roomService,
+            movieService,
+            preferenceService,
+            new RecommendationService(List.of(
+                new ConsensusStrategy(),
+                new AverageRatingStrategy(),
+                new GenreFocusedStrategy()
+            ))
+        );
 
     private final UUID roomId = UUID.randomUUID();
     private final UUID memberId = UUID.randomUUID();
@@ -48,39 +48,39 @@ class RoomRecommendationServiceTest {
     @BeforeEach
     void setUp() {
         RoomMemberData member = new RoomMemberData(
-                memberId, "Vika", "vika@example.com"
+            memberId, "Vika", "vika@example.com"
         );
 
         when(roomService.getRoom(roomId)).thenReturn(new RoomData(
-                roomId,
-                "Movie night",
-                member,
-                List.of(member),
-                RoomStatus.CREATED,
-                Instant.now()
+            roomId,
+            "Movie night",
+            member,
+            List.of(member),
+            RoomStatus.CREATED,
+            Instant.now()
         ));
     }
 
     @Test
     void shouldReturnMovieWithScore() {
         when(movieService.getPopularLocalMovies(40))
-                .thenReturn(List.of(movie(7L, "Dune")));
+            .thenReturn(List.of(movie(7L, "Dune")));
 
         when(preferenceService.getRoomPreferences(roomId))
-                .thenReturn(List.of(new UserPreferenceResponse(
-                        1L,
-                        memberId,
-                        roomId,
-                        Set.of("Sci-Fi"),
-                        Set.of(),
-                        7.0,
-                        180,
-                        null,
-                        null
-                )));
+            .thenReturn(List.of(new UserPreferenceResponse(
+                1L,
+                memberId,
+                roomId,
+                Set.of("Sci-Fi"),
+                Set.of(),
+                7.0,
+                180,
+                null,
+                null
+            )));
 
         var result = service.recommend(
-                roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 40
         );
 
         assertEquals(1, result.size());
@@ -91,30 +91,30 @@ class RoomRecommendationServiceTest {
     @Test
     void shouldRejectNonParticipant() {
         var exception = assertThrows(
-                ResponseStatusException.class,
-                () -> service.recommend(
-                        roomId,
-                        UUID.randomUUID(),
-                        RecommendationType.CONSENSUS,
-                        40
-                )
+            ResponseStatusException.class,
+            () -> service.recommend(
+                roomId,
+                UUID.randomUUID(),
+                RecommendationType.CONSENSUS,
+                40
+            )
         );
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
         verify(movieService, never())
-                .getPopularLocalMovies(anyInt());
+            .getPopularLocalMovies(anyInt());
     }
 
     @Test
     void shouldReturnEmptyWithoutPreferences() {
         when(movieService.getPopularLocalMovies(40))
-                .thenReturn(List.of(movie(7L, "Dune")));
+            .thenReturn(List.of(movie(7L, "Dune")));
 
         when(preferenceService.getRoomPreferences(roomId))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
 
         var result = service.recommend(
-                roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 40
         );
 
         assertTrue(result.isEmpty());
@@ -123,12 +123,12 @@ class RoomRecommendationServiceTest {
     @Test
     void shouldRejectInvalidLimit() {
         assertThrows(IllegalArgumentException.class, () ->
-                service.recommend(
-                        roomId,
-                        memberId,
-                        RecommendationType.AVERAGE_RATING,
-                        101
-                )
+            service.recommend(
+                roomId,
+                memberId,
+                RecommendationType.AVERAGE_RATING,
+                101
+            )
         );
     }
 
@@ -136,33 +136,33 @@ class RoomRecommendationServiceTest {
     @Test
     void shouldReturnExpectedResultsForAllStrategies() {
         var space = testMovie(
-                101L, "Space Adventure", Set.of("Sci-Fi"), 8.7, 135
+            101L, "Space Adventure", Set.of("Sci-Fi"), 8.7, 135
         );
         var drama = testMovie(
-                102L, "Drama Night", Set.of("Drama"), 9.3, 110
+            102L, "Drama Night", Set.of("Drama"), 9.3, 110
         );
         var horror = testMovie(
-                103L, "Horror Story", Set.of("Horror"), 7.9, 185
+            103L, "Horror Story", Set.of("Horror"), 7.9, 185
         );
 
         when(movieService.getPopularLocalMovies(40))
-                .thenReturn(List.of(space, drama, horror));
+            .thenReturn(List.of(space, drama, horror));
 
         when(preferenceService.getRoomPreferences(roomId))
-                .thenReturn(List.of(new UserPreferenceResponse(
-                        1L,
-                        memberId,
-                        roomId,
-                        Set.of("Sci-Fi"),
-                        Set.of("Horror"),
-                        7.0,
-                        160,
-                        null,
-                        null
-                )));
+            .thenReturn(List.of(new UserPreferenceResponse(
+                1L,
+                memberId,
+                roomId,
+                Set.of("Sci-Fi"),
+                Set.of("Horror"),
+                7.0,
+                160,
+                null,
+                null
+            )));
 
         var consensus = service.recommend(
-                roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 40
         );
 
         assertEquals(2, consensus.size());
@@ -172,7 +172,7 @@ class RoomRecommendationServiceTest {
         assertEquals(0.0, consensus.get(1).score(), 0.00001);
 
         var average = service.recommend(
-                roomId, memberId, RecommendationType.AVERAGE_RATING, 40
+            roomId, memberId, RecommendationType.AVERAGE_RATING, 40
         );
 
         assertEquals(3, average.size());
@@ -184,7 +184,7 @@ class RoomRecommendationServiceTest {
         assertEquals(0.79, average.get(2).score(), 0.00001);
 
         var genre = service.recommend(
-                roomId, memberId, RecommendationType.GENRE_FOCUSED, 40
+            roomId, memberId, RecommendationType.GENRE_FOCUSED, 40
         );
 
         assertEquals(3, genre.size());
@@ -199,26 +199,26 @@ class RoomRecommendationServiceTest {
         UUID outsiderId = UUID.randomUUID();
 
         when(movieService.getPopularLocalMovies(40))
-                .thenReturn(List.of(
-                        testMovie(101L, "Space", Set.of("Sci-Fi"), 8.7, 135)
-                ));
+            .thenReturn(List.of(
+                testMovie(101L, "Space", Set.of("Sci-Fi"), 8.7, 135)
+            ));
 
         when(preferenceService.getRoomPreferences(roomId))
-                .thenReturn(List.of(
-                        new UserPreferenceResponse(
-                                1L, memberId, roomId,
-                                Set.of("Sci-Fi"), Set.of(),
-                                null, null, null, null
-                        ),
-                        new UserPreferenceResponse(
-                                2L, outsiderId, roomId,
-                                Set.of("Horror"), Set.of("Sci-Fi"),
-                                null, null, null, null
-                        )
-                ));
+            .thenReturn(List.of(
+                new UserPreferenceResponse(
+                    1L, memberId, roomId,
+                    Set.of("Sci-Fi"), Set.of(),
+                    null, null, null, null
+                ),
+                new UserPreferenceResponse(
+                    2L, outsiderId, roomId,
+                    Set.of("Horror"), Set.of("Sci-Fi"),
+                    null, null, null, null
+                )
+            ));
 
         var result = service.recommend(
-                roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 40
         );
 
         assertEquals(1, result.size());
@@ -228,14 +228,14 @@ class RoomRecommendationServiceTest {
     @Test
     void shouldReturnEmptyResultsForEmptyMovieCatalog() {
         when(movieService.getPopularLocalMovies(40))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
 
         when(preferenceService.getRoomPreferences(roomId))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
 
         for (RecommendationType type : RecommendationType.values()) {
             var result = service.recommend(
-                    roomId, memberId, type, 40
+                roomId, memberId, type, 40
             );
 
             assertTrue(result.isEmpty());
@@ -244,48 +244,48 @@ class RoomRecommendationServiceTest {
 
     private MovieResponse movie(long id, String title) {
         return new MovieResponse(
-                id,
-                null,
-                null,
-                title,
-                "Description",
-                Set.of("Sci-Fi"),
-                8.5,
-                150,
-                2024,
-                null,
-                "en",
-                null,
-                null,
-                null,
-                null
+            id,
+            null,
+            null,
+            title,
+            "Description",
+            Set.of("Sci-Fi"),
+            8.5,
+            150,
+            2024,
+            null,
+            "en",
+            null,
+            null,
+            null,
+            null
         );
     }
 
 
     private MovieResponse testMovie(
-            long id,
-            String title,
-            Set<String> genres,
-            double rating,
-            int runtime
+        long id,
+        String title,
+        Set<String> genres,
+        double rating,
+        int runtime
     ) {
         return new MovieResponse(
-                id,
-                null,
-                null,
-                title,
-                "Test description",
-                genres,
-                rating,
-                runtime,
-                2024,
-                null,
-                "en",
-                null,
-                null,
-                null,
-                null
+            id,
+            null,
+            null,
+            title,
+            "Test description",
+            genres,
+            rating,
+            runtime,
+            2024,
+            null,
+            "en",
+            null,
+            null,
+            null,
+            null
         );
     }
 }

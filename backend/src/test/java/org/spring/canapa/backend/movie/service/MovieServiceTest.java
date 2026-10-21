@@ -41,9 +41,9 @@ class MovieServiceTest {
     @BeforeEach
     void setUp() {
         movieService = new MovieService(
-                movieRepository,
-                tmdbProvider,
-                omdbProvider
+            movieRepository,
+            tmdbProvider,
+            omdbProvider
         );
     }
 
@@ -58,8 +58,8 @@ class MovieServiceTest {
         when(tmdbProvider.isConfigured()).thenReturn(false);
         when(omdbProvider.isConfigured()).thenReturn(false);
         when(movieRepository.findByTitleContainingIgnoreCase(
-                eq("Inception"),
-                any(PageRequest.class)
+            eq("Inception"),
+            any(PageRequest.class)
         )).thenReturn(page);
 
         var response = movieService.searchMovies("Inception", 1, 20, "en-US");
@@ -67,8 +67,8 @@ class MovieServiceTest {
         assertEquals(1, response.results().size());
         assertEquals("Inception", response.results().getFirst().title());
         verify(movieRepository).findByTitleContainingIgnoreCase(
-                eq("Inception"),
-                any(PageRequest.class)
+            eq("Inception"),
+            any(PageRequest.class)
         );
     }
 
@@ -79,15 +79,15 @@ class MovieServiceTest {
         movie.setTitle("Inception");
 
         when(movieRepository.findByTmdbId(27205L))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         when(tmdbProvider.isConfigured()).thenReturn(true);
 
         when(tmdbProvider.getMovieDetails(27205L))
-                .thenReturn(Optional.of(movie));
+            .thenReturn(Optional.of(movie));
 
         when(movieRepository.save(any(Movie.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
         var response = movieService.getMovieByTmdbId(27205L);
 
@@ -101,21 +101,21 @@ class MovieServiceTest {
         when(movieRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(
-                MovieNotFoundException.class,
-                () -> movieService.getMovieById(999L)
+            MovieNotFoundException.class,
+            () -> movieService.getMovieById(999L)
         );
     }
 
     @Test
     void validatesSearchPagination() {
         assertThrows(
-                IllegalArgumentException.class,
-                () -> movieService.searchMovies("Inception", 0, 20, "en-US")
+            IllegalArgumentException.class,
+            () -> movieService.searchMovies("Inception", 0, 20, "en-US")
         );
 
         assertThrows(
-                IllegalArgumentException.class,
-                () -> movieService.searchMovies("Inception", 1, 101, "en-US")
+            IllegalArgumentException.class,
+            () -> movieService.searchMovies("Inception", 1, 101, "en-US")
         );
     }
 }

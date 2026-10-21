@@ -5,30 +5,30 @@ import java.util.Set;
 import java.util.UUID;
 
 public record PreferenceSnapshot(
-        UUID userId,
-        UUID roomId,
-        Set<String> likedGenres,
-        Set<String> dislikedGenres,
-        Double minRating,
-        Integer maxRuntime,
-        String preferredLanguage,
-        String textPreference
+    UUID userId,
+    UUID roomId,
+    Set<String> likedGenres,
+    Set<String> dislikedGenres,
+    Double minRating,
+    Integer maxRuntime,
+    String preferredLanguage,
+    String textPreference
 ) {
     public PreferenceSnapshot {
         Objects.requireNonNull(
-                userId, "User ID is required"
+            userId, "User ID is required"
         );
 
         Objects.requireNonNull(
-                roomId, "Room ID is required"
+            roomId, "Room ID is required"
         );
 
         likedGenres = likedGenres == null
-                ? Set.of()
-                : Set.copyOf(likedGenres);
+            ? Set.of()
+            : Set.copyOf(likedGenres);
 
         dislikedGenres = dislikedGenres == null
-                ? Set.of()
-                : Set.copyOf(dislikedGenres);
+            ? Set.of()
+            : Set.copyOf(dislikedGenres);
     }
 }

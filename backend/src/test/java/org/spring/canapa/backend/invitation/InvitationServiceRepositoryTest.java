@@ -36,10 +36,10 @@ class InvitationServiceRepositoryTest {
 
     @Container
     static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:16-alpine")
-                    .withDatabaseName("canapa_test")
-                    .withUsername("test")
-                    .withPassword("test");
+        new PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("canapa_test")
+            .withUsername("test")
+            .withPassword("test");
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
@@ -47,7 +47,7 @@ class InvitationServiceRepositoryTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name",
-                () -> "org.postgresql.Driver");
+            () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 
@@ -71,11 +71,11 @@ class InvitationServiceRepositoryTest {
         invitationRepository.deleteAll();
 
         user = userRepository.save(
-                new User("Invitation Test User", uniqueEmail())
+            new User("Invitation Test User", uniqueEmail())
         );
 
         room = roomRepository.save(
-                new Room("Invitation Test Room", user)
+            new Room("Invitation Test Room", user)
         );
     }
 
@@ -86,11 +86,11 @@ class InvitationServiceRepositoryTest {
     @Test
     void shouldCreateInvitationWithUniqueCode() {
         Invitation first = invitationService.createInvitation(
-                room.getId(), user.getId(), null
+            room.getId(), user.getId(), null
         );
 
         Invitation second = invitationService.createInvitation(
-                room.getId(), user.getId(), null
+            room.getId(), user.getId(), null
         );
 
         assertNotNull(first.getId());
@@ -105,11 +105,11 @@ class InvitationServiceRepositoryTest {
     @Test
     void shouldReturnValidInvitation() {
         Invitation created = invitationService.createInvitation(
-                room.getId(), user.getId(), 24L
+            room.getId(), user.getId(), 24L
         );
 
         Invitation found = invitationService.getValidInvitation(
-                created.getCode()
+            created.getCode()
         );
 
         assertEquals(created.getId(), found.getId());
@@ -119,20 +119,20 @@ class InvitationServiceRepositoryTest {
     @Test
     void shouldThrowWhenInvitationCodeDoesNotExist() {
         assertThrows(
-                InvitationNotFoundException.class,
-                () -> invitationService.getValidInvitation("invalid-code")
+            InvitationNotFoundException.class,
+            () -> invitationService.getValidInvitation("invalid-code")
         );
     }
 
     @Test
     void shouldRejectExpiredInvitationAndPersistExpiredStatus() {
         Invitation expired = invitationRepository.save(
-                new Invitation(
-                        room,
-                        user,
-                        "expired-test-code",
-                        Instant.now().plusMillis(500)
-                )
+            new Invitation(
+                room,
+                user,
+                "expired-test-code",
+                Instant.now().plusMillis(500)
+            )
         );
 
         try {
@@ -143,13 +143,13 @@ class InvitationServiceRepositoryTest {
         }
 
         assertThrows(
-                InvitationExpiredException.class,
-                () -> invitationService.getValidInvitation(expired.getCode())
+            InvitationExpiredException.class,
+            () -> invitationService.getValidInvitation(expired.getCode())
         );
 
         Invitation updated = invitationRepository
-                .findByCode(expired.getCode())
-                .orElseThrow();
+            .findByCode(expired.getCode())
+            .orElseThrow();
 
         assertEquals(InvitationStatus.EXPIRED, updated.getStatus());
     }
@@ -159,8 +159,8 @@ class InvitationServiceRepositoryTest {
         String link = invitationService.createInvitationLink("test-code");
 
         assertEquals(
-                "http://localhost:5173/join/test-code",
-                link
+            "http://localhost:5173/join/test-code",
+            link
         );
     }
 }

@@ -44,12 +44,12 @@ class UserServiceTest {
     void createsUserWithNormalizedData() {
         UUID userId = UUID.randomUUID();
         when(userRepository.findByEmailIgnoreCase("alice@example.com"))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
         when(userRepository.saveAndFlush(any(User.class)))
-                .thenAnswer(invocation -> persisted(invocation.getArgument(0), userId));
+            .thenAnswer(invocation -> persisted(invocation.getArgument(0), userId));
 
         UserData result = userService.createUser(
-                new CreateUserCommand("  Alice  Smith  ", "  Alice@Example.COM ")
+            new CreateUserCommand("  Alice  Smith  ", "  Alice@Example.COM ")
         );
 
         ArgumentCaptor<User> savedUser = ArgumentCaptor.forClass(User.class);
@@ -66,8 +66,8 @@ class UserServiceTest {
     @Test
     void rejectsNullCreateCommand() {
         assertThatThrownBy(() -> userService.createUser(null))
-                .isInstanceOf(InvalidUserDataException.class)
-                .hasMessage("Invalid request: must not be null");
+            .isInstanceOf(InvalidUserDataException.class)
+            .hasMessage("Invalid request: must not be null");
 
         verifyNoInteractions(userRepository);
     }
@@ -76,9 +76,9 @@ class UserServiceTest {
     @MethodSource("invalidNameCases")
     void rejectsInvalidName(String name, String expectedReason) {
         assertThatThrownBy(() -> userService.createUser(
-                new CreateUserCommand(name, "alice@example.com")
+            new CreateUserCommand(name, "alice@example.com")
         )).isInstanceOf(InvalidUserDataException.class)
-                .hasMessage("Invalid name: " + expectedReason);
+            .hasMessage("Invalid name: " + expectedReason);
 
         verifyNoInteractions(userRepository);
     }
@@ -87,9 +87,9 @@ class UserServiceTest {
     @MethodSource("invalidEmailCases")
     void rejectsInvalidEmail(String email, String expectedReason) {
         assertThatThrownBy(() -> userService.createUser(
-                new CreateUserCommand("Alice", email)
+            new CreateUserCommand("Alice", email)
         )).isInstanceOf(InvalidUserDataException.class)
-                .hasMessage("Invalid email: " + expectedReason);
+            .hasMessage("Invalid email: " + expectedReason);
 
         verifyNoInteractions(userRepository);
     }
@@ -100,12 +100,12 @@ class UserServiceTest {
         String maximumEmail = "a".repeat(308) + "@example.com";
         UUID userId = UUID.randomUUID();
         when(userRepository.findByEmailIgnoreCase(maximumEmail))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
         when(userRepository.saveAndFlush(any(User.class)))
-                .thenAnswer(invocation -> persisted(invocation.getArgument(0), userId));
+            .thenAnswer(invocation -> persisted(invocation.getArgument(0), userId));
 
         UserData result = userService.createUser(
-                new CreateUserCommand(maximumName, maximumEmail)
+            new CreateUserCommand(maximumName, maximumEmail)
         );
 
         assertThat(result.name()).hasSize(100);
@@ -116,10 +116,10 @@ class UserServiceTest {
     void rejectsExistingEmailBeforeCreate() {
         User existing = persisted(new User("Existing", "alice@example.com"), UUID.randomUUID());
         when(userRepository.findByEmailIgnoreCase("alice@example.com"))
-                .thenReturn(Optional.of(existing));
+            .thenReturn(Optional.of(existing));
 
         assertThatThrownBy(() -> userService.createUser(
-                new CreateUserCommand("Alice", "ALICE@example.com")
+            new CreateUserCommand("Alice", "ALICE@example.com")
         )).isInstanceOf(DuplicateUserEmailException.class);
 
         verify(userRepository, never()).saveAndFlush(any());
@@ -128,39 +128,39 @@ class UserServiceTest {
     @Test
     void translatesConcurrentEmailConflict() {
         when(userRepository.findByEmailIgnoreCase("alice@example.com"))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
         when(userRepository.saveAndFlush(any(User.class)))
-                .thenThrow(new DataIntegrityViolationException("unique index"));
+            .thenThrow(new DataIntegrityViolationException("unique index"));
 
         assertThatThrownBy(() -> userService.createUser(
-                new CreateUserCommand("Alice", "alice@example.com")
+            new CreateUserCommand("Alice", "alice@example.com")
         )).isInstanceOf(DuplicateUserEmailException.class)
-                .hasCauseInstanceOf(DataIntegrityViolationException.class);
+            .hasCauseInstanceOf(DataIntegrityViolationException.class);
     }
 
     private static Stream<Arguments> invalidNameCases() {
         return Stream.of(
-                Arguments.of((String) null, "must not be null"),
-                Arguments.of("", "must not be blank"),
-                Arguments.of(" \t\n ", "must not be blank"),
-                Arguments.of("n".repeat(101), "must not exceed 100 characters")
+            Arguments.of((String) null, "must not be null"),
+            Arguments.of("", "must not be blank"),
+            Arguments.of(" \t\n ", "must not be blank"),
+            Arguments.of("n".repeat(101), "must not exceed 100 characters")
         );
     }
 
     private static Stream<Arguments> invalidEmailCases() {
         String tooLongEmail = "a".repeat(309) + "@example.com";
         return Stream.of(
-                Arguments.of((String) null, "must not be null"),
-                Arguments.of("", "must not be blank"),
-                Arguments.of(" \t\n ", "must not be blank"),
-                Arguments.of(tooLongEmail, "must not exceed 320 characters"),
-                Arguments.of("alice.example.com", "must be a valid email address"),
-                Arguments.of("@example.com", "must be a valid email address"),
-                Arguments.of("alice@", "must be a valid email address"),
-                Arguments.of("alice@example", "must be a valid email address"),
-                Arguments.of("alice@@example.com", "must be a valid email address"),
-                Arguments.of("alice @example.com", "must be a valid email address"),
-                Arguments.of("alice@exa mple.com", "must be a valid email address")
+            Arguments.of((String) null, "must not be null"),
+            Arguments.of("", "must not be blank"),
+            Arguments.of(" \t\n ", "must not be blank"),
+            Arguments.of(tooLongEmail, "must not exceed 320 characters"),
+            Arguments.of("alice.example.com", "must be a valid email address"),
+            Arguments.of("@example.com", "must be a valid email address"),
+            Arguments.of("alice@", "must be a valid email address"),
+            Arguments.of("alice@example", "must be a valid email address"),
+            Arguments.of("alice@@example.com", "must be a valid email address"),
+            Arguments.of("alice @example.com", "must be a valid email address"),
+            Arguments.of("alice@exa mple.com", "must be a valid email address")
         );
     }
 
@@ -182,7 +182,7 @@ class UserServiceTest {
         UUID userId = UUID.randomUUID();
         User user = persisted(new User("Alice", "alice@example.com"), userId);
         when(userRepository.findByEmailIgnoreCase("alice@example.com"))
-                .thenReturn(Optional.of(user));
+            .thenReturn(Optional.of(user));
 
         UserData result = userService.getUserByEmail("  Alice@Example.COM ");
 
@@ -195,18 +195,18 @@ class UserServiceTest {
     @Test
     void failsWhenUserEmailDoesNotExist() {
         when(userRepository.findByEmailIgnoreCase("missing@example.com"))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getUserByEmail("missing@example.com"))
-                .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("User not found for email: missing@example.com");
+            .isInstanceOf(UserNotFoundException.class)
+            .hasMessage("User not found for email: missing@example.com");
     }
 
     @Test
     void rejectsInvalidEmailLookup() {
         assertThatThrownBy(() -> userService.getUserByEmail("not-an-email"))
-                .isInstanceOf(InvalidUserDataException.class)
-                .hasMessage("Invalid email: must be a valid email address");
+            .isInstanceOf(InvalidUserDataException.class)
+            .hasMessage("Invalid email: must be a valid email address");
 
         verifyNoInteractions(userRepository);
     }
@@ -217,8 +217,8 @@ class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getUser(userId))
-                .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("User not found: " + userId);
+            .isInstanceOf(UserNotFoundException.class)
+            .hasMessage("User not found: " + userId);
     }
 
     @Test
@@ -227,12 +227,12 @@ class UserServiceTest {
         User user = persisted(new User("Alice", "alice@example.com"), userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.findByEmailIgnoreCase("alice.new@example.com"))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
         when(userRepository.saveAndFlush(user)).thenReturn(user);
 
         UserData result = userService.updateUser(
-                userId,
-                new UpdateUserCommand("  Alice Smith ", " Alice.New@Example.com ")
+            userId,
+            new UpdateUserCommand("  Alice Smith ", " Alice.New@Example.com ")
         );
 
         assertThat(result.name()).isEqualTo("Alice Smith");
@@ -246,12 +246,12 @@ class UserServiceTest {
         User user = persisted(new User("Alice", "alice@example.com"), userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.findByEmailIgnoreCase("alice@example.com"))
-                .thenReturn(Optional.of(user));
+            .thenReturn(Optional.of(user));
         when(userRepository.saveAndFlush(user)).thenReturn(user);
 
         UserData result = userService.updateUser(
-                userId,
-                new UpdateUserCommand("Alice Smith", "ALICE@EXAMPLE.COM")
+            userId,
+            new UpdateUserCommand("Alice Smith", "ALICE@EXAMPLE.COM")
         );
 
         assertThat(result.email()).isEqualTo("alice@example.com");
@@ -264,11 +264,11 @@ class UserServiceTest {
         User other = persisted(new User("Bob", "bob@example.com"), UUID.randomUUID());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.findByEmailIgnoreCase("bob@example.com"))
-                .thenReturn(Optional.of(other));
+            .thenReturn(Optional.of(other));
 
         assertThatThrownBy(() -> userService.updateUser(
-                userId,
-                new UpdateUserCommand("Alice", "BOB@example.com")
+            userId,
+            new UpdateUserCommand("Alice", "BOB@example.com")
         )).isInstanceOf(DuplicateUserEmailException.class);
 
         verify(userRepository, never()).saveAndFlush(user);

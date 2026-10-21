@@ -10,15 +10,15 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(
-        name = "user_preferences",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_user_room_preference",
-                columnNames = {"user_id", "room_id"}
-        ),
-        indexes = {
-                @Index(name = "idx_preferences_room", columnList = "room_id"),
-                @Index(name = "idx_preferences_user", columnList = "user_id")
-        }
+    name = "user_preferences",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_user_room_preference",
+        columnNames = {"user_id", "room_id"}
+    ),
+    indexes = {
+        @Index(name = "idx_preferences_room", columnList = "room_id"),
+        @Index(name = "idx_preferences_user", columnList = "user_id")
+    }
 )
 public class UserPreference {
 
@@ -34,16 +34,16 @@ public class UserPreference {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
-            name = "preference_liked_genres",
-            joinColumns = @JoinColumn(name = "preference_id")
+        name = "preference_liked_genres",
+        joinColumns = @JoinColumn(name = "preference_id")
     )
     @Column(name = "genre", nullable = false, length = 100)
     private Set<String> likedGenres = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
-            name = "preference_disliked_genres",
-            joinColumns = @JoinColumn(name = "preference_id")
+        name = "preference_disliked_genres",
+        joinColumns = @JoinColumn(name = "preference_id")
     )
     @Column(name = "genre", nullable = false, length = 100)
     private Set<String> dislikedGenres = new HashSet<>();
@@ -62,13 +62,13 @@ public class UserPreference {
 
     public void setLikedGenres(Set<String> likedGenres) {
         this.likedGenres = likedGenres == null
-                ? new HashSet<>()
-                : new HashSet<>(likedGenres);
+            ? new HashSet<>()
+            : new HashSet<>(likedGenres);
     }
 
     public void setDislikedGenres(Set<String> dislikedGenres) {
         this.dislikedGenres = dislikedGenres == null
-                ? new HashSet<>()
-                : new HashSet<>(dislikedGenres);
+            ? new HashSet<>()
+            : new HashSet<>(dislikedGenres);
     }
 }

@@ -15,21 +15,21 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     List<Vote> findAllByUser_IdAndRoom_Id(UUID userId, UUID roomId);
 
     Optional<Vote> findByUser_IdAndRoom_IdAndMovie_Id(
-            UUID userId,
-            UUID roomId,
-            Long movieId
+        UUID userId,
+        UUID roomId,
+        Long movieId
     );
 
     boolean existsByUser_IdAndRoom_IdAndMovie_Id(
-            UUID userId,
-            UUID roomId,
-            Long movieId
+        UUID userId,
+        UUID roomId,
+        Long movieId
     );
 
     void deleteByUser_IdAndRoom_IdAndMovie_Id(
-            UUID userId,
-            UUID roomId,
-            Long movieId
+        UUID userId,
+        UUID roomId,
+        Long movieId
     );
 
     void deleteAllByUser_IdAndRoom_Id(UUID userId, UUID roomId);

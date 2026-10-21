@@ -53,8 +53,8 @@ public class UserService {
     public UserData getUserByEmail(String email) {
         String normalizedEmail = normalizeAndValidateEmail(email);
         return userRepository.findByEmailIgnoreCase(normalizedEmail)
-                .map(this::toData)
-                .orElseThrow(() -> new UserNotFoundException(normalizedEmail));
+            .map(this::toData)
+            .orElseThrow(() -> new UserNotFoundException(normalizedEmail));
     }
 
     @Transactional
@@ -81,15 +81,15 @@ public class UserService {
             throw new InvalidUserDataException("userId", "must not be null");
         }
         return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+            .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
     private void ensureEmailAvailable(String email, UUID currentUserId) {
         userRepository.findByEmailIgnoreCase(email)
-                .filter(existingUser -> !existingUser.getId().equals(currentUserId))
-                .ifPresent(existingUser -> {
-                    throw new DuplicateUserEmailException(email);
-                });
+            .filter(existingUser -> !existingUser.getId().equals(currentUserId))
+            .ifPresent(existingUser -> {
+                throw new DuplicateUserEmailException(email);
+            });
     }
 
     private String normalizeAndValidateName(String value) {
@@ -127,10 +127,10 @@ public class UserService {
 
     private UserData toData(User user) {
         return new UserData(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getCreatedAt()
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            user.getCreatedAt()
         );
     }
 }

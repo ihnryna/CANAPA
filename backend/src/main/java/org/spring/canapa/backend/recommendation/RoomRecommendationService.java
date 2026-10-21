@@ -31,10 +31,10 @@ public class RoomRecommendationService {
     private final RecommendationService recommendationService;
 
     public RoomRecommendationService(
-            RoomService roomService,
-            MovieService movieService,
-            UserPreferenceService preferenceService,
-            RecommendationService recommendationService
+        RoomService roomService,
+        MovieService movieService,
+        UserPreferenceService preferenceService,
+        RecommendationService recommendationService
     ) {
         this.roomService = roomService;
         this.movieService = movieService;
@@ -43,100 +43,100 @@ public class RoomRecommendationService {
     }
 
     public List<RoomRecommendedMovie> recommend(
-            UUID roomId,
-            UUID userId,
-            RecommendationType strategy,
-            int limit
+        UUID roomId,
+        UUID userId,
+        RecommendationType strategy,
+        int limit
     ) {
         if (strategy == null) {
             throw new IllegalArgumentException(
-                    "Recommendation strategy is required"
+                "Recommendation strategy is required"
             );
         }
 
         if (limit < 1 || limit > 100) {
             throw new IllegalArgumentException(
-                    "Limit must be between 1 and 100"
+                "Limit must be between 1 and 100"
             );
         }
 
         RoomData room = roomService.getRoom(roomId);
 
         Set<UUID> participantIds = room.participants().stream()
-                .map(member -> member.id())
-                .collect(Collectors.toSet());
+            .map(member -> member.id())
+            .collect(Collectors.toSet());
 
         if (userId == null || !participantIds.contains(userId)) {
             throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Only room participants can view recommendations"
+                HttpStatus.FORBIDDEN,
+                "Only room participants can view recommendations"
             );
         }
 
         List<MovieResponse> movies =
-                movieService.getPopularLocalMovies(limit);
+            movieService.getPopularLocalMovies(limit);
 
         List<PreferenceSnapshot> preferences =
-                preferenceService.getRoomPreferences(roomId)
-                        .stream()
-                        .filter(preference ->
-                                participantIds.contains(preference.userId())
-                        )
-                        .map(this::toSnapshot)
-                        .toList();
+            preferenceService.getRoomPreferences(roomId)
+                .stream()
+                .filter(preference ->
+                    participantIds.contains(preference.userId())
+                )
+                .map(this::toSnapshot)
+                .toList();
 
         Map<UUID, MovieResponse> moviesByCandidateId =
-                movies.stream().collect(Collectors.toMap(
-                        movie -> candidateId(movie.id()),
-                        Function.identity()
-                ));
+            movies.stream().collect(Collectors.toMap(
+                movie -> candidateId(movie.id()),
+                Function.identity()
+            ));
 
         List<MovieCandidate> candidates = movies.stream()
-                .map(this::toCandidate)
-                .toList();
+            .map(this::toCandidate)
+            .toList();
 
         return recommendationService
-                .recommend(strategy, candidates, preferences)
-                .stream()
-                .map(result -> new RoomRecommendedMovie(
-                        moviesByCandidateId.get(result.movie().id()),
-                        result.score()
-                ))
-                .toList();
+            .recommend(strategy, candidates, preferences)
+            .stream()
+            .map(result -> new RoomRecommendedMovie(
+                moviesByCandidateId.get(result.movie().id()),
+                result.score()
+            ))
+            .toList();
     }
 
     private MovieCandidate toCandidate(MovieResponse movie) {
         return new MovieCandidate(
-                candidateId(movie.id()),
-                movie.title(),
-                movie.description(),
-                movie.genres(),
-                movie.rating(),
-                movie.runtime(),
-                movie.releaseYear(),
-                movie.posterUrl()
+            candidateId(movie.id()),
+            movie.title(),
+            movie.description(),
+            movie.genres(),
+            movie.rating(),
+            movie.runtime(),
+            movie.releaseYear(),
+            movie.posterUrl()
         );
     }
 
     private PreferenceSnapshot toSnapshot(
-            UserPreferenceResponse preference
+        UserPreferenceResponse preference
     ) {
         return new PreferenceSnapshot(
-                preference.userId(),
-                preference.roomId(),
-                preference.likedGenres(),
-                preference.dislikedGenres(),
-                preference.minRating(),
-                preference.maxRuntime(),
-                preference.preferredLanguage(),
-                preference.textPreference()
+            preference.userId(),
+            preference.roomId(),
+            preference.likedGenres(),
+            preference.dislikedGenres(),
+            preference.minRating(),
+            preference.maxRuntime(),
+            preference.preferredLanguage(),
+            preference.textPreference()
         );
     }
 
     private UUID candidateId(Long id) {
         return UUID.nameUUIDFromBytes(
-                ("canapa-movie:" + id)
-                        .getBytes(StandardCharsets.UTF_8)
+            ("canapa-movie:" + id)
+                .getBytes(StandardCharsets.UTF_8)
         );
     }
 }

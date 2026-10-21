@@ -10,12 +10,12 @@ import java.util.Set;
 @Data
 @Entity
 @Table(
-        name = "movies",
-        indexes = {
-                @Index(name = "idx_movies_title", columnList = "title"),
-                @Index(name = "idx_movies_tmdb_id", columnList = "tmdb_id", unique = true),
-                @Index(name = "idx_movies_imdb_id", columnList = "imdb_id")
-        }
+    name = "movies",
+    indexes = {
+        @Index(name = "idx_movies_title", columnList = "title"),
+        @Index(name = "idx_movies_tmdb_id", columnList = "tmdb_id", unique = true),
+        @Index(name = "idx_movies_imdb_id", columnList = "imdb_id")
+    }
 )
 public class Movie {
 
@@ -37,8 +37,8 @@ public class Movie {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
-            name = "movie_genres",
-            joinColumns = @JoinColumn(name = "movie_id")
+        name = "movie_genres",
+        joinColumns = @JoinColumn(name = "movie_id")
     )
     @Column(name = "genre", nullable = false, length = 100)
     private Set<String> genres = new HashSet<>();

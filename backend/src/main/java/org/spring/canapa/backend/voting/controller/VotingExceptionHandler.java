@@ -13,47 +13,47 @@ public class VotingExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiErrorResponse> handleBadRequest(
-            IllegalArgumentException exception
+        IllegalArgumentException exception
     ) {
         return ResponseEntity.badRequest().body(
-                new ApiErrorResponse(
-                        400,
-                        exception.getMessage(),
-                        LocalDateTime.now()
-                )
+            new ApiErrorResponse(
+                400,
+                exception.getMessage(),
+                LocalDateTime.now()
+            )
         );
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse> handleConflict(
-            IllegalStateException exception
+        IllegalStateException exception
     ) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                new ApiErrorResponse(
-                        409,
-                        exception.getMessage(),
-                        LocalDateTime.now()
-                )
+            new ApiErrorResponse(
+                409,
+                exception.getMessage(),
+                LocalDateTime.now()
+            )
         );
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleDataConflict(
-            DataIntegrityViolationException exception
+        DataIntegrityViolationException exception
     ) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                new ApiErrorResponse(
-                        409,
-                        "The operation conflicts with existing data",
-                        LocalDateTime.now()
-                )
+            new ApiErrorResponse(
+                409,
+                "The operation conflicts with existing data",
+                LocalDateTime.now()
+            )
         );
     }
 
     public record ApiErrorResponse(
-            int status,
-            String message,
-            LocalDateTime timestamp
+        int status,
+        String message,
+        LocalDateTime timestamp
     ) {
     }
 }

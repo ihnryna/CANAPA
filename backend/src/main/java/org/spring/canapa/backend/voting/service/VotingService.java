@@ -35,13 +35,13 @@ public class VotingService {
     private final ApplicationEventPublisher eventPublisher;
 
     public VotingService(
-            VoteRepository voteRepository,
-            VotingResultRepository votingResultRepository,
-            ExcludedMovieRepository excludedMovieRepository,
-            RoomRepository roomRepository,
-            UserRepository userRepository,
-            MovieRepository movieRepository,
-            ApplicationEventPublisher eventPublisher
+        VoteRepository voteRepository,
+        VotingResultRepository votingResultRepository,
+        ExcludedMovieRepository excludedMovieRepository,
+        RoomRepository roomRepository,
+        UserRepository userRepository,
+        MovieRepository movieRepository,
+        ApplicationEventPublisher eventPublisher
     ) {
         this.voteRepository = voteRepository;
         this.votingResultRepository = votingResultRepository;
@@ -57,9 +57,9 @@ public class VotingService {
         ensureVotingIsOpen(roomId);
 
         if (excludedMovieRepository.existsByRoom_IdAndMovie_Id(
-                roomId, movieId)) {
+            roomId, movieId)) {
             throw new IllegalStateException(
-                    "Cannot vote for an excluded movie"
+                "Cannot vote for an excluded movie"
             );
         }
 
@@ -68,10 +68,10 @@ public class VotingService {
         Movie movie = getMovie(movieId);
 
         Vote vote = voteRepository
-                .findByUser_IdAndRoom_IdAndMovie_Id(
-                        userId, roomId, movieId
-                )
-                .orElseGet(() -> new Vote(user, room, movie));
+            .findByUser_IdAndRoom_IdAndMovie_Id(
+                userId, roomId, movieId
+            )
+            .orElseGet(() -> new Vote(user, room, movie));
 
         return voteRepository.save(vote);
     }
@@ -81,7 +81,7 @@ public class VotingService {
         ensureVotingIsOpen(roomId);
 
         voteRepository.deleteByUser_IdAndRoom_IdAndMovie_Id(
-                userId, roomId, movieId
+            userId, roomId, movieId
         );
     }
 
@@ -102,23 +102,23 @@ public class VotingService {
 
     @Transactional
     public ExcludedMovie excludeMovie(
-            UUID userId,
-            UUID roomId,
-            Long movieId
+        UUID userId,
+        UUID roomId,
+        Long movieId
     ) {
         ensureVotingIsOpen(roomId);
 
         return excludedMovieRepository
-                .findByRoom_IdAndMovie_Id(roomId, movieId)
-                .orElseGet(() -> {
-                    User user = getUser(userId);
-                    Room room = getRoom(roomId);
-                    Movie movie = getMovie(movieId);
+            .findByRoom_IdAndMovie_Id(roomId, movieId)
+            .orElseGet(() -> {
+                User user = getUser(userId);
+                Room room = getRoom(roomId);
+                Movie movie = getMovie(movieId);
 
-                    return excludedMovieRepository.save(
-                            new ExcludedMovie(room, movie, user)
-                    );
-                });
+                return excludedMovieRepository.save(
+                    new ExcludedMovie(room, movie, user)
+                );
+            });
     }
 
     @Transactional
@@ -126,14 +126,14 @@ public class VotingService {
         ensureVotingIsOpen(roomId);
 
         ExcludedMovie excluded = excludedMovieRepository
-                .findByRoom_IdAndMovie_Id(roomId, movieId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Excluded movie not found"
-                ));
+            .findByRoom_IdAndMovie_Id(roomId, movieId)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Excluded movie not found"
+            ));
 
         if (!excluded.getExcludedBy().getId().equals(userId)) {
             throw new IllegalStateException(
-                    "Only the user who excluded this movie can restore it"
+                "Only the user who excluded this movie can restore it"
             );
         }
 
@@ -144,7 +144,7 @@ public class VotingService {
     public void ensureVotingIsOpen(UUID roomId) {
         if (votingResultRepository.existsByRoom_Id(roomId)) {
             throw new IllegalStateException(
-                    "Voting has already finished for room: " + roomId
+                "Voting has already finished for room: " + roomId
             );
         }
     }
@@ -153,54 +153,54 @@ public class VotingService {
     public VotingResult finishVoting(UUID roomId) {
         if (votingResultRepository.existsByRoom_Id(roomId)) {
             throw new IllegalStateException(
-                    "Voting has already finished for room: " + roomId
+                "Voting has already finished for room: " + roomId
             );
         }
 
         Room room = getRoom(roomId);
 
         List<Long> excludedMovieIds = excludedMovieRepository
-                .findAllByRoom_Id(roomId)
-                .stream()
-                .map(excluded -> excluded.getMovie().getId())
-                .toList();
+            .findAllByRoom_Id(roomId)
+            .stream()
+            .map(excluded -> excluded.getMovie().getId())
+            .toList();
 
         Map<Long, Long> votesByMovie = voteRepository
-                .findAllByRoom_Id(roomId)
-                .stream()
-                .filter(vote ->
-                        !excludedMovieIds.contains(vote.getMovie().getId())
-                )
-                .collect(Collectors.groupingBy(
-                        vote -> vote.getMovie().getId(),
-                        Collectors.counting()
-                ));
+            .findAllByRoom_Id(roomId)
+            .stream()
+            .filter(vote ->
+                !excludedMovieIds.contains(vote.getMovie().getId())
+            )
+            .collect(Collectors.groupingBy(
+                vote -> vote.getMovie().getId(),
+                Collectors.counting()
+            ));
 
         if (votesByMovie.isEmpty()) {
             return saveResultAndPublishEvent(
-                    new VotingResult(room, List.of(), 0)
+                new VotingResult(room, List.of(), 0)
             );
         }
 
         long maxVotes = votesByMovie.values()
-                .stream()
-                .mapToLong(Long::longValue)
-                .max()
-                .orElse(0);
+            .stream()
+            .mapToLong(Long::longValue)
+            .max()
+            .orElse(0);
 
         List<Long> winnerIds = votesByMovie.entrySet()
-                .stream()
-                .filter(entry -> entry.getValue() == maxVotes)
-                .map(Map.Entry::getKey)
-                .sorted()
-                .toList();
+            .stream()
+            .filter(entry -> entry.getValue() == maxVotes)
+            .map(Map.Entry::getKey)
+            .sorted()
+            .toList();
 
         List<Movie> winners = movieRepository.findAllById(winnerIds);
 
         VotingResult result = new VotingResult(
-                room,
-                winners,
-                Math.toIntExact(maxVotes)
+            room,
+            winners,
+            Math.toIntExact(maxVotes)
         );
 
         return saveResultAndPublishEvent(result);
@@ -208,35 +208,35 @@ public class VotingService {
 
     private User getUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "User not found: " + userId
-                ));
+            .orElseThrow(() -> new IllegalArgumentException(
+                "User not found: " + userId
+            ));
     }
 
     private Room getRoom(UUID roomId) {
         return roomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Room not found: " + roomId
-                ));
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Room not found: " + roomId
+            ));
     }
 
     private Movie getMovie(Long movieId) {
         return movieRepository.findById(movieId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Movie not found: " + movieId
-                ));
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Movie not found: " + movieId
+            ));
     }
 
     private VotingResult saveResultAndPublishEvent(VotingResult result) {
         VotingResult savedResult = votingResultRepository.save(result);
 
         eventPublisher.publishEvent(new VotingResultsReadyEvent(
-                savedResult.getRoom().getId(),
-                savedResult.getWinners().stream()
-                        .map(Movie::getId)
-                        .sorted()
-                        .toList(),
-                savedResult.getVoteCount()
+            savedResult.getRoom().getId(),
+            savedResult.getWinners().stream()
+                .map(Movie::getId)
+                .sorted()
+                .toList(),
+            savedResult.getVoteCount()
         ));
 
         return savedResult;

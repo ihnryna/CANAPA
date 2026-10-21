@@ -50,9 +50,9 @@ class VotingEmailNotificationServiceTest {
     @BeforeEach
     void setUp() {
         notificationListener = new VotingEmailNotificationService(
-                roomRepository,
-                emailService,
-                notificationService
+            roomRepository,
+            emailService,
+            notificationService
         );
 
         roomId = UUID.randomUUID();
@@ -64,19 +64,19 @@ class VotingEmailNotificationServiceTest {
 
         ReflectionTestUtils.setField(room, "id", roomId);
         ReflectionTestUtils.setField(
-                room,
-                "participants",
-                new LinkedHashSet<>(List.of(alice, bob))
+            room,
+            "participants",
+            new LinkedHashSet<>(List.of(alice, bob))
         );
 
         when(roomRepository.findWithParticipantsById(roomId))
-                .thenReturn(Optional.of(room));
+            .thenReturn(Optional.of(room));
 
         when(notificationService.createNotification(
-                any(UUID.class),
-                any(UUID.class),
-                any(NotificationType.class),
-                anyString()
+            any(UUID.class),
+            any(UUID.class),
+            any(NotificationType.class),
+            anyString()
         )).thenAnswer(invocation -> {
             UUID recipientId = invocation.getArgument(0);
             UUID requestedRoomId = invocation.getArgument(1);
@@ -91,19 +91,19 @@ class VotingEmailNotificationServiceTest {
                 recipient = bob;
             } else {
                 throw new AssertionError(
-                        "Unexpected recipient ID: " + recipientId
+                    "Unexpected recipient ID: " + recipientId
                 );
             }
 
             if (!requestedRoomId.equals(roomId)) {
                 throw new AssertionError(
-                        "Unexpected room ID: " + requestedRoomId
+                    "Unexpected room ID: " + requestedRoomId
                 );
             }
 
             Notification notification = new Notification(recipient, room, type, message);
 
-            ReflectionTestUtils.setField(notification,"id",UUID.randomUUID());
+            ReflectionTestUtils.setField(notification, "id", UUID.randomUUID());
             return notification;
         });
     }
@@ -111,36 +111,36 @@ class VotingEmailNotificationServiceTest {
     @Test
     void votingStarted_shouldEmailEveryParticipantAndMarkNotificationsSent() {
         notificationListener.onVotingStarted(
-                new VotingStartedEvent(roomId)
+            new VotingStartedEvent(roomId)
         );
 
         verify(emailService, times(2))
-                .sendTextEmail(anyString(), anyString(), anyString());
+            .sendTextEmail(anyString(), anyString(), anyString());
 
         verify(emailService).sendTextEmail(
-                eq("alice@example.com"),
-                contains("голосування розпочалося"),
-                contains("Friday movies")
+            eq("alice@example.com"),
+            contains("голосування розпочалося"),
+            contains("Friday movies")
         );
 
         verify(emailService).sendTextEmail(
-                eq("bob@example.com"),
-                contains("голосування розпочалося"),
-                contains("Friday movies")
+            eq("bob@example.com"),
+            contains("голосування розпочалося"),
+            contains("Friday movies")
         );
 
         verify(notificationService, times(2)).createNotification(
-                any(UUID.class),
-                eq(roomId),
-                eq(NotificationType.VOTING_STARTED),
-                contains("Friday movies")
+            any(UUID.class),
+            eq(roomId),
+            eq(NotificationType.VOTING_STARTED),
+            contains("Friday movies")
         );
 
         verify(notificationService, times(2))
-                .markAsSent(any(UUID.class));
+            .markAsSent(any(UUID.class));
 
         verify(notificationService, never())
-                .markAsFailed(any(UUID.class));
+            .markAsFailed(any(UUID.class));
     }
 
     @Test
@@ -148,16 +148,16 @@ class VotingEmailNotificationServiceTest {
         List<Long> winners = List.of(11L, 22L);
 
         notificationListener.onVotingResultsReady(
-                new VotingResultsReadyEvent(roomId, winners, 3)
+            new VotingResultsReadyEvent(roomId, winners, 3)
         );
 
         ArgumentCaptor<String> bodyCaptor =
-                ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor.forClass(String.class);
 
         verify(emailService, times(2)).sendTextEmail(
-                anyString(),
-                eq("CANAPA — результати голосування"),
-                bodyCaptor.capture()
+            anyString(),
+            eq("CANAPA — результати голосування"),
+            bodyCaptor.capture()
         );
 
         assertEquals(2, bodyCaptor.getAllValues().size());
@@ -171,81 +171,81 @@ class VotingEmailNotificationServiceTest {
         }
 
         verify(notificationService, times(2)).createNotification(
-                any(UUID.class),
-                eq(roomId),
-                eq(NotificationType.RESULTS_READY),
-                contains("Нічия")
+            any(UUID.class),
+            eq(roomId),
+            eq(NotificationType.RESULTS_READY),
+            contains("Нічия")
         );
 
         verify(notificationService, times(2))
-                .markAsSent(any(UUID.class));
+            .markAsSent(any(UUID.class));
 
         verify(notificationService, never())
-                .markAsFailed(any(UUID.class));
+            .markAsFailed(any(UUID.class));
     }
 
     @Test
     void votingResultsWithoutVotes_shouldSendEmailWithoutWinners() {
         notificationListener.onVotingResultsReady(
-                new VotingResultsReadyEvent(roomId, List.of(), 0)
+            new VotingResultsReadyEvent(roomId, List.of(), 0)
         );
 
         verify(emailService, times(2)).sendTextEmail(
-                anyString(),
-                anyString(),
-                contains("немає переможців")
+            anyString(),
+            anyString(),
+            contains("немає переможців")
         );
 
         verify(notificationService, times(2))
-                .markAsSent(any(UUID.class));
+            .markAsSent(any(UUID.class));
     }
 
     @Test
     void smtpFailure_shouldMarkNotificationsFailedAndContinueSending() {
         doThrow(new RuntimeException("SMTP unavailable"))
-                .when(emailService)
-                .sendTextEmail(anyString(), anyString(), anyString());
+            .when(emailService)
+            .sendTextEmail(anyString(), anyString(), anyString());
 
         assertDoesNotThrow(() ->
-                notificationListener.onVotingStarted(
-                        new VotingStartedEvent(roomId)
-                )
+            notificationListener.onVotingStarted(
+                new VotingStartedEvent(roomId)
+            )
         );
 
         // Сервіс спробував надіслати лист кожному учаснику.
         verify(emailService, times(2))
-                .sendTextEmail(anyString(), anyString(), anyString());
+            .sendTextEmail(anyString(), anyString(), anyString());
 
         // Обидва записи позначені як невдалі.
         verify(notificationService, times(2))
-                .markAsFailed(any(UUID.class));
+            .markAsFailed(any(UUID.class));
 
         verify(notificationService, never())
-                .markAsSent(any(UUID.class));
+            .markAsSent(any(UUID.class));
     }
 
     @Test
     void notificationTypes_shouldMatchExpectedEvents() {
         notificationListener.onVotingStarted(
-                new VotingStartedEvent(roomId)
+            new VotingStartedEvent(roomId)
         );
 
         notificationListener.onVotingResultsReady(
-                new VotingResultsReadyEvent(roomId, List.of(11L), 2)
+            new VotingResultsReadyEvent(roomId, List.of(11L), 2)
         );
 
         verify(notificationService).createNotification(
-                eq(alice.getId()),
-                eq(roomId),
-                eq(NotificationType.VOTING_STARTED),
-                anyString()
+            eq(alice.getId()),
+            eq(roomId),
+            eq(NotificationType.VOTING_STARTED),
+            anyString()
         );
 
         verify(notificationService).createNotification(
-                eq(alice.getId()),
-                eq(roomId),
-                eq(NotificationType.RESULTS_READY),
-                anyString()
+            eq(alice.getId()),
+            eq(roomId),
+            eq(NotificationType.RESULTS_READY),
+            anyString()
         );
     }
 
@@ -253,9 +253,9 @@ class VotingEmailNotificationServiceTest {
         User user = new User(name, email);
 
         ReflectionTestUtils.setField(
-                user,
-                "id",
-                UUID.randomUUID()
+            user,
+            "id",
+            UUID.randomUUID()
         );
 
         return user;

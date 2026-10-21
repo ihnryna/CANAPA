@@ -38,24 +38,24 @@ class UserPreferenceServiceTest {
     @Test
     void createsPreference() {
         UserPreferenceRequest request = new UserPreferenceRequest(
-                Set.of("Action", "Comedy"),
-                Set.of("Horror"),
-                7.0,
-                120,
-                "en-US",
-                "Something funny"
+            Set.of("Action", "Comedy"),
+            Set.of("Horror"),
+            7.0,
+            120,
+            "en-US",
+            "Something funny"
         );
 
         when(preferenceRepository.findByUserIdAndRoomId(USER_ID, ROOM_ID))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         when(preferenceRepository.save(any(UserPreference.class)))
-                .thenAnswer(invocation -> invocation.<UserPreference>getArgument(0));
+            .thenAnswer(invocation -> invocation.<UserPreference>getArgument(0));
 
         var response = preferenceService.createOrUpdatePreference(
-                USER_ID,
-                ROOM_ID,
-                request
+            USER_ID,
+            ROOM_ID,
+            request
         );
 
         assertEquals(USER_ID, response.userId());
@@ -69,17 +69,17 @@ class UserPreferenceServiceTest {
     @Test
     void rejectsGenreThatIsBothLikedAndDisliked() {
         UserPreferenceRequest request = new UserPreferenceRequest(
-                Set.of("Action"),
-                Set.of("Action"),
-                7.0,
-                120,
-                "en-US",
-                null
+            Set.of("Action"),
+            Set.of("Action"),
+            7.0,
+            120,
+            "en-US",
+            null
         );
 
         assertThrows(
-                IllegalArgumentException.class,
-                () -> preferenceService.createOrUpdatePreference(USER_ID, ROOM_ID, request)
+            IllegalArgumentException.class,
+            () -> preferenceService.createOrUpdatePreference(USER_ID, ROOM_ID, request)
         );
 
         verify(preferenceRepository, never()).save(any());
@@ -106,7 +106,7 @@ class UserPreferenceServiceTest {
         second.setPreferredLanguage("uk");
 
         when(preferenceRepository.findAllByRoomId(ROOM_ID))
-                .thenReturn(java.util.List.of(first, second));
+            .thenReturn(java.util.List.of(first, second));
 
         var summary = preferenceService.getGroupPreferenceSummary(ROOM_ID);
 
@@ -121,24 +121,24 @@ class UserPreferenceServiceTest {
     @Test
     void normalizesGenres() {
         UserPreferenceRequest request = new UserPreferenceRequest(
-                new HashSet<>(Set.of("  Action  ", "Comedy")),
-                Set.of(),
-                null,
-                null,
-                null,
-                null
+            new HashSet<>(Set.of("  Action  ", "Comedy")),
+            Set.of(),
+            null,
+            null,
+            null,
+            null
         );
 
         when(preferenceRepository.findByUserIdAndRoomId(USER_ID, ROOM_ID))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         when(preferenceRepository.save(any(UserPreference.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
         var response = preferenceService.createOrUpdatePreference(
-                USER_ID,
-                ROOM_ID,
-                request
+            USER_ID,
+            ROOM_ID,
+            request
         );
 
         assertTrue(response.likedGenres().contains("Action"));

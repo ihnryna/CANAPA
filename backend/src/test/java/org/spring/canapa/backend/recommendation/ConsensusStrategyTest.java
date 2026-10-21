@@ -13,31 +13,31 @@ import static org.spring.canapa.backend.recommendation.RecommendationTestData.*;
 class ConsensusStrategyTest {
 
     private final ConsensusStrategy strategy =
-            new ConsensusStrategy();
+        new ConsensusStrategy();
 
     @Test
     void shouldRespectAllParticipantRestrictions() {
         var preferences = List.of(
-                preference(
-                        Set.of("Sci-Fi"),
-                        Set.of("Horror"),
-                        7.0,
-                        180
-                ),
-                preference(
-                        Set.of("Drama"),
-                        Set.of(),
-                        7.5,
-                        150
-                )
+            preference(
+                Set.of("Sci-Fi"),
+                Set.of("Horror"),
+                7.0,
+                180
+            ),
+            preference(
+                Set.of("Drama"),
+                Set.of(),
+                7.5,
+                150
+            )
         );
 
         var movies = List.of(
-                movie("Balanced", Set.of("Sci-Fi", "Drama"), 8.1, 140),
-                movie("Too Long", Set.of("Sci-Fi", "Drama"), 8.1, 160),
-                movie("Low Rated", Set.of("Sci-Fi", "Drama"), 7.2, 120),
-                movie("Blocked Horror", Set.of("Sci-Fi", "Horror"), 8.2, 120),
-                movie("Only Sci-Fi", Set.of("Sci-Fi"), 8.0, 125)
+            movie("Balanced", Set.of("Sci-Fi", "Drama"), 8.1, 140),
+            movie("Too Long", Set.of("Sci-Fi", "Drama"), 8.1, 160),
+            movie("Low Rated", Set.of("Sci-Fi", "Drama"), 7.2, 120),
+            movie("Blocked Horror", Set.of("Sci-Fi", "Horror"), 8.2, 120),
+            movie("Only Sci-Fi", Set.of("Sci-Fi"), 8.0, 125)
         );
 
         var result = strategy.recommend(movies, preferences);
@@ -54,11 +54,11 @@ class ConsensusStrategyTest {
     @Test
     void shouldRejectMovieWithMissingRequiredRating() {
         var movies = List.of(
-                movie("No Rating", Set.of("Drama"), null, 120)
+            movie("No Rating", Set.of("Drama"), null, 120)
         );
 
         var preferences = List.of(
-                preference(Set.of("Drama"), Set.of(), 7.0, null)
+            preference(Set.of("Drama"), Set.of(), 7.0, null)
         );
 
         var result = strategy.recommend(movies, preferences);
@@ -69,11 +69,11 @@ class ConsensusStrategyTest {
     @Test
     void shouldRejectMovieWithMissingRequiredRuntime() {
         var movies = List.of(
-                movie("No Runtime", Set.of("Drama"), 8.0, null)
+            movie("No Runtime", Set.of("Drama"), 8.0, null)
         );
 
         var preferences = List.of(
-                preference(Set.of("Drama"), Set.of(), null, 150)
+            preference(Set.of("Drama"), Set.of(), null, 150)
         );
 
         var result = strategy.recommend(movies, preferences);
@@ -84,7 +84,7 @@ class ConsensusStrategyTest {
     @Test
     void shouldReturnEmptyListWithoutParticipants() {
         var movies = List.of(
-                movie("Interstellar", Set.of("Sci-Fi"), 8.7, 169)
+            movie("Interstellar", Set.of("Sci-Fi"), 8.7, 169)
         );
 
         var result = strategy.recommend(movies, List.of());

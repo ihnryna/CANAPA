@@ -34,8 +34,8 @@ class OmdbMovieProviderTest {
         server = MockRestServiceServer.bindTo(builder).build();
 
         provider = new OmdbMovieProvider(
-                builder.build(),
-                properties
+            builder.build(),
+            properties
         );
     }
 
@@ -59,15 +59,15 @@ class OmdbMovieProviderTest {
     @Test
     void searchMoviesReturnsResults() {
         server.expect(requestTo(
-                        org.hamcrest.Matchers.allOf(
-                                org.hamcrest.Matchers.containsString("apikey=test-key"),
-                                org.hamcrest.Matchers.containsString("s=Inception"),
-                                org.hamcrest.Matchers.containsString("type=movie"),
-                                org.hamcrest.Matchers.containsString("page=1")
-                        )
-                ))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("""
+                org.hamcrest.Matchers.allOf(
+                    org.hamcrest.Matchers.containsString("apikey=test-key"),
+                    org.hamcrest.Matchers.containsString("s=Inception"),
+                    org.hamcrest.Matchers.containsString("type=movie"),
+                    org.hamcrest.Matchers.containsString("page=1")
+                )
+            ))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("""
                 {
                   "Search": [
                     {
@@ -91,9 +91,9 @@ class OmdbMovieProviderTest {
                 """, MediaType.APPLICATION_JSON));
 
         MovieSearchResult result = provider.searchMovies(
-                "Inception",
-                1,
-                "en-US"
+            "Inception",
+            1,
+            "en-US"
         );
 
         assertEquals(1, result.page());
@@ -106,8 +106,8 @@ class OmdbMovieProviderTest {
         assertEquals("Inception", first.title());
         assertEquals("2010", first.releaseDate());
         assertEquals(
-                "https://example.com/inception.jpg",
-                first.posterUrl()
+            "https://example.com/inception.jpg",
+            first.posterUrl()
         );
         assertNull(first.providerId());
         assertNull(first.rating());
@@ -118,10 +118,10 @@ class OmdbMovieProviderTest {
     @Test
     void searchMoviesReturnsEmptyResultsWhenNoMoviesMatch() {
         server.expect(requestTo(
-                        org.hamcrest.Matchers.containsString("s=UnknownMovie")
-                ))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("""
+                org.hamcrest.Matchers.containsString("s=UnknownMovie")
+            ))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("""
                 {
                   "Response": "False",
                   "Error": "Movie not found!",
@@ -130,9 +130,9 @@ class OmdbMovieProviderTest {
                 """, MediaType.APPLICATION_JSON));
 
         MovieSearchResult result = provider.searchMovies(
-                "UnknownMovie",
-                1,
-                "en-US"
+            "UnknownMovie",
+            1,
+            "en-US"
         );
 
         assertEquals(1, result.page());
@@ -146,10 +146,10 @@ class OmdbMovieProviderTest {
     @Test
     void searchMoviesNormalizesUnavailablePoster() {
         server.expect(requestTo(
-                        org.hamcrest.Matchers.containsString("s=NoPoster")
-                ))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("""
+                org.hamcrest.Matchers.containsString("s=NoPoster")
+            ))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("""
                 {
                   "Search": [
                     {
@@ -166,9 +166,9 @@ class OmdbMovieProviderTest {
                 """, MediaType.APPLICATION_JSON));
 
         MovieSearchResult result = provider.searchMovies(
-                "NoPoster",
-                1,
-                "en-US"
+            "NoPoster",
+            1,
+            "en-US"
         );
 
         assertEquals(1, result.results().size());
@@ -185,14 +185,14 @@ class OmdbMovieProviderTest {
     @Test
     void getMovieDetailsByImdbIdReturnsCompleteMovie() {
         server.expect(requestTo(
-                        org.hamcrest.Matchers.allOf(
-                                org.hamcrest.Matchers.containsString("apikey=test-key"),
-                                org.hamcrest.Matchers.containsString("i=tt0133093"),
-                                org.hamcrest.Matchers.containsString("plot=full")
-                        )
-                ))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("""
+                org.hamcrest.Matchers.allOf(
+                    org.hamcrest.Matchers.containsString("apikey=test-key"),
+                    org.hamcrest.Matchers.containsString("i=tt0133093"),
+                    org.hamcrest.Matchers.containsString("plot=full")
+                )
+            ))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("""
                 {
                   "Title": "The Matrix",
                   "Year": "1999",
@@ -223,28 +223,28 @@ class OmdbMovieProviderTest {
         assertEquals(8.7, movie.getRating());
         assertEquals("R", movie.getRated());
         assertEquals(
-                "https://example.com/matrix.jpg",
-                movie.getPosterUrl()
+            "https://example.com/matrix.jpg",
+            movie.getPosterUrl()
         );
         assertEquals(
-                "Lana Wachowski, Lilly Wachowski",
-                movie.getDirector()
+            "Lana Wachowski, Lilly Wachowski",
+            movie.getDirector()
         );
         assertEquals(
-                "Lilly Wachowski, Lana Wachowski",
-                movie.getWriters()
+            "Lilly Wachowski, Lana Wachowski",
+            movie.getWriters()
         );
         assertEquals(
-                "Keanu Reeves, Laurence Fishburne",
-                movie.getActors()
+            "Keanu Reeves, Laurence Fishburne",
+            movie.getActors()
         );
         assertEquals(
-                "A computer hacker discovers reality is a simulation.",
-                movie.getDescription()
+            "A computer hacker discovers reality is a simulation.",
+            movie.getDescription()
         );
         assertEquals(
-                java.util.Set.of("Action", "Sci-Fi"),
-                movie.getGenres()
+            java.util.Set.of("Action", "Sci-Fi"),
+            movie.getGenres()
         );
 
         server.verify();
@@ -253,10 +253,10 @@ class OmdbMovieProviderTest {
     @Test
     void getMovieDetailsByImdbIdReturnsEmptyWhenMovieIsNotFound() {
         server.expect(requestTo(
-                        org.hamcrest.Matchers.containsString("i=tt0000000")
-                ))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("""
+                org.hamcrest.Matchers.containsString("i=tt0000000")
+            ))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("""
                 {
                   "Response": "False",
                   "Error": "Movie not found!"
@@ -264,7 +264,7 @@ class OmdbMovieProviderTest {
                 """, MediaType.APPLICATION_JSON));
 
         Optional<Movie> result = provider.getMovieDetailsByImdbId(
-                "tt0000000"
+            "tt0000000"
         );
 
         assertTrue(result.isEmpty());
@@ -275,10 +275,10 @@ class OmdbMovieProviderTest {
     @Test
     void getMovieDetailsByImdbIdHandlesUnavailableOptionalFields() {
         server.expect(requestTo(
-                        org.hamcrest.Matchers.containsString("i=tt7654321")
-                ))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("""
+                org.hamcrest.Matchers.containsString("i=tt7654321")
+            ))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("""
                 {
                   "Title": "Minimal Movie",
                   "Year": "N/A",
@@ -296,8 +296,8 @@ class OmdbMovieProviderTest {
                 """, MediaType.APPLICATION_JSON));
 
         Movie movie = provider
-                .getMovieDetailsByImdbId("tt7654321")
-                .orElseThrow();
+            .getMovieDetailsByImdbId("tt7654321")
+            .orElseThrow();
         assertEquals("Minimal Movie", movie.getTitle());
         assertNull(movie.getReleaseYear());
         assertNull(movie.getRuntime());
@@ -319,8 +319,8 @@ class OmdbMovieProviderTest {
         properties.getOmdb().setApiKey("");
 
         assertThrows(
-                MovieProviderException.class,
-                () -> provider.searchMovies("Inception", 1, "en-US")
+            MovieProviderException.class,
+            () -> provider.searchMovies("Inception", 1, "en-US")
         );
     }
 
@@ -329,8 +329,8 @@ class OmdbMovieProviderTest {
         properties.getOmdb().setApiKey("");
 
         assertThrows(
-                MovieProviderException.class,
-                () -> provider.getMovieDetailsByImdbId("tt0133093")
+            MovieProviderException.class,
+            () -> provider.getMovieDetailsByImdbId("tt0133093")
         );
     }
 }

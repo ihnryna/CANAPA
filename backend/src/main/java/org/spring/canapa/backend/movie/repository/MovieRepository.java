@@ -31,11 +31,11 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
         ORDER BY m.rating DESC NULLS LAST
         """)
     List<Movie> findMatchingMovies(
-            @Param("minRating") Double minRating,
-            @Param("maxRuntime") Integer maxRuntime,
-            @Param("language") String language,
-            @Param("excludedGenresEmpty") boolean excludedGenresEmpty,
-            @Param("excludedGenres") Collection<String> excludedGenres,
-            Pageable pageable
+        @Param("minRating") Double minRating,
+        @Param("maxRuntime") Integer maxRuntime,
+        @Param("language") String language,
+        @Param("excludedGenresEmpty") boolean excludedGenresEmpty,
+        @Param("excludedGenres") Collection<String> excludedGenres,
+        Pageable pageable
     );
 }

@@ -11,9 +11,9 @@ public class InvalidRoomStatusTransitionException extends RuntimeException {
     private final RoomStatus targetStatus;
 
     public InvalidRoomStatusTransitionException(
-            UUID roomId,
-            RoomStatus currentStatus,
-            RoomStatus targetStatus
+        UUID roomId,
+        RoomStatus currentStatus,
+        RoomStatus targetStatus
     ) {
         super("Cannot change room " + roomId + " status from " + currentStatus + " to " + targetStatus);
         this.roomId = roomId;

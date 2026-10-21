@@ -25,28 +25,28 @@ public class UserPreferenceService {
 
     @Transactional
     public UserPreferenceResponse createOrUpdatePreference(
-            UUID userId,
-            UUID roomId,
-            UserPreferenceRequest request
+        UUID userId,
+        UUID roomId,
+        UserPreferenceRequest request
     ) {
         validateIds(userId, roomId);
         validatePreference(request);
 
         UserPreference preference = preferenceRepository
-                .findByUserIdAndRoomId(userId, roomId)
-                .orElseGet(() -> {
-                    UserPreference newPreference = new UserPreference();
-                    newPreference.setUserId(userId);
-                    newPreference.setRoomId(roomId);
-                    return newPreference;
-                });
+            .findByUserIdAndRoomId(userId, roomId)
+            .orElseGet(() -> {
+                UserPreference newPreference = new UserPreference();
+                newPreference.setUserId(userId);
+                newPreference.setRoomId(roomId);
+                return newPreference;
+            });
 
         preference.setLikedGenres(normalizeGenres(request.likedGenres()));
         preference.setDislikedGenres(normalizeGenres(request.dislikedGenres()));
         preference.setMinRating(request.minRating());
         preference.setMaxRuntime(request.maxRuntime());
         preference.setPreferredLanguage(normalizeLanguage(
-                request.preferredLanguage()
+            request.preferredLanguage()
         ));
         preference.setTextPreference(normalizeText(request.textPreference()));
 
@@ -55,7 +55,7 @@ public class UserPreferenceService {
 
         if (!liked.isEmpty()) {
             throw new IllegalArgumentException(
-                    "A genre cannot be both liked and disliked: " + liked
+                "A genre cannot be both liked and disliked: " + liked
             );
         }
 
@@ -67,11 +67,11 @@ public class UserPreferenceService {
         validateIds(userId, roomId);
 
         UserPreference preference = preferenceRepository
-                .findByUserIdAndRoomId(userId, roomId)
-                .orElseThrow(() -> new UserPreferenceNotFoundException(
-                        "Preferences not found for user " + userId
-                                + " in room " + roomId
-                ));
+            .findByUserIdAndRoomId(userId, roomId)
+            .orElseThrow(() -> new UserPreferenceNotFoundException(
+                "Preferences not found for user " + userId
+                    + " in room " + roomId
+            ));
 
         return UserPreferenceResponse.from(preference);
     }
@@ -81,9 +81,9 @@ public class UserPreferenceService {
         requireId(roomId, "Room");
 
         return preferenceRepository.findAllByRoomId(roomId)
-                .stream()
-                .map(UserPreferenceResponse::from)
-                .toList();
+            .stream()
+            .map(UserPreferenceResponse::from)
+            .toList();
     }
 
     @Transactional(readOnly = true)
@@ -91,7 +91,7 @@ public class UserPreferenceService {
         requireId(roomId, "Room");
 
         List<UserPreference> preferences =
-                preferenceRepository.findAllByRoomId(roomId);
+            preferenceRepository.findAllByRoomId(roomId);
 
         Set<String> likedGenres = new HashSet<>();
         Set<String> dislikedGenres = new HashSet<>();
@@ -112,15 +112,15 @@ public class UserPreferenceService {
 
             if (preference.getMinRating() != null) {
                 minRating = minRating == null
-                        ? preference.getMinRating()
-                        : Math.max(minRating, preference.getMinRating());
+                    ? preference.getMinRating()
+                    : Math.max(minRating, preference.getMinRating());
                 usersWithRating++;
             }
 
             if (preference.getMaxRuntime() != null) {
                 maxRuntime = maxRuntime == null
-                        ? preference.getMaxRuntime()
-                        : Math.min(maxRuntime, preference.getMaxRuntime());
+                    ? preference.getMaxRuntime()
+                    : Math.min(maxRuntime, preference.getMaxRuntime());
                 usersWithRuntime++;
             }
         }
@@ -128,15 +128,15 @@ public class UserPreferenceService {
         likedGenres.removeAll(dislikedGenres);
 
         return new GroupPreferenceSummary(
-                roomId,
-                preferences.size(),
-                likedGenres,
-                dislikedGenres,
-                minRating,
-                maxRuntime,
-                languages,
-                usersWithRating,
-                usersWithRuntime
+            roomId,
+            preferences.size(),
+            likedGenres,
+            dislikedGenres,
+            minRating,
+            maxRuntime,
+            languages,
+            usersWithRating,
+            usersWithRuntime
         );
     }
 
@@ -146,8 +146,8 @@ public class UserPreferenceService {
 
         if (!preferenceRepository.existsByUserIdAndRoomId(userId, roomId)) {
             throw new UserPreferenceNotFoundException(
-                    "Preferences not found for user " + userId
-                            + " in room " + roomId
+                "Preferences not found for user " + userId
+                    + " in room " + roomId
             );
         }
 
@@ -171,16 +171,16 @@ public class UserPreferenceService {
         }
 
         if (request.minRating() != null
-                && (request.minRating() < 0 || request.minRating() > 10)) {
+            && (request.minRating() < 0 || request.minRating() > 10)) {
             throw new IllegalArgumentException(
-                    "Minimum rating must be between 0 and 10"
+                "Minimum rating must be between 0 and 10"
             );
         }
 
         if (request.maxRuntime() != null
-                && (request.maxRuntime() < 1 || request.maxRuntime() > 600)) {
+            && (request.maxRuntime() < 1 || request.maxRuntime() > 600)) {
             throw new IllegalArgumentException(
-                    "Maximum runtime must be between 1 and 600 minutes"
+                "Maximum runtime must be between 1 and 600 minutes"
             );
         }
 
@@ -190,7 +190,7 @@ public class UserPreferenceService {
 
         if (!liked.isEmpty()) {
             throw new IllegalArgumentException(
-                    "A genre cannot be both liked and disliked: " + liked
+                "A genre cannot be both liked and disliked: " + liked
             );
         }
     }
@@ -211,7 +211,7 @@ public class UserPreferenceService {
 
             if (value.length() > 100) {
                 throw new IllegalArgumentException(
-                        "Genre names cannot exceed 100 characters"
+                    "Genre names cannot exceed 100 characters"
                 );
             }
 
@@ -230,7 +230,7 @@ public class UserPreferenceService {
 
         if (normalized.length() > 10) {
             throw new IllegalArgumentException(
-                    "Preferred language cannot exceed 10 characters"
+                "Preferred language cannot exceed 10 characters"
             );
         }
 
@@ -246,7 +246,7 @@ public class UserPreferenceService {
 
         if (normalized.length() > 2000) {
             throw new IllegalArgumentException(
-                    "Text preference cannot exceed 2000 characters"
+                "Text preference cannot exceed 2000 characters"
             );
         }
 
@@ -254,15 +254,15 @@ public class UserPreferenceService {
     }
 
     public record GroupPreferenceSummary(
-            UUID roomId,
-            int participantCount,
-            Set<String> likedGenres,
-            Set<String> dislikedGenres,
-            Double minimumRating,
-            Integer maximumRuntime,
-            Set<String> preferredLanguages,
-            int participantsWithMinimumRating,
-            int participantsWithMaximumRuntime
+        UUID roomId,
+        int participantCount,
+        Set<String> likedGenres,
+        Set<String> dislikedGenres,
+        Double minimumRating,
+        Integer maximumRuntime,
+        Set<String> preferredLanguages,
+        int participantsWithMinimumRating,
+        int participantsWithMaximumRuntime
     ) {
     }
 }

@@ -15,24 +15,24 @@ public class RoomRecommendationController {
     private final RoomRecommendationService recommendationService;
 
     public RoomRecommendationController(
-            RoomRecommendationService recommendationService
+        RoomRecommendationService recommendationService
     ) {
         this.recommendationService = recommendationService;
     }
 
     @GetMapping
     public List<RoomRecommendedMovie> getRecommendations(
-            @PathVariable UUID roomId,
-            @RequestHeader("X-User-Id") UUID userId,
-            @RequestParam(defaultValue = "CONSENSUS")
-            RecommendationType strategy,
-            @RequestParam(defaultValue = "40") int limit
+        @PathVariable UUID roomId,
+        @RequestHeader("X-User-Id") UUID userId,
+        @RequestParam(defaultValue = "CONSENSUS")
+        RecommendationType strategy,
+        @RequestParam(defaultValue = "40") int limit
     ) {
         return recommendationService.recommend(
-                roomId,
-                userId,
-                strategy,
-                limit
+            roomId,
+            userId,
+            strategy,
+            limit
         );
     }
 }

@@ -27,8 +27,8 @@ public class RoomService {
 
     private static final int MAX_NAME_LENGTH = 100;
     private static final Comparator<User> PARTICIPANT_ORDER = Comparator
-            .comparing(User::getName, String.CASE_INSENSITIVE_ORDER)
-            .thenComparing(User::getId);
+        .comparing(User::getName, String.CASE_INSENSITIVE_ORDER)
+        .thenComparing(User::getId);
 
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
@@ -60,10 +60,10 @@ public class RoomService {
     public List<RoomData> getRoomsForUser(UUID userId) {
         findUser(userId, "userId");
         return roomRepository
-                .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(userId)
-                .stream()
-                .map(this::toData)
-                .toList();
+            .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(userId)
+            .stream()
+            .map(this::toData)
+            .toList();
     }
 
     @Transactional
@@ -119,19 +119,19 @@ public class RoomService {
     private Room findRoom(UUID roomId) {
         validateId(roomId, "roomId");
         return roomRepository.findById(roomId)
-                .orElseThrow(() -> new RoomNotFoundException(roomId));
+            .orElseThrow(() -> new RoomNotFoundException(roomId));
     }
 
     private Room findRoomForUpdate(UUID roomId) {
         validateId(roomId, "roomId");
         return roomRepository.findByIdForUpdate(roomId)
-                .orElseThrow(() -> new RoomNotFoundException(roomId));
+            .orElseThrow(() -> new RoomNotFoundException(roomId));
     }
 
     private User findUser(UUID userId, String field) {
         validateId(userId, field);
         return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+            .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
     private void validateId(UUID id, String field) {
@@ -157,27 +157,27 @@ public class RoomService {
 
     private boolean hasParticipant(Room room, UUID userId) {
         return room.getParticipants().stream()
-                .anyMatch(participant -> participant.getId().equals(userId));
+            .anyMatch(participant -> participant.getId().equals(userId));
     }
 
     private boolean isAllowedTransition(RoomStatus currentStatus, RoomStatus targetStatus) {
         return currentStatus == RoomStatus.CREATED && targetStatus == RoomStatus.VOTING
-                || currentStatus == RoomStatus.VOTING && targetStatus == RoomStatus.FINISHED;
+            || currentStatus == RoomStatus.VOTING && targetStatus == RoomStatus.FINISHED;
     }
 
     private RoomData toData(Room room) {
         List<RoomMemberData> participants = room.getParticipants().stream()
-                .sorted(PARTICIPANT_ORDER)
-                .map(this::toMemberData)
-                .toList();
+            .sorted(PARTICIPANT_ORDER)
+            .map(this::toMemberData)
+            .toList();
 
         return new RoomData(
-                room.getId(),
-                room.getName(),
-                toMemberData(room.getCreator()),
-                participants,
-                room.getStatus(),
-                room.getCreatedAt()
+            room.getId(),
+            room.getName(),
+            toMemberData(room.getCreator()),
+            participants,
+            room.getStatus(),
+            room.getCreatedAt()
         );
     }
 

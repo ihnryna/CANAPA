@@ -18,33 +18,33 @@ public class RecommendationService {
     private final Map<RecommendationType, RecommendationStrategy> strategies;
 
     public RecommendationService(
-            List<RecommendationStrategy> strategyImplementations
+        List<RecommendationStrategy> strategyImplementations
     ) {
         Objects.requireNonNull(
-                strategyImplementations,
-                "Strategies must not be null"
+            strategyImplementations,
+            "Strategies must not be null"
         );
 
         EnumMap<RecommendationType, RecommendationStrategy> strategyMap =
-                new EnumMap<>(RecommendationType.class);
+            new EnumMap<>(RecommendationType.class);
 
         for (RecommendationStrategy strategy : strategyImplementations) {
             Objects.requireNonNull(
-                    strategy,
-                    "Strategy must not be null"
+                strategy,
+                "Strategy must not be null"
             );
 
             RecommendationType type = Objects.requireNonNull(
-                    strategy.type(),
-                    "Strategy type must not be null"
+                strategy.type(),
+                "Strategy type must not be null"
             );
 
             RecommendationStrategy previous =
-                    strategyMap.putIfAbsent(type, strategy);
+                strategyMap.putIfAbsent(type, strategy);
 
             if (previous != null) {
                 throw new IllegalStateException(
-                        "Duplicate recommendation strategy: " + type
+                    "Duplicate recommendation strategy: " + type
                 );
             }
         }
@@ -53,27 +53,27 @@ public class RecommendationService {
     }
 
     public List<RecommendedMovie> recommend(
-            RecommendationType type,
-            List<MovieCandidate> movies,
-            List<PreferenceSnapshot> preferences
+        RecommendationType type,
+        List<MovieCandidate> movies,
+        List<PreferenceSnapshot> preferences
     ) {
         Objects.requireNonNull(
-                type, "Recommendation type must not be null"
+            type, "Recommendation type must not be null"
         );
 
         Objects.requireNonNull(
-                movies, "Movies must not be null"
+            movies, "Movies must not be null"
         );
 
         Objects.requireNonNull(
-                preferences, "Preferences must not be null"
+            preferences, "Preferences must not be null"
         );
 
         RecommendationStrategy strategy = strategies.get(type);
 
         if (strategy == null) {
             throw new IllegalArgumentException(
-                    "Unsupported recommendation strategy: " + type
+                "Unsupported recommendation strategy: " + type
             );
         }
 
