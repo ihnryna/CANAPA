@@ -1,5 +1,6 @@
 package org.spring.canapa.backend.movie.provider;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.spring.canapa.backend.movie.config.MovieApiProperties;
 import org.spring.canapa.backend.movie.dto.MovieSearchResult;
 import org.spring.canapa.backend.movie.entity.Movie;
@@ -77,7 +78,7 @@ public class OmdbMovieProvider implements MovieProvider {
                                     null,
                                     item.title(),
                                     null,
-                                    normalizePoster(item.poster()),
+                                    normalizeOptionalField(item.poster()),
                                     item.year(),
                                     null,
                                     null,
@@ -133,35 +134,40 @@ public class OmdbMovieProvider implements MovieProvider {
 
     private Movie toMovie(OmdbDetailsResponse response) {
         Movie movie = new Movie();
-
-        movie.setImdbId(response.imdbId());
-        movie.setTitle(response.title() == null ? "Untitled" : response.title());
-        movie.setDescription(response.plot());
-        movie.setPosterUrl(normalizePoster(response.poster()));
+        movie.setImdbId(normalizeOptionalField(response.imdbId()));
+        movie.setTitle(
+                response.title() == null || response.title().isBlank()
+                        ? "Untitled"
+                        : response.title()
+        );
+        movie.setDescription(normalizeOptionalField(response.plot()));
+        movie.setPosterUrl(normalizeOptionalField(response.poster()));
         movie.setReleaseYear(parseYear(response.year()));
         movie.setRuntime(parseRuntime(response.runtime()));
         movie.setRating(parseRating(response.imdbRating()));
-        movie.setDirector(response.director());
-        movie.setActors(response.actors());
-        movie.setWriters(response.writer());
-        movie.setRated(response.rated());
+        movie.setDirector(normalizeOptionalField(response.director()));
+        movie.setActors(normalizeOptionalField(response.actors()));
+        movie.setWriters(normalizeOptionalField(response.writer()));
+        movie.setRated(normalizeOptionalField(response.rated()));
 
-        if (response.genre() != null && !response.genre().isBlank()) {
-            Set<String> genres = Arrays.stream(response.genre().split(","))
+        String genre = normalizeOptionalField(response.genre());
+        if (genre != null) {
+            Set<String> genres = Arrays.stream(genre.split(","))
                     .map(String::trim)
                     .filter(value -> !value.isBlank())
+                    .filter(value -> !value.equalsIgnoreCase("N/A"))
                     .collect(Collectors.toSet());
 
             movie.setGenres(genres);
         }
-
         return movie;
     }
 
-    private String normalizePoster(String poster) {
-        return poster == null || poster.isBlank() || poster.equalsIgnoreCase("N/A")
-                ? null
-                : poster;
+    private String normalizeOptionalField(String value) {
+        if (value == null || value.isBlank() || value.trim().equalsIgnoreCase("N/A")) {
+            return null;
+        }
+        return value.trim();
     }
 
     private Integer parseYear(String year) {
@@ -227,17 +233,17 @@ public class OmdbMovieProvider implements MovieProvider {
             String totalResults,
             String response
     ) {
-        @com.fasterxml.jackson.annotation.JsonProperty("Search")
+        @JsonProperty("Search")
         public List<OmdbSearchItem> search() {
             return search;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("totalResults")
+        @JsonProperty("totalResults")
         public String totalResults() {
             return totalResults;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Response")
+        @JsonProperty("Response")
         public String response() {
             return response;
         }
@@ -249,22 +255,22 @@ public class OmdbMovieProvider implements MovieProvider {
             String imdbId,
             String poster
     ) {
-        @com.fasterxml.jackson.annotation.JsonProperty("Title")
+        @JsonProperty("Title")
         public String title() {
             return title;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Year")
+        @JsonProperty("Year")
         public String year() {
             return year;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("imdbID")
+        @JsonProperty("imdbID")
         public String imdbId() {
             return imdbId;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Poster")
+        @JsonProperty("Poster")
         public String poster() {
             return poster;
         }
@@ -285,67 +291,67 @@ public class OmdbMovieProvider implements MovieProvider {
             String imdbId,
             String response
     ) {
-        @com.fasterxml.jackson.annotation.JsonProperty("Title")
+        @JsonProperty("Title")
         public String title() {
             return title;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Year")
+        @JsonProperty("Year")
         public String year() {
             return year;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Rated")
+        @JsonProperty("Rated")
         public String rated() {
             return rated;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Runtime")
+        @JsonProperty("Runtime")
         public String runtime() {
             return runtime;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Genre")
+        @JsonProperty("Genre")
         public String genre() {
             return genre;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Director")
+        @JsonProperty("Director")
         public String director() {
             return director;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Writer")
+        @JsonProperty("Writer")
         public String writer() {
             return writer;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Actors")
+        @JsonProperty("Actors")
         public String actors() {
             return actors;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Plot")
+        @JsonProperty("Plot")
         public String plot() {
             return plot;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Poster")
+        @JsonProperty("Poster")
         public String poster() {
             return poster;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("imdbRating")
+        @JsonProperty("imdbRating")
         public String imdbRating() {
             return imdbRating;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("imdbID")
+        @JsonProperty("imdbID")
         public String imdbId() {
             return imdbId;
         }
 
-        @com.fasterxml.jackson.annotation.JsonProperty("Response")
+        @JsonProperty("Response")
         public String response() {
             return response;
         }

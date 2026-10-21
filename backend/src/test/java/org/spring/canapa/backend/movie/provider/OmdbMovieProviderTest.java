@@ -295,16 +295,21 @@ class OmdbMovieProviderTest {
                 }
                 """, MediaType.APPLICATION_JSON));
 
-        Movie movie = provider.getMovieDetailsByImdbId("tt7654321")
+        Movie movie = provider
+                .getMovieDetailsByImdbId("tt7654321")
                 .orElseThrow();
-
         assertEquals("Minimal Movie", movie.getTitle());
-        assertEquals("tt7654321", movie.getImdbId());
         assertNull(movie.getReleaseYear());
         assertNull(movie.getRuntime());
-        assertNull(movie.getRating());
-        assertNull(movie.getPosterUrl());
         assertTrue(movie.getGenres().isEmpty());
+        assertNull(movie.getDirector());
+        assertNull(movie.getWriters());
+        assertNull(movie.getActors());
+        assertNull(movie.getDescription());
+        assertNull(movie.getPosterUrl());
+        assertNull(movie.getRating());
+        assertEquals("tt7654321", movie.getImdbId());
+        assertNull(movie.getRated());
 
         server.verify();
     }
