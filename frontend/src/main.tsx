@@ -9,7 +9,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <CurrentUserProvider>
-        <App />
+        <App/>
       </CurrentUserProvider>
     </BrowserRouter>
   </StrictMode>,

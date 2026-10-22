@@ -24,7 +24,11 @@ function messageFor(error: unknown): string {
 export function JoinRoomPage() {
   const { code = '' } = useParams()
   const decodedCode = useMemo(() => {
-    try { return decodeURIComponent(code) } catch { return '' }
+    try {
+      return decodeURIComponent(code)
+    } catch {
+      return ''
+    }
   }, [code])
   const navigate = useNavigate()
   const { user, status, restoreError, retryRestore } = useCurrentUser()
@@ -92,53 +96,73 @@ export function JoinRoomPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader/>
       <main className="main-content invitation-page">
-        <Link className="back-link" to="/rooms"><Icon name="back" size={16} /> До моїх кімнат</Link>
+        <Link className="back-link" to="/rooms"><Icon name="back" size={16}/> До моїх кімнат</Link>
         <section className="invitation-card">
-          <span className="form-symbol"><Icon name="link" size={26} /></span>
+          <span className="form-symbol"><Icon name="link" size={26}/></span>
           <div className="eyebrow">ЗАПРОШЕННЯ ДО CANAPA</div>
           <h1>Вас запросили на кіновечір</h1>
 
           {invalidCode ? (
-            <div className="inline-alert" role="alert"><h2>Некоректне посилання</h2><p>Адреса не містить дійсного invitation code.</p><Link className="btn secondary" to="/rooms">До моїх кімнат</Link></div>
+            <div className="inline-alert" role="alert"><h2>Некоректне посилання</h2><p>Адреса не містить дійсного
+              invitation code.</p><Link className="btn secondary" to="/rooms">До моїх кімнат</Link></div>
           ) : status === 'loading' || loading ? (
-            <div className="inline-loading" aria-busy="true"><span className="spinner" /><p>Перевіряємо запрошення…</p></div>
+            <div className="inline-loading" aria-busy="true"><span className="spinner"/><p>Перевіряємо запрошення…</p>
+            </div>
           ) : status === 'error' ? (
-            <div className="inline-alert" role="alert"><p>{restoreError}</p><button className="btn secondary" onClick={retryRestore}>Спробувати ще раз</button></div>
+            <div className="inline-alert" role="alert"><p>{restoreError}</p>
+              <button className="btn secondary" onClick={retryRestore}>Спробувати ще раз</button>
+            </div>
           ) : user === null ? (
             <div className="invitation-profile-needed">
               <p>Щоб безпечно перевірити запрошення та приєднатися, спочатку створіть або відновіть профіль.</p>
-              <Link className="btn primary" to={`/?returnTo=${encodeURIComponent(returnTo)}`}>Налаштувати профіль <Icon name="arrow" size={17} /></Link>
+              <Link className="btn primary" to={`/?returnTo=${encodeURIComponent(returnTo)}`}>Налаштувати профіль <Icon
+                name="arrow" size={17}/></Link>
               <small>Код запрошення збережено в адресі — після профілю ви повернетеся сюди.</small>
             </div>
           ) : error !== null && room === null ? (
             <div className="inline-alert" role="alert">
               <h2>Не вдалося відкрити запрошення</h2><p>{error}</p>
-              <div className="actions"><button className="btn primary" onClick={() => setRetryToken((value) => value + 1)}>Спробувати ще раз</button><Link className="btn secondary" to="/rooms">До моїх кімнат</Link></div>
+              <div className="actions">
+                <button className="btn primary" onClick={() => setRetryToken((value) => value + 1)}>Спробувати ще раз
+                </button>
+                <Link className="btn secondary" to="/rooms">До моїх кімнат</Link></div>
             </div>
           ) : room !== null && invitation !== null ? (
             <>
               <div className="invitation-details">
-                <span className={`status-badge status-${room.status.toLowerCase()}`}>{room.status === 'CREATED' ? 'Підготовка' : room.status === 'VOTING' ? 'Голосування' : 'Завершено'}</span>
+                <span
+                  className={`status-badge status-${room.status.toLowerCase()}`}>{room.status === 'CREATED' ? 'Підготовка' : room.status === 'VOTING' ? 'Голосування' : 'Завершено'}</span>
                 <h2>{room.name}</h2>
                 <p>Організатор: <strong>{room.creator.name}</strong></p>
                 <p>{room.participants.length} учасників</p>
-                <p>Запрошення діє до {new Intl.DateTimeFormat('uk-UA', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(invitation.expiresAt))}</p>
-                <div className="joining-as"><span className="avatar">{user.name.charAt(0).toUpperCase()}</span><span>Ви приєднаєтеся як <strong>{user.name}</strong></span></div>
+                <p>Запрошення діє до {new Intl.DateTimeFormat('uk-UA', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short'
+                }).format(new Date(invitation.expiresAt))}</p>
+                <div className="joining-as"><span className="avatar">{user.name.charAt(0).toUpperCase()}</span><span>Ви приєднаєтеся як <strong>{user.name}</strong></span>
+                </div>
               </div>
-              {alreadyMember && <p className="success-message" role="status"><Icon name="check" size={17} /> Ви вже є учасником цієї кімнати.</p>}
-              {room.status !== 'CREATED' && !alreadyMember && <p className="form-error" role="alert">До кімнати не можна приєднатися після початку голосування.</p>}
+              {alreadyMember &&
+                  <p className="success-message" role="status"><Icon name="check" size={17}/> Ви вже є учасником цієї
+                      кімнати.</p>}
+              {room.status !== 'CREATED' && !alreadyMember &&
+                  <p className="form-error" role="alert">До кімнати не можна приєднатися після початку голосування.</p>}
               {error !== null && <p className="form-error" role="alert">{error}</p>}
               <div className="form-actions">
                 <Link className="btn secondary" to="/rooms">Не зараз</Link>
-                {alreadyMember ? <Link className="btn primary" to={`/rooms/${room.id}`}>Відкрити кімнату <Icon name="arrow" size={17} /></Link> : <button className="btn primary" onClick={handleJoin} disabled={!canJoin || joining}>{joining ? 'Приєднуємо…' : 'Приєднатися до кімнати'} <Icon name="arrow" size={17} /></button>}
+                {alreadyMember ?
+                  <Link className="btn primary" to={`/rooms/${room.id}`}>Відкрити кімнату <Icon name="arrow" size={17}/></Link> :
+                  <button className="btn primary" onClick={handleJoin}
+                          disabled={!canJoin || joining}>{joining ? 'Приєднуємо…' : 'Приєднатися до кімнати'} <Icon
+                    name="arrow" size={17}/></button>}
               </div>
             </>
           ) : null}
         </section>
       </main>
-      <PageFooter />
+      <PageFooter/>
     </div>
   )
 }
