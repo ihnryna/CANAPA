@@ -34,7 +34,7 @@ function App() {
 }
 
 function MovieDiscoveryPageRoute() {
-  const userId = localStorage.getItem('userId') ?? ''
+  const userId = localStorage.getItem('canapa.currentUserId') ?? ''
   return <MovieDiscoveryPage userId={userId}/>
 }
 

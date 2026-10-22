@@ -48,3 +48,18 @@ export function joinRoom(roomId: string, userId: string): Promise<Room> {
     },
   )
 }
+
+export function changeRoomStatus(
+  roomId: string,
+  userId: string,
+  status: RoomStatus,
+): Promise<Room> {
+  return apiRequest<Room>(
+    `/api/rooms/${encodeURIComponent(roomId)}/status`,
+    {
+      method: 'PUT',
+      headers: userHeaders(userId),
+      body: JSON.stringify({ status }),
+    },
+  )
+}

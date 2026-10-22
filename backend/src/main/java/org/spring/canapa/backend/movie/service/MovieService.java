@@ -1,5 +1,6 @@
 package org.spring.canapa.backend.movie.service;
 
+import org.spring.canapa.backend.movie.dto.MovieDiscoveryCriteria;
 import org.spring.canapa.backend.movie.dto.MovieResponse;
 import org.spring.canapa.backend.movie.dto.MovieSearchResponse;
 import org.spring.canapa.backend.movie.dto.MovieSearchResult;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -36,7 +38,7 @@ public class MovieService {
         this.omdbProvider = omdbProvider;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public MovieSearchResponse searchMovies(
         String query,
         int page,
@@ -111,6 +113,44 @@ public class MovieService {
             localResults.getTotalElements(),
             localResults.getContent().stream().map(MovieResponse::from).toList()
         );
+    }
+
+    @Transactional
+    public List<MovieResponse> discoverMovies(
+        MovieDiscoveryCriteria criteria,
+        int limit
+    ) {
+        if (criteria == null) {
+            throw new IllegalArgumentException("Discovery criteria are required");
+        }
+        if (limit < 1 || limit > 100) {
+            throw new IllegalArgumentException("Limit must be between 1 and 100");
+        }
+        if (!tmdbProvider.isConfigured()) {
+            throw new MovieProviderException("TMDB is not configured");
+        }
+
+        List<MovieResponse> movies = new ArrayList<>();
+        int page = 1;
+        int totalPages = 1;
+
+        while (movies.size() < limit && page <= totalPages) {
+            MovieSearchResult result = tmdbProvider.discoverMovies(
+                criteria,
+                page,
+                "uk-UA"
+            );
+            totalPages = result.totalPages();
+
+            for (MovieSearchResult.MovieSearchItem item : result.results()) {
+                if (movies.size() >= limit) break;
+                Movie saved = saveSearchResult(item);
+                movies.add(MovieResponse.from(enrichMovie(saved)));
+            }
+            page++;
+        }
+
+        return movies;
     }
 
     @Transactional
@@ -259,15 +299,27 @@ public class MovieService {
             }
         }
 
-        if (movie.getImdbId() != null && omdbProvider.isConfigured()
-            && (movie.getDirector() == null || movie.getActors() == null)) {
+        if (omdbProvider.isConfigured()) {
             try {
-                Movie details = omdbProvider
-                    .getMovieDetailsByImdbId(movie.getImdbId())
-                    .orElse(null);
+                Optional<Movie> omdbDetails = Optional.empty();
+
+                if (StringUtils.hasText(movie.getImdbId())) {
+                    omdbDetails = omdbProvider.getMovieDetailsByImdbId(
+                        movie.getImdbId()
+                    );
+                }
+
+                if (omdbDetails.isEmpty()) {
+                    omdbDetails = omdbProvider.getMovieDetailsByTitle(
+                        movie.getTitle(),
+                        movie.getReleaseYear()
+                    );
+                }
+
+                Movie details = omdbDetails.orElse(null);
 
                 if (details != null) {
-                    mergeDetails(movie, details);
+                    mergeOmdbDetails(movie, details);
                     movie = movieRepository.save(movie);
                 }
             } catch (MovieProviderException ignored) {
@@ -309,6 +361,26 @@ public class MovieService {
         }
         if (target.getGenres().isEmpty() && !source.getGenres().isEmpty()) {
             target.setGenres(source.getGenres());
+        }
+    }
+
+    private void mergeOmdbDetails(Movie target, Movie source) {
+        mergeDetails(target, source);
+
+        if (StringUtils.hasText(source.getDescription())) {
+            target.setDescription(source.getDescription());
+        }
+        if (StringUtils.hasText(source.getDirector())) {
+            target.setDirector(source.getDirector());
+        }
+        if (StringUtils.hasText(source.getActors())) {
+            target.setActors(source.getActors());
+        }
+        if (StringUtils.hasText(source.getWriters())) {
+            target.setWriters(source.getWriters());
+        }
+        if (StringUtils.hasText(source.getRated())) {
+            target.setRated(source.getRated());
         }
     }
 

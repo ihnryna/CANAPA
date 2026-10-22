@@ -340,6 +340,10 @@ class VotingServiceRepositoryIntegrationTest {
 
         assertEquals(List.of(movie1Id), winnerIds(saved));
         assertEquals(2, saved.getVoteCount());
+        assertEquals(
+            org.spring.canapa.backend.room.RoomStatus.FINISHED,
+            roomRepository.findById(roomId).orElseThrow().getStatus()
+        );
     }
 
     @Test

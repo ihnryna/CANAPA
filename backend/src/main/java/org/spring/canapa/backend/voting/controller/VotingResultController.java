@@ -1,6 +1,7 @@
 package org.spring.canapa.backend.voting.controller;
 
 import org.spring.canapa.backend.movie.entity.Movie;
+import org.spring.canapa.backend.movie.dto.MovieResponse;
 import org.spring.canapa.backend.voting.dto.VotingResultResponse;
 import org.spring.canapa.backend.voting.entity.VotingResult;
 import org.spring.canapa.backend.voting.repository.VotingResultRepository;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -51,15 +54,18 @@ public class VotingResultController {
     }
 
     private static VotingResultResponse toResponse(VotingResult result) {
-        List<Long> winnerMovieIds = result.getWinners()
+        Set<Long> seenMovieIds = new HashSet<>();
+        List<Movie> winners = result.getWinners()
             .stream()
-            .map(Movie::getId)
+            .filter(movie -> seenMovieIds.add(movie.getId()))
             .toList();
+        List<Long> winnerMovieIds = winners.stream().map(Movie::getId).toList();
 
         return new VotingResultResponse(
             result.getId(),
             result.getRoom().getId(),
             winnerMovieIds,
+            winners.stream().map(MovieResponse::from).toList(),
             result.getVoteCount(),
             result.getFinishedAt()
         );

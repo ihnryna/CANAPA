@@ -312,26 +312,6 @@ export function MoviePreferences(
           </label>
         </div>
 
-        <label className="preference-label preference-text-label">
-          Що саме хочете подивитися?
-          <textarea
-            value={form.textPreference}
-            onChange={(event) => {
-              setForm((current) => ({
-                ...current,
-                textPreference: event.target.value,
-              }))
-              setSuccess(false)
-            }}
-            placeholder="Наприклад: щось атмосферне, з несподіваним фіналом, але без жахів..."
-            rows={3}
-            maxLength={500}
-          />
-          <span className="preference-character-count">
-            {form.textPreference.length}/500
-          </span>
-        </label>
-
         {error && (
           <p className="form-error" role="alert">
             {error}

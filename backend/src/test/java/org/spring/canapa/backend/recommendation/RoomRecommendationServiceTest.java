@@ -3,12 +3,17 @@ package org.spring.canapa.backend.recommendation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.spring.canapa.backend.movie.dto.MovieResponse;
+import org.spring.canapa.backend.movie.dto.MovieDiscoveryCriteria;
+import org.spring.canapa.backend.movie.entity.Movie;
+import org.spring.canapa.backend.movie.repository.MovieRepository;
 import org.spring.canapa.backend.movie.service.MovieService;
 import org.spring.canapa.backend.preference.dto.UserPreferenceResponse;
 import org.spring.canapa.backend.preference.service.UserPreferenceService;
 import org.spring.canapa.backend.recommendation.strategy.*;
 import org.spring.canapa.backend.room.RoomService;
 import org.spring.canapa.backend.room.RoomStatus;
+import org.spring.canapa.backend.room.Room;
+import org.spring.canapa.backend.room.RoomRepository;
 import org.spring.canapa.backend.room.dto.RoomData;
 import org.spring.canapa.backend.room.dto.RoomMemberData;
 import org.springframework.http.HttpStatus;
@@ -16,24 +21,31 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class RoomRecommendationServiceTest {
 
     private final RoomService roomService = mock(RoomService.class);
+    private final RoomRepository roomRepository = mock(RoomRepository.class);
     private final MovieService movieService = mock(MovieService.class);
+    private final MovieRepository movieRepository = mock(MovieRepository.class);
     private final UserPreferenceService preferenceService =
         mock(UserPreferenceService.class);
 
     private final RoomRecommendationService service =
         new RoomRecommendationService(
             roomService,
+            roomRepository,
             movieService,
+            movieRepository,
             preferenceService,
             new RecommendationService(List.of(
                 new ConsensusStrategy(),
@@ -44,6 +56,7 @@ class RoomRecommendationServiceTest {
 
     private final UUID roomId = UUID.randomUUID();
     private final UUID memberId = UUID.randomUUID();
+    private final Room lockedRoom = mock(Room.class);
 
     @BeforeEach
     void setUp() {
@@ -59,11 +72,16 @@ class RoomRecommendationServiceTest {
             RoomStatus.CREATED,
             Instant.now()
         ));
+        when(roomRepository.findByIdForUpdate(roomId))
+            .thenReturn(Optional.of(lockedRoom));
+        when(lockedRoom.getMovieCandidates()).thenReturn(List.of());
+        when(movieRepository.findAllById(any()))
+            .thenReturn(List.of());
     }
 
     @Test
     void shouldReturnMovieWithScore() {
-        when(movieService.getPopularLocalMovies(40))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
             .thenReturn(List.of(movie(7L, "Dune")));
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -102,14 +120,11 @@ class RoomRecommendationServiceTest {
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
         verify(movieService, never())
-            .getPopularLocalMovies(anyInt());
+            .discoverMovies(any(MovieDiscoveryCriteria.class), anyInt());
     }
 
     @Test
     void shouldReturnEmptyWithoutPreferences() {
-        when(movieService.getPopularLocalMovies(40))
-            .thenReturn(List.of(movie(7L, "Dune")));
-
         when(preferenceService.getRoomPreferences(roomId))
             .thenReturn(List.of());
 
@@ -145,7 +160,7 @@ class RoomRecommendationServiceTest {
             103L, "Horror Story", Set.of("Horror"), 7.9, 185
         );
 
-        when(movieService.getPopularLocalMovies(40))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
             .thenReturn(List.of(space, drama, horror));
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -198,7 +213,7 @@ class RoomRecommendationServiceTest {
     void shouldIgnorePreferencesOfNonParticipants() {
         UUID outsiderId = UUID.randomUUID();
 
-        when(movieService.getPopularLocalMovies(40))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
             .thenReturn(List.of(
                 testMovie(101L, "Space", Set.of("Sci-Fi"), 8.7, 135)
             ));
@@ -227,7 +242,7 @@ class RoomRecommendationServiceTest {
 
     @Test
     void shouldReturnEmptyResultsForEmptyMovieCatalog() {
-        when(movieService.getPopularLocalMovies(40))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
             .thenReturn(List.of());
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -240,6 +255,108 @@ class RoomRecommendationServiceTest {
 
             assertTrue(result.isEmpty());
         }
+    }
+
+    @Test
+    void shouldBuildTmdbCriteriaFromAllRoomParticipants() {
+        UUID secondMemberId = UUID.randomUUID();
+        RoomMemberData firstMember = new RoomMemberData(
+            memberId, "Vika", "vika@example.com"
+        );
+        RoomMemberData secondMember = new RoomMemberData(
+            secondMemberId, "Taras", "taras@example.com"
+        );
+        when(roomService.getRoom(roomId)).thenReturn(new RoomData(
+            roomId,
+            "Movie night",
+            firstMember,
+            List.of(firstMember, secondMember),
+            RoomStatus.CREATED,
+            Instant.now()
+        ));
+        when(preferenceService.getRoomPreferences(roomId)).thenReturn(List.of(
+            new UserPreferenceResponse(
+                1L, memberId, roomId,
+                Set.of("Comedy", "Science Fiction"), Set.of("Horror"),
+                6.5, 180, "en", null
+            ),
+            new UserPreferenceResponse(
+                2L, secondMemberId, roomId,
+                Set.of("Drama", "Horror"), Set.of("Comedy"),
+                7.5, 140, "en", null
+            )
+        ));
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
+            .thenReturn(List.of());
+
+        service.recommend(
+            roomId, memberId, RecommendationType.CONSENSUS, 20
+        );
+
+        var criteriaCaptor = org.mockito.ArgumentCaptor
+            .forClass(MovieDiscoveryCriteria.class);
+        verify(movieService).discoverMovies(criteriaCaptor.capture(), eq(40));
+
+        MovieDiscoveryCriteria criteria = criteriaCaptor.getValue();
+        assertEquals(Set.of("Science Fiction", "Drama"), criteria.likedGenres());
+        assertEquals(Set.of("Horror", "Comedy"), criteria.dislikedGenres());
+        assertEquals(7.5, criteria.minimumRating());
+        assertEquals(140, criteria.maximumRuntime());
+        assertEquals(Set.of("en"), criteria.preferredLanguages());
+    }
+
+    @Test
+    void shouldReuseMoviesCachedForRoomWithoutCallingProviders() {
+        Movie cachedMovie = new Movie();
+        cachedMovie.setId(77L);
+        cachedMovie.setTitle("Cached movie");
+        cachedMovie.setDescription("Already stored");
+        cachedMovie.setGenres(Set.of("Drama"));
+        cachedMovie.setRating(8.0);
+        cachedMovie.setRuntime(120);
+        when(lockedRoom.getMovieCandidates())
+            .thenReturn(List.of(cachedMovie));
+        when(lockedRoom.hasMovieCandidatesCache()).thenReturn(true);
+        when(preferenceService.getRoomPreferences(roomId))
+            .thenReturn(List.of(new UserPreferenceResponse(
+                1L, memberId, roomId,
+                Set.of("Drama"), Set.of(), 7.0, 150, "en", null
+            )));
+
+        var result = service.recommend(
+            roomId, memberId, RecommendationType.CONSENSUS, 40
+        );
+
+        assertEquals(1, result.size());
+        assertEquals(77L, result.getFirst().movie().id());
+        verify(movieService, never())
+            .discoverMovies(any(MovieDiscoveryCriteria.class), anyInt());
+    }
+
+    @Test
+    void shouldCacheAnEmptyDiscoveryResult() {
+        when(lockedRoom.hasMovieCandidatesCache())
+            .thenReturn(false, true);
+        when(preferenceService.getRoomPreferences(roomId))
+            .thenReturn(List.of(new UserPreferenceResponse(
+                1L, memberId, roomId,
+                Set.of("Documentary"), Set.of(), 10.0, 1, "uk", null
+            )));
+        when(movieService.discoverMovies(
+            any(MovieDiscoveryCriteria.class), eq(40)
+        )).thenReturn(List.of());
+
+        service.recommend(
+            roomId, memberId, RecommendationType.CONSENSUS, 40
+        );
+        service.recommend(
+            roomId, memberId, RecommendationType.CONSENSUS, 40
+        );
+
+        verify(movieService, times(1)).discoverMovies(
+            any(MovieDiscoveryCriteria.class), eq(40)
+        );
+        verify(lockedRoom).cacheMovieCandidates(List.of());
     }
 
     private MovieResponse movie(long id, String title) {

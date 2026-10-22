@@ -38,3 +38,7 @@ out/
 
 ### .env ###
 .env
+.env.movies
+
+### MacOS ###
+.DS_Store
