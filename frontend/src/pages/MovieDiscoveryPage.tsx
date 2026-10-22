@@ -1,9 +1,13 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { MoviePreferences } from '../components/MoviePreferences'
 import { MovieBrowser } from '../components/MovieBrowser'
 import type { Movie } from '../api/movies'
 import './MovieDiscoveryPage.css'
+import { isUuid } from "../auth/user-id.ts";
+import { AppHeader } from "../components/AppHeader.tsx";
+import { PageFooter } from "../components/PageFooter.tsx";
+import { Icon } from "../components/Icon.tsx";
 
 interface MovieDiscoveryPageProps {
   userId: string
@@ -11,21 +15,28 @@ interface MovieDiscoveryPageProps {
 
 export function MovieDiscoveryPage({ userId }: MovieDiscoveryPageProps) {
   const { roomId } = useParams<{ roomId: string }>()
+  const validRoomId = roomId !== undefined && isUuid(roomId) ? roomId : undefined
   const [selectedMovies, setSelectedMovies] = useState<Movie[]>([])
   const [activeTab, setActiveTab] = useState<'preferences' | 'movies'>(
     'preferences',
   )
 
-  if (!roomId) {
+  if (validRoomId === undefined) {
     return (
-      <main className="main-content">
-        <div className="inline-alert">
-          <h2>Кімнату не знайдено</h2>
-          <p>Перевірте посилання та спробуйте ще раз.</p>
-        </div>
-      </main>
+      <div className="app-shell">
+        <AppHeader/>
+        <main className="centered-state">
+          <h1>Некоректний ID кімнати</h1>
+          <Link className="btn primary" to="/rooms">
+            До моїх кімнат
+          </Link>
+        </main>
+        <PageFooter/>
+      </div>
     )
   }
+
+
 
   function toggleMovie(movie: Movie) {
     setSelectedMovies((current) =>
@@ -37,6 +48,11 @@ export function MovieDiscoveryPage({ userId }: MovieDiscoveryPageProps) {
 
   return (
     <main className="main-content movie-discovery-page">
+      <Link className="back-link" to={`/rooms/${roomId}`}>
+        <Icon name="back" size={16} />
+        Повернутися до кімнати
+      </Link>
+
       <div className="page-heading">
         <span className="eyebrow">
           <span className="tiny-line"/>
@@ -71,7 +87,7 @@ export function MovieDiscoveryPage({ userId }: MovieDiscoveryPageProps) {
       </div>
 
       {activeTab === 'preferences' ? (
-        <MoviePreferences roomId={roomId} userId={userId}/>
+        <MoviePreferences roomId={validRoomId} userId={userId}/>
       ) : (
         <MovieBrowser
           onSelectMovie={toggleMovie}

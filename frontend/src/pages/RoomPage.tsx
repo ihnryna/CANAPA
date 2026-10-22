@@ -198,7 +198,6 @@ export function RoomPage() {
           {[
             'Учасники',
             'Уподобання',
-            'Добірка',
             'Голосування',
             'Результат',
           ].map((step, index) => (
@@ -206,12 +205,15 @@ export function RoomPage() {
               key={step}
               type="button"
               className={index === 0 ? 'active' : ''}
-              disabled={index !== 0 && (index !== 2 || !member)}
-              onClick={
-                index === 2 && member
-                  ? () => navigate(`/rooms/${room.id}/recommendations`)
-                  : undefined
-              }
+              disabled={!member}
+              onClick={() => {
+                if (index === 1) {
+                  navigate(`/rooms/${room.id}/discover`)
+                }
+                if (index === 2) {
+                  navigate(`/rooms/${room.id}/voting`)
+                }
+              }}
             >
               <span>0{index + 1}</span>
               {step}
@@ -258,27 +260,16 @@ export function RoomPage() {
               <span className="form-symbol"><Icon name="check" size={24}/></span>
               <h3>Ваші вподобання</h3>
               <p>{readyUserIds === null ? 'Статус уподобань недоступний' : readyUserIds.has(user?.id ?? '') ? 'Уподобання збережено' : 'Ви ще не заповнили вподобання'}</p>
-              <button className="btn primary" disabled>Уподобання — наступний етап</button>
+              <button className="btn primary" onClick={() => navigate(`/rooms/${room.id}/discover`)}>Додати уподобання</button>
             </section>
             <section className="panel room-summary">
               <h3>Усе для кіновечора</h3>
               <p><Icon name="users"/> {room.participants.length} учасників</p>
               <p><Icon name="film"/> Статус: {STATUS_LABELS[room.status]}</p>
               <p className="subtle-note">
-                Перейдіть до вкладки «Добірка», щоб переглянути
+                Перейдіть до вкладки «Голосування», щоб переглянути
                 рекомендації фільмів для вашої компанії.
               </p>
-
-              {member && (
-                <Link
-                  className="btn primary"
-                  to={`/rooms/${room.id}/discover`}
-                >
-                  <Icon name="film" size={17} />
-                  Знайти фільм
-                  <Icon name="arrow" size={17} />
-                </Link>
-              )}
             </section>
           </div>
         </div>

@@ -23,7 +23,7 @@ import { useRoomPolling } from '../hooks/useRoomPolling'
 // TEMP: FOR DEVELOPING
 import { MOCK_MOVIES } from '../mocks/votingMock'
 
-const USE_MOCK_VOTING = true
+const USE_MOCK_VOTING = false
 
 //
 
