@@ -9,6 +9,7 @@ import { RecommendationPage } from './pages/RecommendationPage'
 import { RoomsPage } from './pages/RoomsPage'
 import { UserSetupPage } from './pages/UserSetupPage'
 import { VotingPage } from './pages/VotingPage'
+import { VotingResultsPage } from './pages/VotingResultsPage'
 import { MovieDiscoveryPage } from "./pages/MovieDiscoveryPage.tsx";
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/rooms/:roomId/recommendations" element={<RecommendationPage/>}/>
         <Route path="/rooms/:roomId/voting" element={<VotingPage/>}/>
         <Route path="/rooms/:roomId/discover" element={<MovieDiscoveryPageRoute/>}/>
+        <Route path="/rooms/:roomId/results" element={<VotingResultsPage/>}/>
       </Route>
 
       <Route path="/home" element={<Navigate to="/rooms" replace/>}/>
