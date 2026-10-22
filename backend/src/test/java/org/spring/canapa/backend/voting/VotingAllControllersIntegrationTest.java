@@ -261,8 +261,16 @@ class VotingAllControllersIntegrationTest {
             .andExpect(jsonPath("$.roomId").value(ROOM_9.toString()))
             .andExpect(jsonPath("$.winnerMovieIds.length()").value(1))
             .andExpect(jsonPath("$.winnerMovieIds[0]").value(15))
+            .andExpect(jsonPath("$.winners.length()").value(1))
+            .andExpect(jsonPath("$.winners[0].id").value(15))
+            .andExpect(jsonPath("$.winners[0].title")
+                .value("Test Movie 15"))
             .andExpect(jsonPath("$.voteCount").value(2))
             .andExpect(jsonPath("$.finishedAt").exists());
+
+        mockMvc.perform(get("/api/rooms/" + ROOM_9))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("FINISHED"));
     }
 
     @Test

@@ -3,12 +3,15 @@ package org.spring.canapa.backend.movie.provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.spring.canapa.backend.movie.config.MovieApiProperties;
+import org.spring.canapa.backend.movie.dto.MovieDiscoveryCriteria;
 import org.spring.canapa.backend.movie.dto.MovieSearchResult;
 import org.spring.canapa.backend.movie.entity.Movie;
 import org.spring.canapa.backend.movie.provider.exception.MovieProviderException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.AssertionsKt.assertNull;
@@ -146,7 +149,7 @@ class TmdbMovieProviderTest {
                   "poster_path": null,
                   "release_date": "",
                   "vote_average": null,
-                  "runtime": null,
+                  "runtime": 0,
                   "original_language": null
                 }
                 """, MediaType.APPLICATION_JSON));
@@ -263,6 +266,56 @@ class TmdbMovieProviderTest {
         assertEquals(0, result.totalPages());
         assertTrue(result.results().isEmpty());
 
+        server.verify();
+    }
+
+    @Test
+    void discoversMoviesUsingGroupPreferences() {
+        server.expect(requestTo(
+                org.hamcrest.Matchers.containsString("/discover/movie")
+            ))
+            .andExpect(queryParam("with_genres", "35%7C878"))
+            .andExpect(queryParam("without_genres", "27"))
+            .andExpect(queryParam("vote_average.gte", "7.0"))
+            .andExpect(queryParam("with_runtime.lte", "150"))
+            .andExpect(queryParam("with_original_language", "en"))
+            .andRespond(withSuccess("""
+                {
+                  "page": 1,
+                  "total_pages": 1,
+                  "total_results": 1,
+                  "results": [
+                    {
+                      "id": 157336,
+                      "title": "Interstellar",
+                      "overview": "Space exploration.",
+                      "poster_path": "/poster.jpg",
+                      "release_date": "2014-11-05",
+                      "vote_average": 8.5,
+                      "original_language": "en",
+                      "genre_ids": [12, 18, 878]
+                    }
+                  ]
+                }
+                """, MediaType.APPLICATION_JSON));
+
+        MovieSearchResult result = provider.discoverMovies(
+            new MovieDiscoveryCriteria(
+                java.util.Set.of("Comedy", "Science Fiction"),
+                java.util.Set.of("Horror"),
+                7.0,
+                150,
+                java.util.Set.of("en")
+            ),
+            1,
+            "uk-UA"
+        );
+
+        assertEquals(1, result.results().size());
+        assertEquals(
+            List.of("Adventure", "Drama", "Science Fiction"),
+            result.results().getFirst().genres()
+        );
         server.verify();
     }
 

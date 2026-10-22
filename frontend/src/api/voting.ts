@@ -1,4 +1,5 @@
 import { apiRequest } from './client'
+import type { Movie } from './movies'
 
 export interface Vote {
   id: number
@@ -20,6 +21,7 @@ export interface VotingResult {
   id: number
   roomId: string
   winnerMovieIds: number[]
+  winners: Movie[]
   voteCount: number
   finishedAt: string
 }
@@ -112,8 +114,10 @@ export function finishVoting(roomId: string): Promise<VotingResult> {
 
 export function getVotingResult(
   roomId: string,
+  signal?: AbortSignal,
 ): Promise<VotingResult> {
   return apiRequest<VotingResult>(
     `/api/rooms/${encodeURIComponent(roomId)}/voting-result`,
+    { signal },
   )
 }

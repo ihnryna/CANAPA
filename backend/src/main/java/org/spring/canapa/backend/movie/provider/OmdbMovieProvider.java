@@ -116,6 +116,34 @@ public class OmdbMovieProvider implements MovieProvider {
             .encode()
             .toUri();
 
+        return fetchDetails(uri);
+    }
+
+    public Optional<Movie> getMovieDetailsByTitle(
+        String title,
+        Integer releaseYear
+    ) {
+        requireConfigured();
+
+        if (title == null || title.isBlank()) {
+            return Optional.empty();
+        }
+
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+            .fromUriString(properties.getOmdb().getBaseUrl())
+            .queryParam("apikey", properties.getOmdb().getApiKey())
+            .queryParam("t", title.trim())
+            .queryParam("type", "movie")
+            .queryParam("plot", "full");
+
+        if (releaseYear != null) {
+            uriBuilder.queryParam("y", releaseYear);
+        }
+
+        return fetchDetails(uriBuilder.build().encode().toUri());
+    }
+
+    private Optional<Movie> fetchDetails(URI uri) {
         try {
             OmdbDetailsResponse response = restClient.get()
                 .uri(uri)
@@ -190,7 +218,8 @@ public class OmdbMovieProvider implements MovieProvider {
         }
 
         try {
-            return Integer.parseInt(runtime.replaceAll("[^0-9]", ""));
+            int parsed = Integer.parseInt(runtime.replaceAll("[^0-9]", ""));
+            return parsed > 0 ? parsed : null;
         } catch (NumberFormatException ex) {
             return null;
         }

@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.spring.canapa.backend.movie.dto.MovieDiscoveryCriteria;
+import org.spring.canapa.backend.movie.dto.MovieSearchResult;
 import org.spring.canapa.backend.movie.entity.Movie;
 import org.spring.canapa.backend.movie.provider.OmdbMovieProvider;
 import org.spring.canapa.backend.movie.provider.TmdbMovieProvider;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -117,5 +120,110 @@ class MovieServiceTest {
             IllegalArgumentException.class,
             () -> movieService.searchMovies("Inception", 1, 101, "en-US")
         );
+    }
+
+    @Test
+    void discoversWithTmdbAndUsesOmdbExpandedDescription() {
+        var criteria = new MovieDiscoveryCriteria(
+            Set.of("Science Fiction"),
+            Set.of("Horror"),
+            7.0,
+            160,
+            Set.of("en")
+        );
+
+        when(tmdbProvider.isConfigured()).thenReturn(true);
+        when(omdbProvider.isConfigured()).thenReturn(true);
+        when(tmdbProvider.discoverMovies(criteria, 1, "uk-UA"))
+            .thenReturn(new MovieSearchResult(
+                1,
+                1,
+                1,
+                List.of(new MovieSearchResult.MovieSearchItem(
+                    157336L,
+                    "Interstellar",
+                    "Short TMDB overview",
+                    null,
+                    "2014-11-05",
+                    8.5,
+                    "en",
+                    List.of("Science Fiction")
+                ))
+            ));
+        when(movieRepository.findByTmdbId(157336L))
+            .thenReturn(Optional.empty());
+        when(movieRepository.save(any(Movie.class)))
+            .thenAnswer(invocation -> {
+                Movie movie = invocation.getArgument(0);
+                if (movie.getId() == null) movie.setId(1L);
+                return movie;
+            });
+
+        Movie tmdbDetails = new Movie();
+        tmdbDetails.setTmdbId(157336L);
+        tmdbDetails.setImdbId("tt0816692");
+        tmdbDetails.setTitle("Interstellar");
+        tmdbDetails.setDescription("Longer TMDB overview");
+        tmdbDetails.setRuntime(169);
+        when(tmdbProvider.getMovieDetails(157336L))
+            .thenReturn(Optional.of(tmdbDetails));
+
+        Movie omdbDetails = new Movie();
+        omdbDetails.setImdbId("tt0816692");
+        omdbDetails.setTitle("Interstellar");
+        omdbDetails.setDescription("Expanded OMDb plot");
+        omdbDetails.setDirector("Christopher Nolan");
+        when(omdbProvider.getMovieDetailsByImdbId("tt0816692"))
+            .thenReturn(Optional.of(omdbDetails));
+
+        var result = movieService.discoverMovies(criteria, 20);
+
+        assertEquals(1, result.size());
+        assertEquals("Expanded OMDb plot", result.getFirst().description());
+        assertEquals("Christopher Nolan", result.getFirst().director());
+    }
+
+    @Test
+    void fallsBackToOmdbTitleLookupWhenTmdbHasNoImdbId() {
+        var criteria = new MovieDiscoveryCriteria(
+            Set.of("Drama"), Set.of(), 6.0, 180, Set.of("en")
+        );
+        when(tmdbProvider.isConfigured()).thenReturn(true);
+        when(omdbProvider.isConfigured()).thenReturn(true);
+        when(tmdbProvider.discoverMovies(criteria, 1, "uk-UA"))
+            .thenReturn(new MovieSearchResult(
+                1, 1, 1,
+                List.of(new MovieSearchResult.MovieSearchItem(
+                    99L, "New Movie", "TMDB overview", null,
+                    "2026-04-01", 7.0, "en", List.of("Drama")
+                ))
+            ));
+        when(movieRepository.findByTmdbId(99L)).thenReturn(Optional.empty());
+        when(movieRepository.save(any(Movie.class)))
+            .thenAnswer(invocation -> {
+                Movie movie = invocation.getArgument(0);
+                if (movie.getId() == null) movie.setId(2L);
+                return movie;
+            });
+
+        Movie tmdbDetails = new Movie();
+        tmdbDetails.setTmdbId(99L);
+        tmdbDetails.setTitle("New Movie");
+        tmdbDetails.setReleaseYear(2026);
+        when(tmdbProvider.getMovieDetails(99L))
+            .thenReturn(Optional.of(tmdbDetails));
+
+        Movie omdbDetails = new Movie();
+        omdbDetails.setImdbId("tt9999999");
+        omdbDetails.setTitle("New Movie");
+        omdbDetails.setDescription("Expanded title-match plot");
+        when(omdbProvider.getMovieDetailsByTitle("New Movie", 2026))
+            .thenReturn(Optional.of(omdbDetails));
+
+        var result = movieService.discoverMovies(criteria, 10);
+
+        assertEquals("Expanded title-match plot", result.getFirst().description());
+        assertEquals("tt9999999", result.getFirst().imdbId());
+        verify(omdbProvider).getMovieDetailsByTitle("New Movie", 2026);
     }
 }

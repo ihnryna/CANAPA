@@ -2,6 +2,7 @@ package org.spring.canapa.backend.movie.provider;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.spring.canapa.backend.movie.config.MovieApiProperties;
+import org.spring.canapa.backend.movie.dto.MovieDiscoveryCriteria;
 import org.spring.canapa.backend.movie.dto.MovieSearchResult;
 import org.spring.canapa.backend.movie.entity.Movie;
 import org.spring.canapa.backend.movie.provider.exception.MovieProviderException;
@@ -12,14 +13,43 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class TmdbMovieProvider implements MovieProvider {
 
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
+    private static final Map<Integer, String> GENRE_NAMES = Map.ofEntries(
+        Map.entry(28, "Action"),
+        Map.entry(12, "Adventure"),
+        Map.entry(16, "Animation"),
+        Map.entry(35, "Comedy"),
+        Map.entry(80, "Crime"),
+        Map.entry(99, "Documentary"),
+        Map.entry(18, "Drama"),
+        Map.entry(10751, "Family"),
+        Map.entry(14, "Fantasy"),
+        Map.entry(36, "History"),
+        Map.entry(27, "Horror"),
+        Map.entry(10402, "Music"),
+        Map.entry(9648, "Mystery"),
+        Map.entry(10749, "Romance"),
+        Map.entry(878, "Science Fiction"),
+        Map.entry(53, "Thriller"),
+        Map.entry(10752, "War"),
+        Map.entry(37, "Western")
+    );
+    private static final Map<String, Integer> GENRE_IDS = GENRE_NAMES.entrySet()
+        .stream()
+        .collect(Collectors.toUnmodifiableMap(
+            entry -> entry.getValue().toLowerCase(Locale.ROOT),
+            Map.Entry::getKey
+        ));
 
     private final RestClient restClient;
     private final MovieApiProperties properties;
@@ -95,6 +125,69 @@ public class TmdbMovieProvider implements MovieProvider {
                 "TMDB movie search failed",
                 ex
             );
+        }
+    }
+
+    public MovieSearchResult discoverMovies(
+        MovieDiscoveryCriteria criteria,
+        int page,
+        String language
+    ) {
+        requireConfigured();
+        Objects.requireNonNull(criteria, "Discovery criteria must not be null");
+
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+            .fromUriString(properties.getTmdb().getBaseUrl())
+            .path("/discover/movie")
+            .queryParam("include_adult", false)
+            .queryParam("include_video", false)
+            .queryParam("sort_by", "popularity.desc")
+            .queryParam("page", page)
+            .queryParamIfPresent("language", Optional.ofNullable(language));
+
+        genreIds(criteria.likedGenres()).ifPresent(ids ->
+            uriBuilder.queryParam("with_genres", ids));
+        genreIds(criteria.dislikedGenres()).ifPresent(ids ->
+            uriBuilder.queryParam("without_genres", ids));
+
+        if (criteria.minimumRating() != null) {
+            uriBuilder.queryParam("vote_average.gte", criteria.minimumRating());
+        }
+        if (criteria.maximumRuntime() != null) {
+            uriBuilder.queryParam("with_runtime.lte", criteria.maximumRuntime());
+        }
+        if (criteria.preferredLanguages().size() == 1) {
+            uriBuilder.queryParam(
+                "with_original_language",
+                criteria.preferredLanguages().iterator().next()
+            );
+        }
+
+        URI uri = uriBuilder.build().encode().toUri();
+
+        try {
+            TmdbSearchResponse response = restClient.get()
+                .uri(addApiKeyIfNeeded(uri))
+                .headers(headers -> {
+                    if (hasText(properties.getTmdb().getAccessToken())) {
+                        headers.setBearerAuth(properties.getTmdb().getAccessToken());
+                    }
+                })
+                .retrieve()
+                .body(TmdbSearchResponse.class);
+
+            if (response == null || response.results() == null) {
+                return new MovieSearchResult(page, 0, 0, List.of());
+            }
+
+            return new MovieSearchResult(
+                response.page(),
+                response.totalPages(),
+                response.totalResults(),
+                response.results().stream().map(this::toSearchItem).toList()
+            );
+        } catch (RestClientException ex) {
+            throw new MovieProviderException("TMDB movie discovery failed", ex);
         }
     }
 
@@ -181,8 +274,7 @@ public class TmdbMovieProvider implements MovieProvider {
 
         return UriComponentsBuilder.fromUri(uri)
             .queryParam("api_key", properties.getTmdb().getApiKey())
-            .build()
-            .encode()
+            .build(true)
             .toUri();
     }
 
@@ -197,8 +289,26 @@ public class TmdbMovieProvider implements MovieProvider {
             response.releaseDate(),
             response.voteAverage(),
             response.originalLanguage(),
-            List.of()
+            response.genreIds() == null
+                ? List.of()
+                : response.genreIds().stream()
+                    .map(GENRE_NAMES::get)
+                    .filter(Objects::nonNull)
+                    .toList()
         );
+    }
+
+    private Optional<String> genreIds(Set<String> genres) {
+        String value = genres.stream()
+            .filter(Objects::nonNull)
+            .map(genre -> genre.trim().toLowerCase(Locale.ROOT))
+            .map(GENRE_IDS::get)
+            .filter(Objects::nonNull)
+            .sorted()
+            .map(String::valueOf)
+            .collect(Collectors.joining("|"));
+
+        return value.isBlank() ? Optional.empty() : Optional.of(value);
     }
 
     private Movie toMovie(TmdbMovieResponse response) {
@@ -208,7 +318,7 @@ public class TmdbMovieProvider implements MovieProvider {
         movie.setTitle(response.title() == null ? "Untitled" : response.title());
         movie.setDescription(response.overview());
         movie.setRating(response.voteAverage());
-        movie.setRuntime(response.runtime());
+        movie.setRuntime(positiveRuntime(response.runtime()));
         movie.setReleaseYear(parseYear(response.releaseDate()));
         movie.setPosterUrl(posterUrl(response.posterPath()));
         movie.setOriginalLanguage(response.originalLanguage());
@@ -241,6 +351,10 @@ public class TmdbMovieProvider implements MovieProvider {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private Integer positiveRuntime(Integer runtime) {
+        return runtime != null && runtime > 0 ? runtime : null;
     }
 
     private void requireConfigured() {
@@ -278,6 +392,7 @@ public class TmdbMovieProvider implements MovieProvider {
         @JsonProperty("vote_average") Double voteAverage,
         @JsonProperty("runtime") Integer runtime,
         @JsonProperty("original_language") String originalLanguage,
+        @JsonProperty("genre_ids") List<Integer> genreIds,
         @JsonProperty("genres") List<TmdbGenre> genres,
         @JsonProperty("external_ids") TmdbExternalIds externalIds
     ) {

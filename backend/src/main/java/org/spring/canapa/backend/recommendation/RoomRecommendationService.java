@@ -1,6 +1,9 @@
 package org.spring.canapa.backend.recommendation;
 
+import org.spring.canapa.backend.movie.dto.MovieDiscoveryCriteria;
 import org.spring.canapa.backend.movie.dto.MovieResponse;
+import org.spring.canapa.backend.movie.entity.Movie;
+import org.spring.canapa.backend.movie.repository.MovieRepository;
 import org.spring.canapa.backend.movie.service.MovieService;
 import org.spring.canapa.backend.preference.dto.UserPreferenceResponse;
 import org.spring.canapa.backend.preference.service.UserPreferenceService;
@@ -9,12 +12,16 @@ import org.spring.canapa.backend.recommendation.dto.PreferenceSnapshot;
 import org.spring.canapa.backend.recommendation.dto.RoomRecommendedMovie;
 import org.spring.canapa.backend.recommendation.strategy.RecommendationType;
 import org.spring.canapa.backend.room.RoomService;
+import org.spring.canapa.backend.room.Room;
+import org.spring.canapa.backend.room.RoomRepository;
 import org.spring.canapa.backend.room.dto.RoomData;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,23 +32,32 @@ import java.util.stream.Collectors;
 @Service
 public class RoomRecommendationService {
 
+    private static final int ROOM_MOVIE_CACHE_SIZE = 40;
+
     private final RoomService roomService;
+    private final RoomRepository roomRepository;
     private final MovieService movieService;
+    private final MovieRepository movieRepository;
     private final UserPreferenceService preferenceService;
     private final RecommendationService recommendationService;
 
     public RoomRecommendationService(
         RoomService roomService,
+        RoomRepository roomRepository,
         MovieService movieService,
+        MovieRepository movieRepository,
         UserPreferenceService preferenceService,
         RecommendationService recommendationService
     ) {
         this.roomService = roomService;
+        this.roomRepository = roomRepository;
         this.movieService = movieService;
+        this.movieRepository = movieRepository;
         this.preferenceService = preferenceService;
         this.recommendationService = recommendationService;
     }
 
+    @Transactional
     public List<RoomRecommendedMovie> recommend(
         UUID roomId,
         UUID userId,
@@ -73,9 +89,6 @@ public class RoomRecommendationService {
             );
         }
 
-        List<MovieResponse> movies =
-            movieService.getPopularLocalMovies(limit);
-
         List<PreferenceSnapshot> preferences =
             preferenceService.getRoomPreferences(roomId)
                 .stream()
@@ -84,6 +97,30 @@ public class RoomRecommendationService {
                 )
                 .map(this::toSnapshot)
                 .toList();
+
+        if (preferences.isEmpty()) {
+            return List.of();
+        }
+
+        Room lockedRoom = roomRepository
+            .findByIdForUpdate(roomId)
+            .orElseThrow(() -> new IllegalStateException(
+                "Room disappeared while loading recommendations: " + roomId
+            ));
+
+        List<MovieResponse> movies;
+
+        if (!lockedRoom.hasMovieCandidatesCache()) {
+            movies = movieService.discoverMovies(
+                discoveryCriteria(preferences),
+                ROOM_MOVIE_CACHE_SIZE
+            );
+            cacheMovies(lockedRoom, movies);
+        } else {
+            movies = lockedRoom.getMovieCandidates().stream()
+                .map(MovieResponse::from)
+                .toList();
+        }
 
         Map<UUID, MovieResponse> moviesByCandidateId =
             movies.stream().collect(Collectors.toMap(
@@ -102,7 +139,24 @@ public class RoomRecommendationService {
                 moviesByCandidateId.get(result.movie().id()),
                 result.score()
             ))
+            .limit(limit)
             .toList();
+    }
+
+    private void cacheMovies(Room room, List<MovieResponse> movies) {
+        Map<Long, Movie> storedMovies = movieRepository
+            .findAllById(movies.stream().map(MovieResponse::id).toList())
+            .stream()
+            .collect(Collectors.toMap(Movie::getId, Function.identity()));
+
+        List<Movie> orderedMovies = movies.stream()
+            .map(MovieResponse::id)
+            .map(storedMovies::get)
+            .filter(java.util.Objects::nonNull)
+            .toList();
+
+        room.cacheMovieCandidates(orderedMovies);
+        roomRepository.saveAndFlush(room);
     }
 
     private MovieCandidate toCandidate(MovieResponse movie) {
@@ -130,6 +184,46 @@ public class RoomRecommendationService {
             preference.maxRuntime(),
             preference.preferredLanguage(),
             preference.textPreference()
+        );
+    }
+
+    private MovieDiscoveryCriteria discoveryCriteria(
+        List<PreferenceSnapshot> preferences
+    ) {
+        Set<String> likedGenres = new HashSet<>();
+        Set<String> dislikedGenres = new HashSet<>();
+        Set<String> languages = new HashSet<>();
+        Double minimumRating = null;
+        Integer maximumRuntime = null;
+
+        for (PreferenceSnapshot preference : preferences) {
+            likedGenres.addAll(preference.likedGenres());
+            dislikedGenres.addAll(preference.dislikedGenres());
+
+            if (preference.preferredLanguage() != null
+                && !preference.preferredLanguage().isBlank()) {
+                languages.add(preference.preferredLanguage().trim());
+            }
+            if (preference.minRating() != null) {
+                minimumRating = minimumRating == null
+                    ? preference.minRating()
+                    : Math.max(minimumRating, preference.minRating());
+            }
+            if (preference.maxRuntime() != null) {
+                maximumRuntime = maximumRuntime == null
+                    ? preference.maxRuntime()
+                    : Math.min(maximumRuntime, preference.maxRuntime());
+            }
+        }
+
+        likedGenres.removeAll(dislikedGenres);
+
+        return new MovieDiscoveryCriteria(
+            likedGenres,
+            dislikedGenres,
+            minimumRating,
+            maximumRuntime,
+            languages
         );
     }
 

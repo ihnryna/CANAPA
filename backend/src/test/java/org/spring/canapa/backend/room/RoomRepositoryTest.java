@@ -3,6 +3,8 @@ package org.spring.canapa.backend.room;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
+import org.spring.canapa.backend.movie.entity.Movie;
+import org.spring.canapa.backend.movie.repository.MovieRepository;
 import org.spring.canapa.backend.user.User;
 import org.spring.canapa.backend.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,6 +51,9 @@ class RoomRepositoryTest {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private MovieRepository movieRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -84,6 +90,30 @@ class RoomRepositoryTest {
             "alice@example.com",
             "bob@example.com"
         );
+    }
+
+    @Test
+    void savesOrderedMovieCandidatesForRoom() {
+        User creator = userRepository.save(
+            new User("Alice", "alice-cache@example.com")
+        );
+        Movie first = new Movie();
+        first.setTitle("First cached movie");
+        Movie second = new Movie();
+        second.setTitle("Second cached movie");
+        movieRepository.saveAllAndFlush(List.of(first, second));
+
+        Room room = new Room("Cached movie night", creator);
+        room.cacheMovieCandidates(List.of(first, second));
+        Room saved = roomRepository.saveAndFlush(room);
+        entityManager.clear();
+
+        Room found = roomRepository.findById(saved.getId()).orElseThrow();
+
+        assertThat(found.getMovieCandidates())
+            .extracting(Movie::getTitle)
+            .containsExactly("First cached movie", "Second cached movie");
+        assertThat(found.getMovieCandidatesCachedAt()).isNotNull();
     }
 
     @Test

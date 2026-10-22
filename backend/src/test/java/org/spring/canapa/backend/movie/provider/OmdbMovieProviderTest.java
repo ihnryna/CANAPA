@@ -273,6 +273,37 @@ class OmdbMovieProviderTest {
     }
 
     @Test
+    void getMovieDetailsByTitleUsesTitleYearAndFullPlot() {
+        server.expect(requestTo(
+                org.hamcrest.Matchers.allOf(
+                    org.hamcrest.Matchers.containsString("apikey=test-key"),
+                    org.hamcrest.Matchers.containsString("t=Backrooms"),
+                    org.hamcrest.Matchers.containsString("y=2026"),
+                    org.hamcrest.Matchers.containsString("type=movie"),
+                    org.hamcrest.Matchers.containsString("plot=full")
+                )
+            ))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("""
+                {
+                  "Title": "Backrooms",
+                  "Year": "2026",
+                  "Plot": "An expanded plot from OMDb.",
+                  "imdbID": "tt26657236",
+                  "Response": "True"
+                }
+                """, MediaType.APPLICATION_JSON));
+
+        Movie movie = provider
+            .getMovieDetailsByTitle("Backrooms", 2026)
+            .orElseThrow();
+
+        assertEquals("tt26657236", movie.getImdbId());
+        assertEquals("An expanded plot from OMDb.", movie.getDescription());
+        server.verify();
+    }
+
+    @Test
     void getMovieDetailsByImdbIdHandlesUnavailableOptionalFields() {
         server.expect(requestTo(
                 org.hamcrest.Matchers.containsString("i=tt7654321")
@@ -282,7 +313,7 @@ class OmdbMovieProviderTest {
                 {
                   "Title": "Minimal Movie",
                   "Year": "N/A",
-                  "Runtime": "N/A",
+                  "Runtime": "0 min",
                   "Genre": "N/A",
                   "Director": "N/A",
                   "Writer": "N/A",

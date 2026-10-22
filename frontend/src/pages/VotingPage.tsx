@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getPopularMovies, searchMovies, type Movie } from '../api/movies'
+import { searchMovies, type Movie } from '../api/movies'
+import { getRoomRecommendations } from '../api/recommendations'
 import {
   addVote,
   excludeMovie,
@@ -129,7 +130,14 @@ export function VotingPage() {
     try {
       const [loadedMovies, loadedVotes, loadedExcluded] =
         await Promise.all([
-          getPopularMovies(40),
+          getRoomRecommendations(
+            validRoomId,
+            user.id,
+            'CONSENSUS',
+            40,
+          ).then((recommendations) =>
+            recommendations.map((recommendation) => recommendation.movie),
+          ),
           getRoomVotes(validRoomId),
           getExcludedMovies(validRoomId),
         ])
@@ -152,7 +160,7 @@ export function VotingPage() {
     } finally {
       setLoadingMovies(false)
     }
-  }, [validRoomId, user, room])
+  }, [validRoomId, user, room?.status])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -404,6 +412,9 @@ export function VotingPage() {
         id: Date.now(),
         roomId: validRoomId,
         winnerMovieIds,
+        winners: MOCK_MOVIES.filter((movie) =>
+          winnerMovieIds.includes(movie.id)
+        ),
         voteCount: votes.length,
         finishedAt: new Date().toISOString(),
       })
@@ -573,7 +584,9 @@ export function VotingPage() {
                 </p>
                 <div className="winner-list">
                   {result.winnerMovieIds.map((id) => {
-                    const movie = movieById.get(id)
+                    const movie = result.winners.find(
+                      (winner) => winner.id === id
+                    ) ?? movieById.get(id)
 
                     return (
                       <div className="winner-item" key={id}>

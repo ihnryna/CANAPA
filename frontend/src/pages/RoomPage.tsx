@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { createInvitation, type Invitation } from '../api/invitations'
+import { changeRoomStatus } from '../api/rooms'
+import { getVotingResult, type VotingResult } from '../api/voting'
 import { useCurrentUser } from '../auth/current-user-context'
 import { isUuid } from '../auth/user-id'
 import { AppHeader } from '../components/AppHeader'
@@ -117,6 +119,10 @@ export function RoomPage() {
   const initialNotice = routeState?.created ? 'Кімнату створено' : routeState?.joined ? 'Ви приєдналися до кімнати' : routeState?.alreadyMember ? 'Ви вже були учасником кімнати' : null
   const [notice, setNotice] = useState<string | null>(initialNotice)
   const [showInvitation, setShowInvitation] = useState(false)
+  const [startingVoting, setStartingVoting] = useState(false)
+  const [votingError, setVotingError] = useState<string | null>(null)
+  const [votingResult, setVotingResult] = useState<VotingResult | null>(null)
+  const [resultError, setResultError] = useState<string | null>(null)
   const { room, readyUserIds, loading, error, preferencesError, lastUpdatedAt, refresh } = useRoomPolling(validRoomId)
 
   useEffect(() => {
@@ -124,6 +130,31 @@ export function RoomPage() {
     const timer = window.setTimeout(() => setNotice(null), 3200)
     return () => window.clearTimeout(timer)
   }, [notice])
+
+  useEffect(() => {
+    if (room?.status !== 'FINISHED') {
+      setVotingResult(null)
+      setResultError(null)
+      return
+    }
+
+    const controller = new AbortController()
+    setResultError(null)
+
+    getVotingResult(room.id, controller.signal)
+      .then(setVotingResult)
+      .catch((caught: unknown) => {
+        if (!controller.signal.aborted) {
+          setResultError(
+            caught instanceof Error
+              ? caught.message
+              : 'Не вдалося завантажити результат голосування.',
+          )
+        }
+      })
+
+    return () => controller.abort()
+  }, [room?.id, room?.status])
 
   const organizer = room?.creator.id === user?.id
   const member = room?.participants.some((participant) => participant.id === user?.id) ?? false
@@ -136,6 +167,21 @@ export function RoomPage() {
       setNotice('ID кімнати скопійовано')
     } catch {
       setNotice('Не вдалося скопіювати ID')
+    }
+  }
+
+  async function handleStartVoting() {
+    if (room === null || user === null || !organizer || room.status !== 'CREATED') return
+
+    setStartingVoting(true)
+    setVotingError(null)
+    try {
+      await changeRoomStatus(room.id, user.id, 'VOTING')
+      navigate(`/rooms/${room.id}/voting`)
+    } catch (caught) {
+      setVotingError(caught instanceof Error ? caught.message : 'Не вдалося розпочати голосування.')
+    } finally {
+      setStartingVoting(false)
     }
   }
 
@@ -172,6 +218,9 @@ export function RoomPage() {
         {error !== null && <div className="polling-alert" role="alert"><span>Оновлення призупинено: {error}</span>
             <button className="text-button" onClick={() => void refresh()}>Повторити</button>
         </div>}
+        {votingError !== null && <div className="polling-alert" role="alert"><span>{votingError}</span>
+            <button className="text-button" onClick={() => void handleStartVoting()}>Повторити</button>
+        </div>}
         {!member && <div className="polling-alert warning" role="alert">Ваш профіль не входить до списку учасників. Дані
             доступні через backend, але дії кімнати приховано.</div>}
 
@@ -186,10 +235,27 @@ export function RoomPage() {
           </button>
           <span className="polling-note">{lastUpdatedAt === null ? 'Оновлюємо…' : 'Автоматично оновлюється'}</span>
         </div>
-        {room.status === 'VOTING' && (
+        {organizer && member && room.status === 'CREATED' && (
+          <div className="voting-entry">
+            <button className="btn primary" type="button" disabled={startingVoting}
+                    onClick={() => void handleStartVoting()}>
+              {startingVoting ? 'Розпочинаємо…' : 'Розпочати голосування'}
+              {!startingVoting && <Icon name="arrow" size={17}/>}
+            </button>
+          </div>
+        )}
+        {member && room.status === 'VOTING' && (
           <div className="voting-entry">
             <Link className="btn primary" to={`/rooms/${room.id}/voting`}>
               Перейти до голосування
+              <Icon name="arrow" size={17}/>
+            </Link>
+          </div>
+        )}
+        {member && room.status === 'FINISHED' && (
+          <div className="voting-entry">
+            <Link className="btn primary" to={`/rooms/${room.id}/voting`}>
+              Переглянути результат
               <Icon name="arrow" size={17}/>
             </Link>
           </div>
@@ -204,7 +270,9 @@ export function RoomPage() {
             <button
               key={step}
               type="button"
-              className={index === 0 ? 'active' : ''}
+              className={room.status === 'FINISHED'
+                ? index === 3 ? 'active' : ''
+                : index === 0 ? 'active' : ''}
               disabled={!member}
               onClick={() => {
                 if (index === 1) {
@@ -212,6 +280,10 @@ export function RoomPage() {
                 }
                 if (index === 2) {
                   navigate(`/rooms/${room.id}/voting`)
+                }
+                if (index === 3 && room.status === 'FINISHED') {
+                  document.getElementById('room-voting-result')
+                    ?.scrollIntoView({ behavior: 'smooth' })
                 }
               }}
             >
@@ -223,14 +295,68 @@ export function RoomPage() {
 
         <section className="rooms-heading lobby-heading">
           <div className="page-heading">
-            <div className="eyebrow">ЗБИРАЄМО КОМПАНІЮ</div>
-            <h2>{organizer ? 'Гарне кіно починається з вас' : 'Ваша компанія вже збирається'}</h2>
-            <p>{organizer ? 'Ви — організатор. Запросіть друзів і стежте за готовністю групи.' : 'Ви — учасник. Сторінка автоматично показуватиме зміни в кімнаті.'}</p>
+            <div className="eyebrow">
+              {room.status === 'FINISHED' ? 'ВИБІР ЗРОБЛЕНО' : 'ЗБИРАЄМО КОМПАНІЮ'}
+            </div>
+            <h2>{room.status === 'FINISHED'
+              ? 'Команда обрала фільм'
+              : organizer
+                ? 'Гарне кіно починається з вас'
+                : 'Ваша компанія вже збирається'}</h2>
+            <p>{room.status === 'FINISHED'
+              ? 'Голосування завершено. Нижче збережено результат вашого кіновечора.'
+              : organizer
+                ? 'Ви — організатор. Запросіть друзів і стежте за готовністю групи.'
+                : 'Ви — учасник. Сторінка автоматично показуватиме зміни в кімнаті.'}</p>
           </div>
           {organizer && member && room.status === 'CREATED' &&
               <button className="btn secondary" onClick={() => setShowInvitation(true)}><Icon name="link"/> Запросити
                   друзів</button>}
         </section>
+
+        {room.status === 'FINISHED' && (
+          <section
+            id="room-voting-result"
+            className="voting-state-panel result-panel"
+            aria-live="polite"
+          >
+            <div className="eyebrow">РЕЗУЛЬТАТ ГОЛОСУВАННЯ</div>
+            <h2>Голосування завершено</h2>
+            {resultError !== null ? (
+              <p role="alert">{resultError}</p>
+            ) : votingResult === null ? (
+              <p>Завантажуємо фільм, який обрала команда…</p>
+            ) : votingResult.winners.length === 0 ? (
+              <p>Команда не віддала жодного голосу, тому переможця немає.</p>
+            ) : (
+              <>
+                <p>{votingResult.winners.length > 1
+                  ? 'Голоси розділилися порівну. Переможці:'
+                  : 'Команда обрала:'}</p>
+                <div className="winner-list">
+                  {votingResult.winners.map((movie) => (
+                    <article className="winner-item" key={movie.id}>
+                      {movie.posterUrl ? (
+                        <img src={movie.posterUrl} alt={`Постер: ${movie.title}`}/>
+                      ) : (
+                        <span className="poster-placeholder">
+                          <Icon name="film" size={28}/>
+                        </span>
+                      )}
+                      <strong>{movie.title}</strong>
+                      <span>{movie.releaseYear ?? 'Рік невідомий'}</span>
+                    </article>
+                  ))}
+                </div>
+                <p className="subtle-note">
+                  {votingResult.winners.length > 1
+                    ? `За кожного переможця: ${votingResult.voteCount} голосів.`
+                    : `Голосів за фільм: ${votingResult.voteCount}.`}
+                </p>
+              </>
+            )}
+          </section>
+        )}
 
         <div className="lobby-grid">
           <section className="panel members-panel">
@@ -275,7 +401,7 @@ export function RoomPage() {
         </div>
 
         <div className="bottom-bar">
-          <p>{room.status === 'CREATED' ? 'Кімната відкрита для нових учасників.' : room.status === 'VOTING' ? 'Голосування вже почалося. Екран голосування буде додано окремо.' : 'Кіновечір завершено. Екран результату буде додано окремо.'}</p>
+          <p>{room.status === 'CREATED' ? 'Кімната відкрита для нових учасників.' : room.status === 'VOTING' ? 'Голосування вже почалося. Перейдіть до нього, щоб обрати фільм.' : 'Голосування завершено. Командний вибір збережено в кімнаті.'}</p>
           <button className="btn secondary" onClick={() => void refresh()}>Оновити зараз</button>
         </div>
       </main>

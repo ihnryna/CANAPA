@@ -151,13 +151,16 @@ public class VotingService {
 
     @Transactional
     public VotingResult finishVoting(UUID roomId) {
+        Room room = roomRepository.findByIdForUpdate(roomId)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Room not found: " + roomId
+            ));
+
         if (votingResultRepository.existsByRoom_Id(roomId)) {
             throw new IllegalStateException(
                 "Voting has already finished for room: " + roomId
             );
         }
-
-        Room room = getRoom(roomId);
 
         List<Long> excludedMovieIds = excludedMovieRepository
             .findAllByRoom_Id(roomId)
@@ -228,6 +231,8 @@ public class VotingService {
     }
 
     private VotingResult saveResultAndPublishEvent(VotingResult result) {
+        result.getRoom().markVotingFinished();
+        roomRepository.save(result.getRoom());
         VotingResult savedResult = votingResultRepository.save(result);
 
         eventPublisher.publishEvent(new VotingResultsReadyEvent(
