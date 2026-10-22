@@ -3,6 +3,8 @@ package org.spring.canapa.backend.notification.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spring.canapa.backend.movie.entity.Movie;
+import org.spring.canapa.backend.movie.repository.MovieRepository;
 import org.spring.canapa.backend.notification.entity.Notification;
 import org.spring.canapa.backend.notification.entity.NotificationType;
 import org.spring.canapa.backend.notification.event.VotingResultsReadyEvent;
@@ -25,15 +27,18 @@ public class VotingEmailNotificationService {
     private final RoomRepository roomRepository;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final MovieRepository movieRepository;
 
     public VotingEmailNotificationService(
         RoomRepository roomRepository,
         EmailService emailService,
-        NotificationService notificationService
+        NotificationService notificationService,
+        MovieRepository movieRepository
     ) {
         this.roomRepository = roomRepository;
         this.emailService = emailService;
         this.notificationService = notificationService;
+        this.movieRepository = movieRepository;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -54,7 +59,7 @@ public class VotingEmailNotificationService {
                     room.getId(),
                     NotificationType.VOTING_STARTED,
                     message,
-                    "CANAPA — голосування розпочалося",
+                    "CANAPA: голосування розпочалося",
                     "Привіт, " + participant.getName() + "!\n\n"
                         + message
                         + "\n\nЗаходь у CANAPA, щоб проголосувати."
@@ -77,13 +82,24 @@ public class VotingEmailNotificationService {
                     "Room not found: " + event.roomId()
                 ));
 
-            String winnersText = event.winnerMovieIds().isEmpty()
-                ? "У голосуванні немає переможців: жоден фільм не отримав голосів."
-                : event.winnerMovieIds().size() == 1
-                ? "Фільм-переможець: ID "
-                + event.winnerMovieIds().getFirst() + "."
-                : "Нічия! Фільми-переможці (ID): "
-                + event.winnerMovieIds() + ".";
+            List<String> winnerTitles = event.winnerMovieIds().stream()
+                    .map(movieId -> movieRepository.findById(movieId)
+                            .map(Movie::getTitle)
+                            .orElse("Невідомий фільм"))
+                    .toList();
+
+            String winnersText;
+
+            if (winnerTitles.isEmpty()) {
+                winnersText =
+                        "У голосуванні немає переможців: жоден фільм не отримав голосів.";
+            } else if (winnerTitles.size() == 1) {
+                winnersText = "Фільм-переможець: «"
+                        + winnerTitles.getFirst() + "».";
+            } else {
+                winnersText = "Нічия! Фільми-переможці: "
+                        + String.join(", ", winnerTitles) + ".";
+            }
 
             String message = "Результати голосування в кімнаті «"
                 + room.getName() + "». " + winnersText
@@ -97,7 +113,7 @@ public class VotingEmailNotificationService {
                     room.getId(),
                     NotificationType.RESULTS_READY,
                     message,
-                    "CANAPA — результати голосування",
+                    "CANAPA: результати голосування",
                     "Привіт, " + participant.getName() + "!\n\n"
                         + message
                         + "\n\nДякуємо за участь у голосуванні!"
