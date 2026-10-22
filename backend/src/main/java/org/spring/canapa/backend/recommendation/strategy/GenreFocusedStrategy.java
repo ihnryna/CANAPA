@@ -23,45 +23,45 @@ public class GenreFocusedStrategy implements RecommendationStrategy {
 
     @Override
     public List<RecommendedMovie> recommend(
-            List<MovieCandidate> movies,
-            List<PreferenceSnapshot> preferences
+        List<MovieCandidate> movies,
+        List<PreferenceSnapshot> preferences
     ) {
         Objects.requireNonNull(movies, "Movies must not be null");
         Objects.requireNonNull(preferences, "Preferences must not be null");
 
         List<PreferenceSnapshot> genrePreferences = preferences.stream()
-                .filter(Objects::nonNull)
-                .filter(preference ->
-                        !normalizeGenres(preference.likedGenres()).isEmpty()
-                                || !normalizeGenres(preference.dislikedGenres()).isEmpty()
-                )
-                .toList();
+            .filter(Objects::nonNull)
+            .filter(preference ->
+                !normalizeGenres(preference.likedGenres()).isEmpty()
+                    || !normalizeGenres(preference.dislikedGenres()).isEmpty()
+            )
+            .toList();
 
         if (genrePreferences.isEmpty()) {
             return List.of();
         }
 
         return movies.stream()
-                .filter(Objects::nonNull)
-                .map(movie -> new RecommendedMovie(
-                        movie,
-                        calculateGroupScore(movie, genrePreferences)
-                ))
-                .sorted(
-                        Comparator.comparingDouble(RecommendedMovie::score)
-                                .reversed()
-                                .thenComparing(
-                                        result -> result.movie().title(),
-                                        String.CASE_INSENSITIVE_ORDER
-                                )
-                                .thenComparing(result -> result.movie().id())
-                )
-                .toList();
+            .filter(Objects::nonNull)
+            .map(movie -> new RecommendedMovie(
+                movie,
+                calculateGroupScore(movie, genrePreferences)
+            ))
+            .sorted(
+                Comparator.comparingDouble(RecommendedMovie::score)
+                    .reversed()
+                    .thenComparing(
+                        result -> result.movie().title(),
+                        String.CASE_INSENSITIVE_ORDER
+                    )
+                    .thenComparing(result -> result.movie().id())
+            )
+            .toList();
     }
 
     private double calculateGroupScore(
-            MovieCandidate movie,
-            List<PreferenceSnapshot> preferences
+        MovieCandidate movie,
+        List<PreferenceSnapshot> preferences
     ) {
         Set<String> movieGenres = normalizeGenres(movie.genres());
 
@@ -70,25 +70,25 @@ public class GenreFocusedStrategy implements RecommendationStrategy {
         }
 
         return preferences.stream()
-                .mapToDouble(preference ->
-                        calculateUserScore(movieGenres, preference)
-                )
-                .average()
-                .orElse(0.0);
+            .mapToDouble(preference ->
+                calculateUserScore(movieGenres, preference)
+            )
+            .average()
+            .orElse(0.0);
     }
 
     private double calculateUserScore(
-            Set<String> movieGenres,
-            PreferenceSnapshot preference
+        Set<String> movieGenres,
+        PreferenceSnapshot preference
     ) {
         Set<String> likedGenres =
-                normalizeGenres(preference.likedGenres());
+            normalizeGenres(preference.likedGenres());
 
         Set<String> dislikedGenres =
-                normalizeGenres(preference.dislikedGenres());
+            normalizeGenres(preference.dislikedGenres());
 
         boolean hasDislikedGenre = dislikedGenres.stream()
-                .anyMatch(movieGenres::contains);
+            .anyMatch(movieGenres::contains);
 
         if (hasDislikedGenre) {
             return 0.0;
@@ -99,8 +99,8 @@ public class GenreFocusedStrategy implements RecommendationStrategy {
         }
 
         long matchingGenres = likedGenres.stream()
-                .filter(movieGenres::contains)
-                .count();
+            .filter(movieGenres::contains)
+            .count();
 
         return (double) matchingGenres / likedGenres.size();
     }
@@ -111,9 +111,9 @@ public class GenreFocusedStrategy implements RecommendationStrategy {
         }
 
         return genres.stream()
-                .filter(Objects::nonNull)
-                .map(genre -> genre.trim().toLowerCase(Locale.ROOT))
-                .filter(genre -> !genre.isEmpty())
-                .collect(Collectors.toUnmodifiableSet());
+            .filter(Objects::nonNull)
+            .map(genre -> genre.trim().toLowerCase(Locale.ROOT))
+            .filter(genre -> !genre.isEmpty())
+            .collect(Collectors.toUnmodifiableSet());
     }
 }

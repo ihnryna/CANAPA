@@ -20,35 +20,35 @@ public class AverageRatingStrategy implements RecommendationStrategy {
 
     @Override
     public List<RecommendedMovie> recommend(
-            List<MovieCandidate> movies,
-            List<PreferenceSnapshot> preferences
+        List<MovieCandidate> movies,
+        List<PreferenceSnapshot> preferences
     ) {
         Objects.requireNonNull(movies, "Movies must not be null");
         Objects.requireNonNull(preferences, "Preferences must not be null");
 
         return movies.stream()
-                .filter(Objects::nonNull)
-                .filter(movie -> isValidRating(movie.rating()))
-                .map(movie -> new RecommendedMovie(
-                        movie,
-                        movie.rating() / 10.0
-                ))
-                .sorted(
-                        Comparator.comparingDouble(RecommendedMovie::score)
-                                .reversed()
-                                .thenComparing(
-                                        result -> result.movie().title(),
-                                        String.CASE_INSENSITIVE_ORDER
-                                )
-                                .thenComparing(result -> result.movie().id())
-                )
-                .toList();
+            .filter(Objects::nonNull)
+            .filter(movie -> isValidRating(movie.rating()))
+            .map(movie -> new RecommendedMovie(
+                movie,
+                movie.rating() / 10.0
+            ))
+            .sorted(
+                Comparator.comparingDouble(RecommendedMovie::score)
+                    .reversed()
+                    .thenComparing(
+                        result -> result.movie().title(),
+                        String.CASE_INSENSITIVE_ORDER
+                    )
+                    .thenComparing(result -> result.movie().id())
+            )
+            .toList();
     }
 
     private boolean isValidRating(Double rating) {
         return rating != null
-                && Double.isFinite(rating)
-                && rating >= 0.0
-                && rating <= 10.0;
+            && Double.isFinite(rating)
+            && rating >= 0.0
+            && rating <= 10.0;
     }
 }

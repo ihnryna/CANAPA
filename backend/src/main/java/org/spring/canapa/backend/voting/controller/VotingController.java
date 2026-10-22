@@ -22,19 +22,19 @@ public class VotingController {
 
     @PostMapping
     public ResponseEntity<VoteResponse> addVote(
-            @PathVariable UUID roomId,
-            @RequestBody VoteRequest request
+        @PathVariable UUID roomId,
+        @RequestBody VoteRequest request
     ) {
         if (request.userId() == null || request.movieId() == null) {
             throw new IllegalArgumentException(
-                    "userId and movieId are required"
+                "userId and movieId are required"
             );
         }
 
         Vote vote = votingService.addVote(
-                request.userId(),
-                roomId,
-                request.movieId()
+            request.userId(),
+            roomId,
+            request.movieId()
         );
 
         return ResponseEntity.ok(toResponse(vote));
@@ -42,9 +42,9 @@ public class VotingController {
 
     @DeleteMapping("/{movieId}")
     public ResponseEntity<Void> removeVote(
-            @PathVariable UUID roomId,
-            @PathVariable Long movieId,
-            @RequestParam UUID userId
+        @PathVariable UUID roomId,
+        @PathVariable Long movieId,
+        @RequestParam UUID userId
     ) {
         votingService.removeVote(userId, roomId, movieId);
 
@@ -53,37 +53,37 @@ public class VotingController {
 
     @GetMapping
     public ResponseEntity<List<VoteResponse>> getRoomVotes(
-            @PathVariable UUID roomId
+        @PathVariable UUID roomId
     ) {
         List<VoteResponse> votes = votingService.getRoomVotes(roomId)
-                .stream()
-                .map(VotingController::toResponse)
-                .toList();
+            .stream()
+            .map(VotingController::toResponse)
+            .toList();
 
         return ResponseEntity.ok(votes);
     }
 
     @GetMapping("/me")
     public ResponseEntity<List<VoteResponse>> getUserVotes(
-            @PathVariable UUID roomId,
-            @RequestParam UUID userId
+        @PathVariable UUID roomId,
+        @RequestParam UUID userId
     ) {
         List<VoteResponse> votes = votingService
-                .getUserVotes(userId, roomId)
-                .stream()
-                .map(VotingController::toResponse)
-                .toList();
+            .getUserVotes(userId, roomId)
+            .stream()
+            .map(VotingController::toResponse)
+            .toList();
 
         return ResponseEntity.ok(votes);
     }
 
     private static VoteResponse toResponse(Vote vote) {
         return new VoteResponse(
-                vote.getId(),
-                vote.getUser().getId(),
-                vote.getRoom().getId(),
-                vote.getMovie().getId(),
-                vote.getCreatedAt()
+            vote.getId(),
+            vote.getUser().getId(),
+            vote.getRoom().getId(),
+            vote.getMovie().getId(),
+            vote.getCreatedAt()
         );
     }
 }

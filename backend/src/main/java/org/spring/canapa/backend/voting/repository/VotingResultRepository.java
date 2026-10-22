@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface VotingResultRepository
-        extends JpaRepository<VotingResult, Long> {
+    extends JpaRepository<VotingResult, Long> {
 
     Optional<VotingResult> findByRoom_Id(UUID roomId);
 

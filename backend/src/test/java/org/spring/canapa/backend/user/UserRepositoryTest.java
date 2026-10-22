@@ -26,10 +26,10 @@ class UserRepositoryTest {
 
     @Container
     static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:16-alpine")
-                    .withDatabaseName("canapa_test")
-                    .withUsername("test")
-                    .withPassword("test");
+        new PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("canapa_test")
+            .withUsername("test")
+            .withPassword("test");
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
@@ -37,7 +37,7 @@ class UserRepositoryTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name",
-                () -> "org.postgresql.Driver");
+            () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 
@@ -67,14 +67,14 @@ class UserRepositoryTest {
         userRepository.saveAndFlush(new User("Alice", "alice@example.com"));
 
         assertThatThrownBy(() ->
-                userRepository.saveAndFlush(new User("Another Alice", "ALICE@example.com")))
-                .isInstanceOf(DataIntegrityViolationException.class);
+            userRepository.saveAndFlush(new User("Another Alice", "ALICE@example.com")))
+            .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void rejectsBlankNameAtDatabaseBoundary() {
         assertThatThrownBy(() ->
-                userRepository.saveAndFlush(new User("   ", "alice@example.com")))
-                .isInstanceOf(DataIntegrityViolationException.class);
+            userRepository.saveAndFlush(new User("   ", "alice@example.com")))
+            .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

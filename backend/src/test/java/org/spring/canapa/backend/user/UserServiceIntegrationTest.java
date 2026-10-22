@@ -27,10 +27,10 @@ class UserServiceIntegrationTest {
 
     @Container
     static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:16-alpine")
-                    .withDatabaseName("canapa_test")
-                    .withUsername("test")
-                    .withPassword("test");
+        new PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("canapa_test")
+            .withUsername("test")
+            .withPassword("test");
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
@@ -38,7 +38,7 @@ class UserServiceIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name",
-                () -> "org.postgresql.Driver");
+            () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 
@@ -48,13 +48,13 @@ class UserServiceIntegrationTest {
     @Test
     void createsRetrievesAndUpdatesUser() {
         UserData created = userService.createUser(
-                new CreateUserCommand("  Alice  ", " Alice@Example.COM ")
+            new CreateUserCommand("  Alice  ", " Alice@Example.COM ")
         );
 
         UserData retrieved = userService.getUser(created.id());
         UserData updated = userService.updateUser(
-                created.id(),
-                new UpdateUserCommand("Alice Smith", "alice.smith@example.com")
+            created.id(),
+            new UpdateUserCommand("Alice Smith", "alice.smith@example.com")
         );
 
         assertThat(created.id()).isNotNull();
@@ -71,7 +71,7 @@ class UserServiceIntegrationTest {
         userService.createUser(new CreateUserCommand("Alice", "alice@example.com"));
 
         assertThatThrownBy(() -> userService.createUser(
-                new CreateUserCommand("Another Alice", "ALICE@EXAMPLE.COM")
+            new CreateUserCommand("Another Alice", "ALICE@EXAMPLE.COM")
         )).isInstanceOf(DuplicateUserEmailException.class);
     }
 }

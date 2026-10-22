@@ -23,24 +23,24 @@ public class InvitationController {
     @PostMapping("/rooms/{roomId}/invitations")
     @ResponseStatus(HttpStatus.CREATED)
     public InvitationResponse createInvitation(
-            @PathVariable UUID roomId,
-            @RequestHeader("X-User-Id") UUID userId,
-            @Valid @RequestBody(required = false)
-            CreateInvitationRequest request
+        @PathVariable UUID roomId,
+        @RequestHeader("X-User-Id") UUID userId,
+        @Valid @RequestBody(required = false)
+        CreateInvitationRequest request
     ) {
         Long expiresInHours = request == null
-                ? null
-                : request.expiresInHours();
+            ? null
+            : request.expiresInHours();
 
         Invitation invitation = invitationService.createInvitation(
-                roomId,
-                userId,
-                expiresInHours
+            roomId,
+            userId,
+            expiresInHours
         );
 
         return InvitationResponse.from(
-                invitation,
-                invitationService.createInvitationLink(invitation.getCode())
+            invitation,
+            invitationService.createInvitationLink(invitation.getCode())
         );
     }
 
@@ -50,14 +50,14 @@ public class InvitationController {
      */
     @PostMapping("/invitations/{code}/join")
     public InvitationResponse validateInvitationForJoining(
-            @PathVariable String code,
-            @RequestHeader("X-User-Id") UUID userId
+        @PathVariable String code,
+        @RequestHeader("X-User-Id") UUID userId
     ) {
         Invitation invitation = invitationService.getValidInvitation(code);
 
         return InvitationResponse.from(
-                invitation,
-                invitationService.createInvitationLink(invitation.getCode())
+            invitation,
+            invitationService.createInvitationLink(invitation.getCode())
         );
     }
 }

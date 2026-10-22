@@ -26,54 +26,54 @@ public class ConsensusStrategy implements RecommendationStrategy {
 
     @Override
     public List<RecommendedMovie> recommend(
-            List<MovieCandidate> movies,
-            List<PreferenceSnapshot> preferences
+        List<MovieCandidate> movies,
+        List<PreferenceSnapshot> preferences
     ) {
         Objects.requireNonNull(movies, "Movies must not be null");
         Objects.requireNonNull(preferences, "Preferences must not be null");
 
         List<PreferenceSnapshot> groupPreferences = preferences.stream()
-                .filter(Objects::nonNull)
-                .toList();
+            .filter(Objects::nonNull)
+            .toList();
 
         if (groupPreferences.isEmpty()) {
             return List.of();
         }
 
         return movies.stream()
-                .filter(Objects::nonNull)
-                .filter(movie ->
-                        satisfiesAllRestrictions(movie, groupPreferences)
-                )
-                .map(movie -> new RecommendedMovie(
-                        movie,
-                        calculateConsensusScore(movie, groupPreferences)
-                ))
-                .sorted(
-                        Comparator.comparingDouble(RecommendedMovie::score)
-                                .reversed()
-                                .thenComparing(
-                                        result -> result.movie().title(),
-                                        String.CASE_INSENSITIVE_ORDER
-                                )
-                                .thenComparing(result -> result.movie().id())
-                )
-                .toList();
+            .filter(Objects::nonNull)
+            .filter(movie ->
+                satisfiesAllRestrictions(movie, groupPreferences)
+            )
+            .map(movie -> new RecommendedMovie(
+                movie,
+                calculateConsensusScore(movie, groupPreferences)
+            ))
+            .sorted(
+                Comparator.comparingDouble(RecommendedMovie::score)
+                    .reversed()
+                    .thenComparing(
+                        result -> result.movie().title(),
+                        String.CASE_INSENSITIVE_ORDER
+                    )
+                    .thenComparing(result -> result.movie().id())
+            )
+            .toList();
     }
 
     private boolean satisfiesAllRestrictions(
-            MovieCandidate movie,
-            List<PreferenceSnapshot> preferences
+        MovieCandidate movie,
+        List<PreferenceSnapshot> preferences
     ) {
         Set<String> movieGenres = normalizeGenres(movie.genres());
 
         for (PreferenceSnapshot preference : preferences) {
 
             Set<String> dislikedGenres =
-                    normalizeGenres(preference.dislikedGenres());
+                normalizeGenres(preference.dislikedGenres());
 
             boolean containsDislikedGenre = dislikedGenres.stream()
-                    .anyMatch(movieGenres::contains);
+                .anyMatch(movieGenres::contains);
 
             if (containsDislikedGenre) {
                 return false;
@@ -83,8 +83,8 @@ public class ConsensusStrategy implements RecommendationStrategy {
                 Double rating = movie.rating();
 
                 if (rating == null
-                        || !Double.isFinite(rating)
-                        || rating < preference.minRating()) {
+                    || !Double.isFinite(rating)
+                    || rating < preference.minRating()) {
                     return false;
                 }
             }
@@ -93,7 +93,7 @@ public class ConsensusStrategy implements RecommendationStrategy {
                 Integer runtime = movie.runtime();
 
                 if (runtime == null
-                        || runtime > preference.maxRuntime()) {
+                    || runtime > preference.maxRuntime()) {
                     return false;
                 }
             }
@@ -103,38 +103,38 @@ public class ConsensusStrategy implements RecommendationStrategy {
     }
 
     private double calculateConsensusScore(
-            MovieCandidate movie,
-            List<PreferenceSnapshot> preferences
+        MovieCandidate movie,
+        List<PreferenceSnapshot> preferences
     ) {
         Set<String> movieGenres = normalizeGenres(movie.genres());
 
         DoubleSummaryStatistics statistics = preferences.stream()
-                .mapToDouble(preference ->
-                        calculateUserScore(movieGenres, preference)
-                )
-                .summaryStatistics();
+            .mapToDouble(preference ->
+                calculateUserScore(movieGenres, preference)
+            )
+            .summaryStatistics();
 
         double minimumScore = statistics.getMin();
         double averageScore = statistics.getAverage();
 
         return MIN_WEIGHT * minimumScore
-                + AVERAGE_WEIGHT * averageScore;
+            + AVERAGE_WEIGHT * averageScore;
     }
 
     private double calculateUserScore(
-            Set<String> movieGenres,
-            PreferenceSnapshot preference
+        Set<String> movieGenres,
+        PreferenceSnapshot preference
     ) {
         Set<String> likedGenres =
-                normalizeGenres(preference.likedGenres());
+            normalizeGenres(preference.likedGenres());
 
         if (likedGenres.isEmpty()) {
             return 1.0;
         }
 
         long matchingGenres = likedGenres.stream()
-                .filter(movieGenres::contains)
-                .count();
+            .filter(movieGenres::contains)
+            .count();
 
         return (double) matchingGenres / likedGenres.size();
     }
@@ -145,9 +145,9 @@ public class ConsensusStrategy implements RecommendationStrategy {
         }
 
         return genres.stream()
-                .filter(Objects::nonNull)
-                .map(genre -> genre.trim().toLowerCase(Locale.ROOT))
-                .filter(genre -> !genre.isEmpty())
-                .collect(Collectors.toUnmodifiableSet());
+            .filter(Objects::nonNull)
+            .map(genre -> genre.trim().toLowerCase(Locale.ROOT))
+            .filter(genre -> !genre.isEmpty())
+            .collect(Collectors.toUnmodifiableSet());
     }
 }

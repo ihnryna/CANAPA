@@ -13,38 +13,38 @@ final class RecommendationTestData {
     }
 
     static MovieCandidate movie(
-            String title,
-            Set<String> genres,
-            Double rating,
-            Integer runtime
+        String title,
+        Set<String> genres,
+        Double rating,
+        Integer runtime
     ) {
         return new MovieCandidate(
-                UUID.randomUUID(),
-                title,
-                "Test description",
-                genres,
-                rating,
-                runtime,
-                2024,
-                null
+            UUID.randomUUID(),
+            title,
+            "Test description",
+            genres,
+            rating,
+            runtime,
+            2024,
+            null
         );
     }
 
     static PreferenceSnapshot preference(
-            Set<String> likedGenres,
-            Set<String> dislikedGenres,
-            Double minRating,
-            Integer maxRuntime
+        Set<String> likedGenres,
+        Set<String> dislikedGenres,
+        Double minRating,
+        Integer maxRuntime
     ) {
         return new PreferenceSnapshot(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                likedGenres,
-                dislikedGenres,
-                minRating,
-                maxRuntime,
-                null,
-                null
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            likedGenres,
+            dislikedGenres,
+            minRating,
+            maxRuntime,
+            null,
+            null
         );
     }
 }

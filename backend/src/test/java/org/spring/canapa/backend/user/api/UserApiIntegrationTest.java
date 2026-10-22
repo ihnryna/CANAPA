@@ -33,10 +33,10 @@ class UserApiIntegrationTest {
 
     @Container
     static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:16-alpine")
-                    .withDatabaseName("canapa_test")
-                    .withUsername("test")
-                    .withPassword("test");
+        new PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("canapa_test")
+            .withUsername("test")
+            .withPassword("test");
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
@@ -44,7 +44,7 @@ class UserApiIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name",
-                () -> "org.postgresql.Driver");
+            () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 
@@ -54,44 +54,44 @@ class UserApiIntegrationTest {
     @Test
     void createsRetrievesAndUpdatesUserThroughHttp() throws Exception {
         MvcResult createResult = mockMvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "  Alice  ",
-                                  "email": " Alice@Example.COM "
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"))
-                .andExpect(jsonPath("$.name").value("Alice"))
-                .andExpect(jsonPath("$.email").value("alice@example.com"))
-                .andReturn();
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "  Alice  ",
+                      "email": " Alice@Example.COM "
+                    }
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(header().exists("Location"))
+            .andExpect(jsonPath("$.name").value("Alice"))
+            .andExpect(jsonPath("$.email").value("alice@example.com"))
+            .andReturn();
 
         String userId = JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
 
         mockMvc.perform(get("/api/users/{userId}", userId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId))
-                .andExpect(jsonPath("$.name").value("Alice"));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(userId))
+            .andExpect(jsonPath("$.name").value("Alice"));
 
         mockMvc.perform(get("/api/users/by-email")
-                        .queryParam("email", " ALICE@EXAMPLE.COM "))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId))
-                .andExpect(jsonPath("$.name").value("Alice"))
-                .andExpect(jsonPath("$.email").value("alice@example.com"));
+                .queryParam("email", " ALICE@EXAMPLE.COM "))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(userId))
+            .andExpect(jsonPath("$.name").value("Alice"))
+            .andExpect(jsonPath("$.email").value("alice@example.com"));
 
         mockMvc.perform(put("/api/users/{userId}", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Alice Smith",
-                                  "email": "alice.smith@example.com"
-                                }
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId))
-                .andExpect(jsonPath("$.name").value("Alice Smith"))
-                .andExpect(jsonPath("$.email").value("alice.smith@example.com"));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Alice Smith",
+                      "email": "alice.smith@example.com"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(userId))
+            .andExpect(jsonPath("$.name").value("Alice Smith"))
+            .andExpect(jsonPath("$.email").value("alice.smith@example.com"));
     }
 }

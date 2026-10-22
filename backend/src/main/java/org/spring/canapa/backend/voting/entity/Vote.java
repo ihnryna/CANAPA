@@ -13,11 +13,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "votes",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_vote_user_room_movie",
-                columnNames = {"user_id", "room_id", "movie_id"}
-        )
+    name = "votes",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_vote_user_room_movie",
+        columnNames = {"user_id", "room_id", "movie_id"}
+    )
 )
 @Getter
 @Setter

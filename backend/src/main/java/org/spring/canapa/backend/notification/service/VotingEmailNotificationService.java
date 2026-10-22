@@ -20,16 +20,16 @@ import java.util.List;
 public class VotingEmailNotificationService {
 
     private static final Logger log =
-            LoggerFactory.getLogger(VotingEmailNotificationService.class);
+        LoggerFactory.getLogger(VotingEmailNotificationService.class);
 
     private final RoomRepository roomRepository;
     private final EmailService emailService;
     private final NotificationService notificationService;
 
     public VotingEmailNotificationService(
-            RoomRepository roomRepository,
-            EmailService emailService,
-            NotificationService notificationService
+        RoomRepository roomRepository,
+        EmailService emailService,
+        NotificationService notificationService
     ) {
         this.roomRepository = roomRepository;
         this.emailService = emailService;
@@ -40,31 +40,31 @@ public class VotingEmailNotificationService {
     public void onVotingStarted(VotingStartedEvent event) {
         try {
             Room room = roomRepository.findWithParticipantsById(event.roomId())
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Room not found: " + event.roomId()
-                    ));
+                .orElseThrow(() -> new IllegalStateException(
+                    "Room not found: " + event.roomId()
+                ));
 
             String message = "Голосування в кімнаті «" + room.getName()
-                    + "» розпочалося.";
+                + "» розпочалося.";
 
             for (var participant : room.getParticipants()) {
                 sendToParticipant(
-                        participant.getId(),
-                        participant.getEmail(),
-                        room.getId(),
-                        NotificationType.VOTING_STARTED,
-                        message,
-                        "CANAPA — голосування розпочалося",
-                        "Привіт, " + participant.getName() + "!\n\n"
-                                + message
-                                + "\n\nЗаходь у CANAPA, щоб проголосувати."
+                    participant.getId(),
+                    participant.getEmail(),
+                    room.getId(),
+                    NotificationType.VOTING_STARTED,
+                    message,
+                    "CANAPA — голосування розпочалося",
+                    "Привіт, " + participant.getName() + "!\n\n"
+                        + message
+                        + "\n\nЗаходь у CANAPA, щоб проголосувати."
                 );
             }
         } catch (Exception exception) {
             log.error(
-                    "Could not process voting-started notifications for room {}",
-                    event.roomId(),
-                    exception
+                "Could not process voting-started notifications for room {}",
+                event.roomId(),
+                exception
             );
         }
     }
@@ -73,69 +73,69 @@ public class VotingEmailNotificationService {
     public void onVotingResultsReady(VotingResultsReadyEvent event) {
         try {
             Room room = roomRepository.findWithParticipantsById(event.roomId())
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Room not found: " + event.roomId()
-                    ));
+                .orElseThrow(() -> new IllegalStateException(
+                    "Room not found: " + event.roomId()
+                ));
 
             String winnersText = event.winnerMovieIds().isEmpty()
-                    ? "У голосуванні немає переможців: жоден фільм не отримав голосів."
-                    : event.winnerMovieIds().size() == 1
-                    ? "Фільм-переможець: ID "
-                    + event.winnerMovieIds().getFirst() + "."
-                    : "Нічия! Фільми-переможці (ID): "
-                    + event.winnerMovieIds() + ".";
+                ? "У голосуванні немає переможців: жоден фільм не отримав голосів."
+                : event.winnerMovieIds().size() == 1
+                ? "Фільм-переможець: ID "
+                + event.winnerMovieIds().getFirst() + "."
+                : "Нічия! Фільми-переможці (ID): "
+                + event.winnerMovieIds() + ".";
 
             String message = "Результати голосування в кімнаті «"
-                    + room.getName() + "». " + winnersText
-                    + " Кількість голосів за кожного переможця: "
-                    + event.voteCount() + ".";
+                + room.getName() + "». " + winnersText
+                + " Кількість голосів за кожного переможця: "
+                + event.voteCount() + ".";
 
             for (var participant : room.getParticipants()) {
                 sendToParticipant(
-                        participant.getId(),
-                        participant.getEmail(),
-                        room.getId(),
-                        NotificationType.RESULTS_READY,
-                        message,
-                        "CANAPA — результати голосування",
-                        "Привіт, " + participant.getName() + "!\n\n"
-                                + message
-                                + "\n\nДякуємо за участь у голосуванні!"
+                    participant.getId(),
+                    participant.getEmail(),
+                    room.getId(),
+                    NotificationType.RESULTS_READY,
+                    message,
+                    "CANAPA — результати голосування",
+                    "Привіт, " + participant.getName() + "!\n\n"
+                        + message
+                        + "\n\nДякуємо за участь у голосуванні!"
                 );
             }
         } catch (Exception exception) {
             log.error(
-                    "Could not process voting-result notifications for room {}",
-                    event.roomId(),
-                    exception
+                "Could not process voting-result notifications for room {}",
+                event.roomId(),
+                exception
             );
         }
     }
 
     private void sendToParticipant(
-            java.util.UUID userId,
-            String email,
-            java.util.UUID roomId,
-            NotificationType type,
-            String notificationMessage,
-            String subject,
-            String emailBody
+        java.util.UUID userId,
+        String email,
+        java.util.UUID roomId,
+        NotificationType type,
+        String notificationMessage,
+        String subject,
+        String emailBody
     ) {
         Notification notification;
 
         try {
             notification = notificationService.createNotification(
-                    userId,
-                    roomId,
-                    type,
-                    notificationMessage
+                userId,
+                roomId,
+                type,
+                notificationMessage
             );
         } catch (Exception exception) {
             log.error(
-                    "Could not create notification for user {} in room {}",
-                    userId,
-                    roomId,
-                    exception
+                "Could not create notification for user {} in room {}",
+                userId,
+                roomId,
+                exception
             );
             return;
         }
@@ -145,20 +145,20 @@ public class VotingEmailNotificationService {
             notificationService.markAsSent(notification.getId());
         } catch (Exception exception) {
             log.warn(
-                    "Email notification {} failed for user {} in room {}",
-                    notification.getId(),
-                    userId,
-                    roomId,
-                    exception
+                "Email notification {} failed for user {} in room {}",
+                notification.getId(),
+                userId,
+                roomId,
+                exception
             );
 
             try {
                 notificationService.markAsFailed(notification.getId());
             } catch (Exception statusException) {
                 log.error(
-                        "Could not mark notification {} as FAILED",
-                        notification.getId(),
-                        statusException
+                    "Could not mark notification {} as FAILED",
+                    notification.getId(),
+                    statusException
                 );
             }
         }

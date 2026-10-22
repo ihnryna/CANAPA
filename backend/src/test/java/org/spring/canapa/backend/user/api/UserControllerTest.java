@@ -43,106 +43,106 @@ class UserControllerTest {
     void createsUser() throws Exception {
         UUID userId = UUID.randomUUID();
         when(userService.createUser(new CreateUserCommand("Alice", "alice@example.com")))
-                .thenReturn(new UserData(userId, "Alice", "alice@example.com", CREATED_AT));
+            .thenReturn(new UserData(userId, "Alice", "alice@example.com", CREATED_AT));
 
         mockMvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Alice",
-                                  "email": "alice@example.com"
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/users/" + userId))
-                .andExpect(jsonPath("$.id").value(userId.toString()))
-                .andExpect(jsonPath("$.name").value("Alice"))
-                .andExpect(jsonPath("$.email").value("alice@example.com"))
-                .andExpect(jsonPath("$.createdAt").value("2026-10-07T12:00:00Z"));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Alice",
+                      "email": "alice@example.com"
+                    }
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(header().string("Location", "/api/users/" + userId))
+            .andExpect(jsonPath("$.id").value(userId.toString()))
+            .andExpect(jsonPath("$.name").value("Alice"))
+            .andExpect(jsonPath("$.email").value("alice@example.com"))
+            .andExpect(jsonPath("$.createdAt").value("2026-10-07T12:00:00Z"));
     }
 
     @Test
     void retrievesUser() throws Exception {
         UUID userId = UUID.randomUUID();
         when(userService.getUser(userId))
-                .thenReturn(new UserData(userId, "Alice", "alice@example.com", CREATED_AT));
+            .thenReturn(new UserData(userId, "Alice", "alice@example.com", CREATED_AT));
 
         mockMvc.perform(get("/api/users/{userId}", userId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId.toString()))
-                .andExpect(jsonPath("$.email").value("alice@example.com"));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(userId.toString()))
+            .andExpect(jsonPath("$.email").value("alice@example.com"));
     }
 
     @Test
     void retrievesUserByEmail() throws Exception {
         UUID userId = UUID.randomUUID();
         when(userService.getUserByEmail("Alice@Example.COM"))
-                .thenReturn(new UserData(userId, "Alice", "alice@example.com", CREATED_AT));
+            .thenReturn(new UserData(userId, "Alice", "alice@example.com", CREATED_AT));
 
         mockMvc.perform(get("/api/users/by-email")
-                        .queryParam("email", "Alice@Example.COM"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId.toString()))
-                .andExpect(jsonPath("$.name").value("Alice"))
-                .andExpect(jsonPath("$.email").value("alice@example.com"));
+                .queryParam("email", "Alice@Example.COM"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(userId.toString()))
+            .andExpect(jsonPath("$.name").value("Alice"))
+            .andExpect(jsonPath("$.email").value("alice@example.com"));
     }
 
     @Test
     void mapsMissingEmailUserToNotFound() throws Exception {
         when(userService.getUserByEmail("missing@example.com"))
-                .thenThrow(new UserNotFoundException("missing@example.com"));
+            .thenThrow(new UserNotFoundException("missing@example.com"));
 
         mockMvc.perform(get("/api/users/by-email")
-                        .queryParam("email", "missing@example.com"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.path").value("/api/users/by-email"));
+                .queryParam("email", "missing@example.com"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.path").value("/api/users/by-email"));
     }
 
     @Test
     void updatesUser() throws Exception {
         UUID userId = UUID.randomUUID();
         when(userService.updateUser(
-                userId,
-                new UpdateUserCommand("Alice Smith", "alice.smith@example.com")
+            userId,
+            new UpdateUserCommand("Alice Smith", "alice.smith@example.com")
         )).thenReturn(new UserData(
-                userId,
-                "Alice Smith",
-                "alice.smith@example.com",
-                CREATED_AT
+            userId,
+            "Alice Smith",
+            "alice.smith@example.com",
+            CREATED_AT
         ));
 
         mockMvc.perform(put("/api/users/{userId}", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Alice Smith",
-                                  "email": "alice.smith@example.com"
-                                }
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId.toString()))
-                .andExpect(jsonPath("$.name").value("Alice Smith"))
-                .andExpect(jsonPath("$.email").value("alice.smith@example.com"));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Alice Smith",
+                      "email": "alice.smith@example.com"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(userId.toString()))
+            .andExpect(jsonPath("$.name").value("Alice Smith"))
+            .andExpect(jsonPath("$.email").value("alice.smith@example.com"));
     }
 
     @Test
     void mapsInvalidUserDataToBadRequest() throws Exception {
         when(userService.createUser(new CreateUserCommand("", "invalid")))
-                .thenThrow(new InvalidUserDataException("name", "must not be blank"));
+            .thenThrow(new InvalidUserDataException("name", "must not be blank"));
 
         mockMvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name": "", "email": "invalid"}
-                                """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
-                .andExpect(jsonPath("$.message").value("Invalid name: must not be blank"))
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.path").value("/api/users"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"name": "", "email": "invalid"}
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+            .andExpect(jsonPath("$.message").value("Invalid name: must not be blank"))
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.path").value("/api/users"))
+            .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
@@ -151,43 +151,43 @@ class UserControllerTest {
         when(userService.getUser(userId)).thenThrow(new UserNotFoundException(userId));
 
         mockMvc.perform(get("/api/users/{userId}", userId))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.path").value("/api/users/" + userId));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.path").value("/api/users/" + userId));
     }
 
     @Test
     void mapsDuplicateEmailToConflict() throws Exception {
         when(userService.createUser(new CreateUserCommand("Alice", "alice@example.com")))
-                .thenThrow(new DuplicateUserEmailException("alice@example.com"));
+            .thenThrow(new DuplicateUserEmailException("alice@example.com"));
 
         mockMvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name": "Alice", "email": "alice@example.com"}
-                                """))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("DUPLICATE_USER_DATA"))
-                .andExpect(jsonPath("$.status").value(409));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"name": "Alice", "email": "alice@example.com"}
+                    """))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("DUPLICATE_USER_DATA"))
+            .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test
     void mapsMalformedUuidToBadRequest() throws Exception {
         mockMvc.perform(get("/api/users/not-a-uuid"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
-                .andExpect(jsonPath("$.message").value("Invalid value for userId"))
-                .andExpect(jsonPath("$.path").value("/api/users/not-a-uuid"));
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+            .andExpect(jsonPath("$.message").value("Invalid value for userId"))
+            .andExpect(jsonPath("$.path").value("/api/users/not-a-uuid"));
     }
 
     @Test
     void mapsMalformedJsonToBadRequest() throws Exception {
         mockMvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
-                .andExpect(jsonPath("$.message").value("Request body is missing or malformed"));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+            .andExpect(jsonPath("$.message").value("Request body is missing or malformed"));
     }
 }

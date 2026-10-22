@@ -32,11 +32,11 @@ public class InvitationService {
     private final String frontendBaseUrl;
 
     public InvitationService(
-            InvitationRepository invitationRepository,
-            RoomRepository roomRepository,
-            UserRepository userRepository,
-            @Value("${canapa.frontend.base-url:http://localhost:5173}")
-            String frontendBaseUrl
+        InvitationRepository invitationRepository,
+        RoomRepository roomRepository,
+        UserRepository userRepository,
+        @Value("${canapa.frontend.base-url:http://localhost:5173}")
+        String frontendBaseUrl
     ) {
         this.invitationRepository = invitationRepository;
         this.roomRepository = roomRepository;
@@ -46,17 +46,17 @@ public class InvitationService {
 
     @Transactional
     public Invitation createInvitation(
-            UUID roomId,
-            UUID createdByUserId,
-            Long expiresInHours
+        UUID roomId,
+        UUID createdByUserId,
+        Long expiresInHours
     ) {
         long hours = expiresInHours == null
-                ? DEFAULT_EXPIRATION_HOURS
-                : expiresInHours;
+            ? DEFAULT_EXPIRATION_HOURS
+            : expiresInHours;
 
         if (hours <= 0) {
             throw new IllegalArgumentException(
-                    "Invitation expiration must be greater than zero"
+                "Invitation expiration must be greater than zero"
             );
         }
 
@@ -64,18 +64,18 @@ public class InvitationService {
         Instant expiresAt = Instant.now().plusSeconds(hours * 3600);
 
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Room not found: " + roomId));
+            .orElseThrow(() ->
+                new IllegalArgumentException("Room not found: " + roomId));
 
         User createdBy = userRepository.findById(createdByUserId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("User not found: " + createdByUserId));
+            .orElseThrow(() ->
+                new IllegalArgumentException("User not found: " + createdByUserId));
 
         Invitation invitation = new Invitation(
-                room,
-                createdBy,
-                code,
-                expiresAt
+            room,
+            createdBy,
+            code,
+            expiresAt
         );
 
         return invitationRepository.save(invitation);
@@ -84,10 +84,10 @@ public class InvitationService {
     @Transactional(noRollbackFor = InvitationExpiredException.class)
     public Invitation getValidInvitation(String code) {
         Invitation invitation = invitationRepository.findByCode(code)
-                .orElseThrow(() -> new InvitationNotFoundException(code));
+            .orElseThrow(() -> new InvitationNotFoundException(code));
 
         if (invitation.getStatus() == InvitationStatus.EXPIRED
-                || invitation.isExpired(Instant.now())) {
+            || invitation.isExpired(Instant.now())) {
             invitation.expire();
             invitationRepository.save(invitation);
             throw new InvitationExpiredException(code);
@@ -106,8 +106,8 @@ public class InvitationService {
             secureRandom.nextBytes(bytes);
 
             String code = Base64.getUrlEncoder()
-                    .withoutPadding()
-                    .encodeToString(bytes);
+                .withoutPadding()
+                .encodeToString(bytes);
 
             if (!invitationRepository.existsByCode(code)) {
                 return code;
@@ -115,7 +115,7 @@ public class InvitationService {
         }
 
         throw new IllegalStateException(
-                "Could not generate a unique invitation code"
+            "Could not generate a unique invitation code"
         );
     }
 }

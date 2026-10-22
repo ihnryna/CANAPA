@@ -25,8 +25,8 @@ public class TmdbMovieProvider implements MovieProvider {
     private final MovieApiProperties properties;
 
     public TmdbMovieProvider(
-            RestClient movieRestClient,
-            MovieApiProperties properties
+        RestClient movieRestClient,
+        MovieApiProperties properties
     ) {
         this.restClient = movieRestClient;
         this.properties = properties;
@@ -40,60 +40,60 @@ public class TmdbMovieProvider implements MovieProvider {
     @Override
     public boolean isConfigured() {
         return hasText(properties.getTmdb().getAccessToken())
-                || hasText(properties.getTmdb().getApiKey());
+            || hasText(properties.getTmdb().getApiKey());
     }
 
     @Override
     public MovieSearchResult searchMovies(
-            String query,
-            int page,
-            String language
+        String query,
+        int page,
+        String language
     ) {
         requireConfigured();
 
         URI uri = UriComponentsBuilder
-                .fromUriString(properties.getTmdb().getBaseUrl())
-                .path("/search/movie")
-                .queryParam("query", query)
-                .queryParam("page", page)
-                .queryParam("include_adult", false)
-                .queryParamIfPresent("language", Optional.ofNullable(language))
-                .build()
-                .encode()
-                .toUri();
+            .fromUriString(properties.getTmdb().getBaseUrl())
+            .path("/search/movie")
+            .queryParam("query", query)
+            .queryParam("page", page)
+            .queryParam("include_adult", false)
+            .queryParamIfPresent("language", Optional.ofNullable(language))
+            .build()
+            .encode()
+            .toUri();
 
         try {
             TmdbSearchResponse response = restClient.get()
-                    .uri(addApiKeyIfNeeded(uri))
-                    .headers(headers -> {
-                        if (hasText(properties.getTmdb().getAccessToken())) {
-                            headers.setBearerAuth(
-                                    properties.getTmdb().getAccessToken()
-                            );
-                        }
-                    })
-                    .retrieve()
-                    .body(TmdbSearchResponse.class);
+                .uri(addApiKeyIfNeeded(uri))
+                .headers(headers -> {
+                    if (hasText(properties.getTmdb().getAccessToken())) {
+                        headers.setBearerAuth(
+                            properties.getTmdb().getAccessToken()
+                        );
+                    }
+                })
+                .retrieve()
+                .body(TmdbSearchResponse.class);
 
             if (response == null || response.results() == null) {
                 return new MovieSearchResult(1, 0, 0, List.of());
             }
 
             List<MovieSearchResult.MovieSearchItem> results =
-                    response.results().stream()
-                            .map(this::toSearchItem)
-                            .toList();
+                response.results().stream()
+                    .map(this::toSearchItem)
+                    .toList();
 
             return new MovieSearchResult(
-                    response.page(),
-                    response.totalPages(),
-                    response.totalResults(),
-                    results
+                response.page(),
+                response.totalPages(),
+                response.totalResults(),
+                results
             );
         } catch (RestClientException ex) {
             throw new MovieProviderException(
-                    "TMDB movie search failed",
-                    ex
+                "TMDB movie search failed",
+                ex
             );
         }
     }
@@ -103,31 +103,31 @@ public class TmdbMovieProvider implements MovieProvider {
         requireConfigured();
 
         URI uri = UriComponentsBuilder
-                .fromUriString(properties.getTmdb().getBaseUrl())
-                .path("/movie/{id}")
-                .queryParam("append_to_response", "external_ids")
-                .buildAndExpand(providerMovieId)
-                .encode()
-                .toUri();
+            .fromUriString(properties.getTmdb().getBaseUrl())
+            .path("/movie/{id}")
+            .queryParam("append_to_response", "external_ids")
+            .buildAndExpand(providerMovieId)
+            .encode()
+            .toUri();
 
         try {
             TmdbMovieResponse response = restClient.get()
-                    .uri(addApiKeyIfNeeded(uri))
-                    .headers(headers -> {
-                        if (hasText(properties.getTmdb().getAccessToken())) {
-                            headers.setBearerAuth(
-                                    properties.getTmdb().getAccessToken()
-                            );
-                        }
-                    })
-                    .retrieve()
-                    .body(TmdbMovieResponse.class);
+                .uri(addApiKeyIfNeeded(uri))
+                .headers(headers -> {
+                    if (hasText(properties.getTmdb().getAccessToken())) {
+                        headers.setBearerAuth(
+                            properties.getTmdb().getAccessToken()
+                        );
+                    }
+                })
+                .retrieve()
+                .body(TmdbMovieResponse.class);
 
             return Optional.ofNullable(response).map(this::toMovie);
         } catch (RestClientException ex) {
             throw new MovieProviderException(
-                    "TMDB movie details request failed",
-                    ex
+                "TMDB movie details request failed",
+                ex
             );
         }
     }
@@ -137,67 +137,67 @@ public class TmdbMovieProvider implements MovieProvider {
         requireConfigured();
 
         URI uri = UriComponentsBuilder
-                .fromUriString(properties.getTmdb().getBaseUrl())
-                .path("/find/{id}")
-                .queryParam("external_source", "imdb_id")
-                .buildAndExpand(imdbId)
-                .encode()
-                .toUri();
+            .fromUriString(properties.getTmdb().getBaseUrl())
+            .path("/find/{id}")
+            .queryParam("external_source", "imdb_id")
+            .buildAndExpand(imdbId)
+            .encode()
+            .toUri();
 
         try {
             TmdbFindResponse response = restClient.get()
-                    .uri(addApiKeyIfNeeded(uri))
-                    .headers(headers -> {
-                        if (hasText(properties.getTmdb().getAccessToken())) {
-                            headers.setBearerAuth(
-                                    properties.getTmdb().getAccessToken()
-                            );
-                        }
-                    })
-                    .retrieve()
-                    .body(TmdbFindResponse.class);
+                .uri(addApiKeyIfNeeded(uri))
+                .headers(headers -> {
+                    if (hasText(properties.getTmdb().getAccessToken())) {
+                        headers.setBearerAuth(
+                            properties.getTmdb().getAccessToken()
+                        );
+                    }
+                })
+                .retrieve()
+                .body(TmdbFindResponse.class);
 
             if (response == null || response.movieResults() == null) {
                 return Optional.empty();
             }
 
             return response.movieResults().stream()
-                    .findFirst()
-                    .map(result -> getMovieDetails(result.id()))
-                    .orElse(Optional.empty());
+                .findFirst()
+                .map(result -> getMovieDetails(result.id()))
+                .orElse(Optional.empty());
         } catch (RestClientException ex) {
             throw new MovieProviderException(
-                    "TMDB IMDb lookup failed",
-                    ex
+                "TMDB IMDb lookup failed",
+                ex
             );
         }
     }
 
     private URI addApiKeyIfNeeded(URI uri) {
         if (hasText(properties.getTmdb().getAccessToken())
-                || !hasText(properties.getTmdb().getApiKey())) {
+            || !hasText(properties.getTmdb().getApiKey())) {
             return uri;
         }
 
         return UriComponentsBuilder.fromUri(uri)
-                .queryParam("api_key", properties.getTmdb().getApiKey())
-                .build()
-                .encode()
-                .toUri();
+            .queryParam("api_key", properties.getTmdb().getApiKey())
+            .build()
+            .encode()
+            .toUri();
     }
 
     private MovieSearchResult.MovieSearchItem toSearchItem(
-            TmdbMovieResponse response
+        TmdbMovieResponse response
     ) {
         return new MovieSearchResult.MovieSearchItem(
-                response.id(),
-                response.title(),
-                response.overview(),
-                posterUrl(response.posterPath()),
-                response.releaseDate(),
-                response.voteAverage(),
-                response.originalLanguage(),
-                List.of()
+            response.id(),
+            response.title(),
+            response.overview(),
+            posterUrl(response.posterPath()),
+            response.releaseDate(),
+            response.voteAverage(),
+            response.originalLanguage(),
+            List.of()
         );
     }
 
@@ -219,9 +219,9 @@ public class TmdbMovieProvider implements MovieProvider {
 
         if (response.genres() != null) {
             movie.setGenres(response.genres().stream()
-                    .map(TmdbGenre::name)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet()));
+                .map(TmdbGenre::name)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet()));
         }
 
         return movie;
@@ -246,7 +246,7 @@ public class TmdbMovieProvider implements MovieProvider {
     private void requireConfigured() {
         if (!isConfigured()) {
             throw new MovieProviderException(
-                    "TMDB is not configured. Set TMDB_ACCESS_TOKEN or TMDB_API_KEY."
+                "TMDB is not configured. Set TMDB_ACCESS_TOKEN or TMDB_API_KEY."
             );
         }
     }
@@ -256,41 +256,41 @@ public class TmdbMovieProvider implements MovieProvider {
     }
 
     private record TmdbSearchResponse(
-            @JsonProperty("page") int page,
-            @JsonProperty("results") List<TmdbMovieResponse> results,
-            @JsonProperty("total_pages") int totalPages,
-            @JsonProperty("total_results") long totalResults
+        @JsonProperty("page") int page,
+        @JsonProperty("results") List<TmdbMovieResponse> results,
+        @JsonProperty("total_pages") int totalPages,
+        @JsonProperty("total_results") long totalResults
     ) {
     }
 
     private record TmdbFindResponse(
-            @JsonProperty("movie_results")
-            List<TmdbMovieResponse> movieResults
+        @JsonProperty("movie_results")
+        List<TmdbMovieResponse> movieResults
     ) {
     }
 
     private record TmdbMovieResponse(
-            @JsonProperty("id") Long id,
-            @JsonProperty("title") String title,
-            @JsonProperty("overview") String overview,
-            @JsonProperty("poster_path") String posterPath,
-            @JsonProperty("release_date") String releaseDate,
-            @JsonProperty("vote_average") Double voteAverage,
-            @JsonProperty("runtime") Integer runtime,
-            @JsonProperty("original_language") String originalLanguage,
-            @JsonProperty("genres") List<TmdbGenre> genres,
-            @JsonProperty("external_ids") TmdbExternalIds externalIds
+        @JsonProperty("id") Long id,
+        @JsonProperty("title") String title,
+        @JsonProperty("overview") String overview,
+        @JsonProperty("poster_path") String posterPath,
+        @JsonProperty("release_date") String releaseDate,
+        @JsonProperty("vote_average") Double voteAverage,
+        @JsonProperty("runtime") Integer runtime,
+        @JsonProperty("original_language") String originalLanguage,
+        @JsonProperty("genres") List<TmdbGenre> genres,
+        @JsonProperty("external_ids") TmdbExternalIds externalIds
     ) {
     }
 
     private record TmdbGenre(
-            @JsonProperty("id") Long id,
-            @JsonProperty("name") String name
+        @JsonProperty("id") Long id,
+        @JsonProperty("name") String name
     ) {
     }
 
     private record TmdbExternalIds(
-            @JsonProperty("imdb_id") String imdbId
+        @JsonProperty("imdb_id") String imdbId
     ) {
     }
 }

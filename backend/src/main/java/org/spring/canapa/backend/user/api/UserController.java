@@ -33,13 +33,13 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody CreateUserRequest request) {
         UserData created = userService.createUser(
-                new CreateUserCommand(request.name(), request.email())
+            new CreateUserCommand(request.name(), request.email())
         );
         UserResponse response = toResponse(created);
 
         return ResponseEntity
-                .created(URI.create("/api/users/" + response.id()))
-                .body(response);
+            .created(URI.create("/api/users/" + response.id()))
+            .body(response);
     }
 
     @GetMapping("/{userId}")
@@ -54,21 +54,21 @@ public class UserController {
 
     @PutMapping("/{userId}")
     public UserResponse updateUser(
-            @PathVariable UUID userId,
-            @RequestBody UpdateUserRequest request
+        @PathVariable UUID userId,
+        @RequestBody UpdateUserRequest request
     ) {
         return toResponse(userService.updateUser(
-                userId,
-                new UpdateUserCommand(request.name(), request.email())
+            userId,
+            new UpdateUserCommand(request.name(), request.email())
         ));
     }
 
     private UserResponse toResponse(UserData user) {
         return new UserResponse(
-                user.id(),
-                user.name(),
-                user.email(),
-                user.createdAt()
+            user.id(),
+            user.name(),
+            user.email(),
+            user.createdAt()
         );
     }
 }

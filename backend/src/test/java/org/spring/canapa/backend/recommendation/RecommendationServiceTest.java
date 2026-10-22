@@ -16,23 +16,23 @@ import static org.spring.canapa.backend.recommendation.RecommendationTestData.mo
 class RecommendationServiceTest {
 
     private final RecommendationService service =
-            new RecommendationService(List.of(
-                    new AverageRatingStrategy(),
-                    new GenreFocusedStrategy(),
-                    new ConsensusStrategy()
-            ));
+        new RecommendationService(List.of(
+            new AverageRatingStrategy(),
+            new GenreFocusedStrategy(),
+            new ConsensusStrategy()
+        ));
 
     @Test
     void shouldSelectAverageRatingStrategy() {
         var movies = List.of(
-                movie("Dune", Set.of("Sci-Fi"), 8.5, 155),
-                movie("Inception", Set.of("Action"), 8.8, 148)
+            movie("Dune", Set.of("Sci-Fi"), 8.5, 155),
+            movie("Inception", Set.of("Action"), 8.8, 148)
         );
 
         var result = service.recommend(
-                RecommendationType.AVERAGE_RATING,
-                movies,
-                List.of()
+            RecommendationType.AVERAGE_RATING,
+            movies,
+            List.of()
         );
 
         assertEquals(2, result.size());
@@ -42,13 +42,13 @@ class RecommendationServiceTest {
     @Test
     void shouldSelectGenreFocusedStrategy() {
         var movies = List.of(
-                movie("Dune", Set.of("Sci-Fi"), 8.5, 155)
+            movie("Dune", Set.of("Sci-Fi"), 8.5, 155)
         );
 
         var result = service.recommend(
-                RecommendationType.GENRE_FOCUSED,
-                movies,
-                List.of()
+            RecommendationType.GENRE_FOCUSED,
+            movies,
+            List.of()
         );
 
         assertTrue(result.isEmpty());
@@ -57,39 +57,39 @@ class RecommendationServiceTest {
     @Test
     void shouldRejectUnsupportedStrategy() {
         var incompleteService = new RecommendationService(
-                List.of(new AverageRatingStrategy())
+            List.of(new AverageRatingStrategy())
         );
 
         assertThrows(
-                IllegalArgumentException.class,
-                () -> incompleteService.recommend(
-                        RecommendationType.CONSENSUS,
-                        List.of(),
-                        List.of()
-                )
+            IllegalArgumentException.class,
+            () -> incompleteService.recommend(
+                RecommendationType.CONSENSUS,
+                List.of(),
+                List.of()
+            )
         );
     }
 
     @Test
     void shouldRejectDuplicateStrategyTypes() {
         assertThrows(
-                IllegalStateException.class,
-                () -> new RecommendationService(List.of(
-                        new AverageRatingStrategy(),
-                        new AverageRatingStrategy()
-                ))
+            IllegalStateException.class,
+            () -> new RecommendationService(List.of(
+                new AverageRatingStrategy(),
+                new AverageRatingStrategy()
+            ))
         );
     }
 
     @Test
     void shouldRejectNullRecommendationType() {
         assertThrows(
-                NullPointerException.class,
-                () -> service.recommend(
-                        null,
-                        List.of(),
-                        List.of()
-                )
+            NullPointerException.class,
+            () -> service.recommend(
+                null,
+                List.of(),
+                List.of()
+            )
         );
     }
 }

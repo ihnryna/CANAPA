@@ -24,8 +24,8 @@ public class OmdbMovieProvider implements MovieProvider {
     private final MovieApiProperties properties;
 
     public OmdbMovieProvider(
-            RestClient movieRestClient,
-            MovieApiProperties properties
+        RestClient movieRestClient,
+        MovieApiProperties properties
     ) {
         this.restClient = movieRestClient;
         this.properties = properties;
@@ -39,32 +39,32 @@ public class OmdbMovieProvider implements MovieProvider {
     @Override
     public boolean isConfigured() {
         return properties.getOmdb().getApiKey() != null
-                && !properties.getOmdb().getApiKey().isBlank();
+            && !properties.getOmdb().getApiKey().isBlank();
     }
 
     @Override
     public MovieSearchResult searchMovies(
-            String query,
-            int page,
-            String language
+        String query,
+        int page,
+        String language
     ) {
         requireConfigured();
 
         URI uri = UriComponentsBuilder
-                .fromUriString(properties.getOmdb().getBaseUrl())
-                .queryParam("apikey", properties.getOmdb().getApiKey())
-                .queryParam("s", query)
-                .queryParam("type", "movie")
-                .queryParam("page", page)
-                .build()
-                .encode()
-                .toUri();
+            .fromUriString(properties.getOmdb().getBaseUrl())
+            .queryParam("apikey", properties.getOmdb().getApiKey())
+            .queryParam("s", query)
+            .queryParam("type", "movie")
+            .queryParam("page", page)
+            .build()
+            .encode()
+            .toUri();
 
         try {
             OmdbSearchResponse response = restClient.get()
-                    .uri(uri)
-                    .retrieve()
-                    .body(OmdbSearchResponse.class);
+                .uri(uri)
+                .retrieve()
+                .body(OmdbSearchResponse.class);
 
             if (response == null || response.search() == null) {
                 return new MovieSearchResult(1, 0, 0, List.of());
@@ -73,24 +73,25 @@ public class OmdbMovieProvider implements MovieProvider {
             long total = parseLong(response.totalResults());
 
             List<MovieSearchResult.MovieSearchItem> results =
-                    response.search().stream()
-                            .map(item -> new MovieSearchResult.MovieSearchItem(
-                                    null,
-                                    item.title(),
-                                    null,
-                                    normalizeOptionalField(item.poster()),
-                                    item.year(),
-                                    null,
-                                    null,
-                                    List.of()
-                            ))
-                            .toList();
+                response.search()
+                    .stream()
+                    .map(item -> new MovieSearchResult.MovieSearchItem(
+                        null,
+                        item.title(),
+                        null,
+                        normalizeOptionalField(item.poster()),
+                        item.year(),
+                        null,
+                        null,
+                        List.of()
+                    ))
+                    .toList();
 
             return new MovieSearchResult(
-                    page,
-                    (int) Math.ceil(total / 10.0),
-                    total,
-                    results
+                page,
+                (int) Math.ceil(total / 10.0),
+                total,
+                results
             );
         } catch (RestClientException ex) {
             throw new MovieProviderException("OMDb movie search failed", ex);
@@ -107,22 +108,22 @@ public class OmdbMovieProvider implements MovieProvider {
         requireConfigured();
 
         URI uri = UriComponentsBuilder
-                .fromUriString(properties.getOmdb().getBaseUrl())
-                .queryParam("apikey", properties.getOmdb().getApiKey())
-                .queryParam("i", imdbId)
-                .queryParam("plot", "full")
-                .build()
-                .encode()
-                .toUri();
+            .fromUriString(properties.getOmdb().getBaseUrl())
+            .queryParam("apikey", properties.getOmdb().getApiKey())
+            .queryParam("i", imdbId)
+            .queryParam("plot", "full")
+            .build()
+            .encode()
+            .toUri();
 
         try {
             OmdbDetailsResponse response = restClient.get()
-                    .uri(uri)
-                    .retrieve()
-                    .body(OmdbDetailsResponse.class);
+                .uri(uri)
+                .retrieve()
+                .body(OmdbDetailsResponse.class);
 
             if (response == null
-                    || !"true".equalsIgnoreCase(response.response())) {
+                || !"true".equalsIgnoreCase(response.response())) {
                 return Optional.empty();
             }
 
@@ -136,9 +137,9 @@ public class OmdbMovieProvider implements MovieProvider {
         Movie movie = new Movie();
         movie.setImdbId(normalizeOptionalField(response.imdbId()));
         movie.setTitle(
-                response.title() == null || response.title().isBlank()
-                        ? "Untitled"
-                        : response.title()
+            response.title() == null || response.title().isBlank()
+                ? "Untitled"
+                : response.title()
         );
         movie.setDescription(normalizeOptionalField(response.plot()));
         movie.setPosterUrl(normalizeOptionalField(response.poster()));
@@ -153,10 +154,10 @@ public class OmdbMovieProvider implements MovieProvider {
         String genre = normalizeOptionalField(response.genre());
         if (genre != null) {
             Set<String> genres = Arrays.stream(genre.split(","))
-                    .map(String::trim)
-                    .filter(value -> !value.isBlank())
-                    .filter(value -> !value.equalsIgnoreCase("N/A"))
-                    .collect(Collectors.toSet());
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .filter(value -> !value.equalsIgnoreCase("N/A"))
+                .collect(Collectors.toSet());
 
             movie.setGenres(genres);
         }
@@ -184,7 +185,7 @@ public class OmdbMovieProvider implements MovieProvider {
 
     private Integer parseRuntime(String runtime) {
         if (runtime == null || runtime.isBlank()
-                || runtime.equalsIgnoreCase("N/A")) {
+            || runtime.equalsIgnoreCase("N/A")) {
             return null;
         }
 
@@ -197,7 +198,7 @@ public class OmdbMovieProvider implements MovieProvider {
 
     private Double parseRating(String rating) {
         if (rating == null || rating.isBlank()
-                || rating.equalsIgnoreCase("N/A")) {
+            || rating.equalsIgnoreCase("N/A")) {
             return null;
         }
 
@@ -223,15 +224,15 @@ public class OmdbMovieProvider implements MovieProvider {
     private void requireConfigured() {
         if (!isConfigured()) {
             throw new MovieProviderException(
-                    "OMDb is not configured. Set OMDB_API_KEY."
+                "OMDb is not configured. Set OMDB_API_KEY."
             );
         }
     }
 
     private record OmdbSearchResponse(
-            List<OmdbSearchItem> search,
-            String totalResults,
-            String response
+        List<OmdbSearchItem> search,
+        String totalResults,
+        String response
     ) {
         @JsonProperty("Search")
         public List<OmdbSearchItem> search() {
@@ -250,10 +251,10 @@ public class OmdbMovieProvider implements MovieProvider {
     }
 
     private record OmdbSearchItem(
-            String title,
-            String year,
-            String imdbId,
-            String poster
+        String title,
+        String year,
+        String imdbId,
+        String poster
     ) {
         @JsonProperty("Title")
         public String title() {
@@ -277,19 +278,19 @@ public class OmdbMovieProvider implements MovieProvider {
     }
 
     private record OmdbDetailsResponse(
-            String title,
-            String year,
-            String rated,
-            String runtime,
-            String genre,
-            String director,
-            String writer,
-            String actors,
-            String plot,
-            String poster,
-            String imdbRating,
-            String imdbId,
-            String response
+        String title,
+        String year,
+        String rated,
+        String runtime,
+        String genre,
+        String director,
+        String writer,
+        String actors,
+        String plot,
+        String poster,
+        String imdbRating,
+        String imdbId,
+        String response
     ) {
         @JsonProperty("Title")
         public String title() {

@@ -21,8 +21,8 @@ public class VotingResultController {
     private final VotingResultRepository votingResultRepository;
 
     public VotingResultController(
-            VotingService votingService,
-            VotingResultRepository votingResultRepository
+        VotingService votingService,
+        VotingResultRepository votingResultRepository
     ) {
         this.votingService = votingService;
         this.votingResultRepository = votingResultRepository;
@@ -30,7 +30,7 @@ public class VotingResultController {
 
     @PostMapping
     public ResponseEntity<VotingResultResponse> finishVoting(
-            @PathVariable UUID roomId
+        @PathVariable UUID roomId
     ) {
         VotingResult result = votingService.finishVoting(roomId);
 
@@ -39,29 +39,29 @@ public class VotingResultController {
 
     @GetMapping
     public ResponseEntity<VotingResultResponse> getVotingResult(
-            @PathVariable UUID roomId
+        @PathVariable UUID roomId
     ) {
         VotingResult result = votingResultRepository.findByRoom_Id(roomId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Voting result not found for this room"
-                ));
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Voting result not found for this room"
+            ));
 
         return ResponseEntity.ok(toResponse(result));
     }
 
     private static VotingResultResponse toResponse(VotingResult result) {
         List<Long> winnerMovieIds = result.getWinners()
-                .stream()
-                .map(Movie::getId)
-                .toList();
+            .stream()
+            .map(Movie::getId)
+            .toList();
 
         return new VotingResultResponse(
-                result.getId(),
-                result.getRoom().getId(),
-                winnerMovieIds,
-                result.getVoteCount(),
-                result.getFinishedAt()
+            result.getId(),
+            result.getRoom().getId(),
+            winnerMovieIds,
+            result.getVoteCount(),
+            result.getFinishedAt()
         );
     }
 }

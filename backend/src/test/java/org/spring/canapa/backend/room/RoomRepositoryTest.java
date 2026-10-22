@@ -31,10 +31,10 @@ class RoomRepositoryTest {
 
     @Container
     static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:16-alpine")
-                    .withDatabaseName("canapa_test")
-                    .withUsername("test")
-                    .withPassword("test");
+        new PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("canapa_test")
+            .withUsername("test")
+            .withPassword("test");
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
@@ -42,7 +42,7 @@ class RoomRepositoryTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name",
-                () -> "org.postgresql.Driver");
+            () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 
@@ -74,15 +74,15 @@ class RoomRepositoryTest {
 
         Room found = roomRepository.findById(saved.getId()).orElseThrow();
         Set<String> participantEmails = found.getParticipants().stream()
-                .map(User::getEmail)
-                .collect(Collectors.toSet());
+            .map(User::getEmail)
+            .collect(Collectors.toSet());
 
         assertThat(found.getName()).isEqualTo("Friday movies");
         assertThat(found.getCreator().getId()).isEqualTo(creator.getId());
         assertThat(found.getStatus()).isEqualTo(RoomStatus.CREATED);
         assertThat(participantEmails).containsExactlyInAnyOrder(
-                "alice@example.com",
-                "bob@example.com"
+            "alice@example.com",
+            "bob@example.com"
         );
     }
 
@@ -91,7 +91,7 @@ class RoomRepositoryTest {
         User creator = userRepository.save(new User("Alice", "alice@example.com"));
 
         assertThatThrownBy(() -> roomRepository.saveAndFlush(new Room("   ", creator)))
-                .isInstanceOf(DataIntegrityViolationException.class);
+            .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -100,9 +100,9 @@ class RoomRepositoryTest {
         Room room = roomRepository.saveAndFlush(new Room("Friday movies", creator));
 
         assertThatThrownBy(() -> jdbcTemplate.update(
-                "INSERT INTO room_participants (room_id, user_id) VALUES (?, ?)",
-                room.getId(),
-                creator.getId()
+            "INSERT INTO room_participants (room_id, user_id) VALUES (?, ?)",
+            room.getId(),
+            creator.getId()
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -112,8 +112,8 @@ class RoomRepositoryTest {
         roomRepository.saveAndFlush(new Room("Friday movies", creator));
 
         assertThatThrownBy(() -> jdbcTemplate.update(
-                "DELETE FROM users WHERE id = ?",
-                creator.getId()
+            "DELETE FROM users WHERE id = ?",
+            creator.getId()
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -125,14 +125,14 @@ class RoomRepositoryTest {
         jdbcTemplate.update("DELETE FROM rooms WHERE id = ?", room.getId());
 
         Integer membershipCount = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM room_participants WHERE room_id = ?",
-                Integer.class,
-                room.getId()
+            "SELECT count(*) FROM room_participants WHERE room_id = ?",
+            Integer.class,
+            room.getId()
         );
         Integer userCount = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM users WHERE id = ?",
-                Integer.class,
-                creator.getId()
+            "SELECT count(*) FROM users WHERE id = ?",
+            Integer.class,
+            creator.getId()
         );
 
         assertThat(membershipCount).isZero();

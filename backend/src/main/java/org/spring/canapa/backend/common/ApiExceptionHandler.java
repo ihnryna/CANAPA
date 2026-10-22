@@ -21,74 +21,74 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(MovieNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleMovieNotFound(
-            MovieNotFoundException exception
+        MovieNotFoundException exception
     ) {
         return problem(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler(UserPreferenceNotFoundException.class)
     public ResponseEntity<ProblemDetail> handlePreferenceNotFound(
-            UserPreferenceNotFoundException exception
+        UserPreferenceNotFoundException exception
     ) {
         return problem(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler({
-            IllegalArgumentException.class,
-            ConstraintViolationException.class,
-            HttpMessageNotReadableException.class
+        IllegalArgumentException.class,
+        ConstraintViolationException.class,
+        HttpMessageNotReadableException.class
     })
     public ResponseEntity<ProblemDetail> handleBadRequest(
-            Exception exception
+        Exception exception
     ) {
         return problem(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidation(
-            MethodArgumentNotValidException exception
+        MethodArgumentNotValidException exception
     ) {
         String message = exception.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining("; "));
+            .getFieldErrors()
+            .stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .collect(Collectors.joining("; "));
 
         return problem(HttpStatus.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(MovieProviderException.class)
     public ResponseEntity<ProblemDetail> handleProviderFailure(
-            MovieProviderException exception
+        MovieProviderException exception
     ) {
         return problem(
-                HttpStatus.BAD_GATEWAY,
-                "Movie provider request failed: " + exception.getMessage()
+            HttpStatus.BAD_GATEWAY,
+            "Movie provider request failed: " + exception.getMessage()
         );
     }
 
     @ExceptionHandler(RestClientResponseException.class)
     public ResponseEntity<ProblemDetail> handleExternalHttpError(
-            RestClientResponseException exception
+        RestClientResponseException exception
     ) {
         return problem(
-                HttpStatus.BAD_GATEWAY,
-                "External movie service returned HTTP "
-                        + exception.getStatusCode().value()
+            HttpStatus.BAD_GATEWAY,
+            "External movie service returned HTTP "
+                + exception.getStatusCode().value()
         );
     }
 
     private ResponseEntity<ProblemDetail> problem(
-            HttpStatus status,
-            String detail
+        HttpStatus status,
+        String detail
     ) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                status,
-                detail == null ? status.getReasonPhrase() : detail
+            status,
+            detail == null ? status.getReasonPhrase() : detail
         );
 
         problem.setType(URI.create(
-                "https://canapa.example/problems/" + status.value() // TODO: change URI
+            "https://canapa.example/problems/" + status.value() // TODO: change URI
         ));
 
         problem.setTitle(status.getReasonPhrase());

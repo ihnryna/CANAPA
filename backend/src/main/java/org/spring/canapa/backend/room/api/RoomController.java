@@ -36,25 +36,25 @@ public class RoomController {
 
     @PostMapping
     public ResponseEntity<RoomResponse> createRoom(
-            @RequestHeader(USER_ID_HEADER) UUID creatorId,
-            @RequestBody CreateRoomRequest request
+        @RequestHeader(USER_ID_HEADER) UUID creatorId,
+        @RequestBody CreateRoomRequest request
     ) {
         RoomResponse response = toResponse(roomService.createRoom(
-                new CreateRoomCommand(request.name(), creatorId)
+            new CreateRoomCommand(request.name(), creatorId)
         ));
 
         return ResponseEntity
-                .created(URI.create("/api/rooms/" + response.id()))
-                .body(response);
+            .created(URI.create("/api/rooms/" + response.id()))
+            .body(response);
     }
 
     @GetMapping
     public List<RoomResponse> getRooms(
-            @RequestHeader(USER_ID_HEADER) UUID userId
+        @RequestHeader(USER_ID_HEADER) UUID userId
     ) {
         return roomService.getRoomsForUser(userId).stream()
-                .map(this::toResponse)
-                .toList();
+            .map(this::toResponse)
+            .toList();
     }
 
     @GetMapping("/{roomId}")
@@ -64,33 +64,33 @@ public class RoomController {
 
     @PostMapping("/{roomId}/participants")
     public RoomResponse joinRoom(
-            @PathVariable UUID roomId,
-            @RequestHeader(USER_ID_HEADER) UUID userId
+        @PathVariable UUID roomId,
+        @RequestHeader(USER_ID_HEADER) UUID userId
     ) {
         return toResponse(roomService.joinRoom(roomId, userId));
     }
 
     @PutMapping("/{roomId}/status")
     public RoomResponse changeRoomStatus(
-            @PathVariable UUID roomId,
-            @RequestHeader(USER_ID_HEADER) UUID actorUserId,
-            @RequestBody ChangeRoomStatusRequest request
+        @PathVariable UUID roomId,
+        @RequestHeader(USER_ID_HEADER) UUID actorUserId,
+        @RequestBody ChangeRoomStatusRequest request
     ) {
         return toResponse(roomService.changeRoomStatus(
-                roomId,
-                actorUserId,
-                request.status()
+            roomId,
+            actorUserId,
+            request.status()
         ));
     }
 
     private RoomResponse toResponse(RoomData room) {
         return new RoomResponse(
-                room.id(),
-                room.name(),
-                toResponse(room.creator()),
-                room.participants().stream().map(this::toResponse).toList(),
-                room.status(),
-                room.createdAt()
+            room.id(),
+            room.name(),
+            toResponse(room.creator()),
+            room.participants().stream().map(this::toResponse).toList(),
+            room.status(),
+            room.createdAt()
         );
     }
 

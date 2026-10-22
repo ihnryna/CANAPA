@@ -14,9 +14,9 @@ public class EmailService {
     private final boolean enabled;
 
     public EmailService(
-            JavaMailSender mailSender,
-            @Value("${spring.mail.username:}") String fromAddress,
-            @Value("${canapa.mail.enabled:false}") boolean enabled
+        JavaMailSender mailSender,
+        @Value("${spring.mail.username:}") String fromAddress,
+        @Value("${canapa.mail.enabled:false}") boolean enabled
     ) {
         this.mailSender = mailSender;
         this.fromAddress = fromAddress;
@@ -24,25 +24,25 @@ public class EmailService {
     }
 
     public void sendTextEmail(
-            String recipient,
-            String subject,
-            String body
+        String recipient,
+        String subject,
+        String body
     ) {
         if (!enabled) {
             throw new IllegalStateException(
-                    "Email sending is disabled"
+                "Email sending is disabled"
             );
         }
 
         if (fromAddress == null || fromAddress.isBlank()) {
             throw new IllegalStateException(
-                    "Email sender address is not configured"
+                "Email sender address is not configured"
             );
         }
 
         if (recipient == null || recipient.isBlank()) {
             throw new IllegalArgumentException(
-                    "Recipient email must not be blank"
+                "Recipient email must not be blank"
             );
         }
 

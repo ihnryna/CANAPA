@@ -13,14 +13,14 @@ import static org.spring.canapa.backend.recommendation.RecommendationTestData.mo
 class AverageRatingStrategyTest {
 
     private final AverageRatingStrategy strategy =
-            new AverageRatingStrategy();
+        new AverageRatingStrategy();
 
     @Test
     void shouldSortMoviesByRatingDescending() {
         var movies = List.of(
-                movie("Dune", Set.of("Sci-Fi"), 8.5, 155),
-                movie("Interstellar", Set.of("Sci-Fi"), 8.7, 169),
-                movie("Inception", Set.of("Action"), 8.8, 148)
+            movie("Dune", Set.of("Sci-Fi"), 8.5, 155),
+            movie("Interstellar", Set.of("Sci-Fi"), 8.7, 169),
+            movie("Inception", Set.of("Action"), 8.8, 148)
         );
 
         var result = strategy.recommend(movies, List.of());
@@ -36,10 +36,10 @@ class AverageRatingStrategyTest {
     @Test
     void shouldIgnoreMoviesWithInvalidRatings() {
         var movies = List.of(
-                movie("Valid", Set.of("Drama"), 8.0, 120),
-                movie("No Rating", Set.of("Drama"), null, 120),
-                movie("Invalid Rating", Set.of("Drama"), 11.0, 120),
-                movie("NaN Rating", Set.of("Drama"), Double.NaN, 120)
+            movie("Valid", Set.of("Drama"), 8.0, 120),
+            movie("No Rating", Set.of("Drama"), null, 120),
+            movie("Invalid Rating", Set.of("Drama"), 11.0, 120),
+            movie("NaN Rating", Set.of("Drama"), Double.NaN, 120)
         );
 
         var result = strategy.recommend(movies, List.of());
@@ -58,8 +58,8 @@ class AverageRatingStrategyTest {
     @Test
     void shouldRejectNullMovieList() {
         assertThrows(
-                NullPointerException.class,
-                () -> strategy.recommend(null, List.of())
+            NullPointerException.class,
+            () -> strategy.recommend(null, List.of())
         );
     }
 }

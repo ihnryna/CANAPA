@@ -34,10 +34,10 @@ class NotificationServiceRepositoryTest {
 
     @Container
     static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:16-alpine")
-                    .withDatabaseName("canapa_test")
-                    .withUsername("test")
-                    .withPassword("test");
+        new PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("canapa_test")
+            .withUsername("test")
+            .withPassword("test");
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
@@ -45,7 +45,7 @@ class NotificationServiceRepositoryTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name",
-                () -> "org.postgresql.Driver");
+            () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 
@@ -72,15 +72,15 @@ class NotificationServiceRepositoryTest {
         notificationRepository.deleteAll();
 
         user = userRepository.save(
-                new User("Notification Test User", uniqueEmail())
+            new User("Notification Test User", uniqueEmail())
         );
 
         anotherUser = userRepository.save(
-                new User("Another Notification User", uniqueEmail())
+            new User("Another Notification User", uniqueEmail())
         );
 
         room = roomRepository.save(
-                new Room("Notification Test Room", user)
+            new Room("Notification Test Room", user)
         );
 
         userId = user.getId();
@@ -94,10 +94,10 @@ class NotificationServiceRepositoryTest {
     @Test
     void shouldCreateAndPersistPendingNotification() {
         Notification created = notificationService.createNotification(
-                userId,
-                roomId,
-                NotificationType.VOTING_STARTED,
-                "Voting has started"
+            userId,
+            roomId,
+            NotificationType.VOTING_STARTED,
+            "Voting has started"
         );
 
         assertNotNull(created.getId());
@@ -110,8 +110,8 @@ class NotificationServiceRepositoryTest {
         assertNull(created.getSentAt());
 
         Notification saved = notificationRepository
-                .findById(created.getId())
-                .orElseThrow();
+            .findById(created.getId())
+            .orElseThrow();
 
         assertEquals(created.getId(), saved.getId());
         assertEquals(NotificationStatus.PENDING, saved.getStatus());
@@ -122,49 +122,49 @@ class NotificationServiceRepositoryTest {
     @Test
     void shouldFindNotificationsByRecipient() {
         notificationService.createNotification(
-                userId,
-                roomId,
-                NotificationType.VOTING_STARTED,
-                "Voting has started"
+            userId,
+            roomId,
+            NotificationType.VOTING_STARTED,
+            "Voting has started"
         );
 
         notificationService.createNotification(
-                userId,
-                roomId,
-                NotificationType.VOTING_ENDED,
-                "Voting has ended"
+            userId,
+            roomId,
+            NotificationType.VOTING_ENDED,
+            "Voting has ended"
         );
 
         notificationService.createNotification(
-                anotherUser.getId(),
-                roomId,
-                NotificationType.VOTE_CAST,
-                "A vote was cast"
+            anotherUser.getId(),
+            roomId,
+            NotificationType.VOTE_CAST,
+            "A vote was cast"
         );
 
         var notifications =
-                notificationService.getUserNotifications(userId);
+            notificationService.getUserNotifications(userId);
 
         assertEquals(2, notifications.size());
         assertTrue(notifications.stream().allMatch(
-                n -> n.getRecipient().getId().equals(userId)
+            n -> n.getRecipient().getId().equals(userId)
         ));
     }
 
     @Test
     void shouldMarkNotificationAsSentAndPersistStatus() {
         Notification created = notificationService.createNotification(
-                userId,
-                roomId,
-                NotificationType.VOTING_ENDED,
-                "Voting has ended"
+            userId,
+            roomId,
+            NotificationType.VOTING_ENDED,
+            "Voting has ended"
         );
 
         notificationService.markAsSent(created.getId());
 
         Notification saved = notificationRepository
-                .findById(created.getId())
-                .orElseThrow();
+            .findById(created.getId())
+            .orElseThrow();
 
         assertEquals(NotificationStatus.SENT, saved.getStatus());
         assertNotNull(saved.getSentAt());
@@ -173,17 +173,17 @@ class NotificationServiceRepositoryTest {
     @Test
     void shouldMarkNotificationAsFailedAndPersistStatus() {
         Notification created = notificationService.createNotification(
-                userId,
-                roomId,
-                NotificationType.VOTE_CAST,
-                "A vote was cast"
+            userId,
+            roomId,
+            NotificationType.VOTE_CAST,
+            "A vote was cast"
         );
 
         notificationService.markAsFailed(created.getId());
 
         Notification saved = notificationRepository
-                .findById(created.getId())
-                .orElseThrow();
+            .findById(created.getId())
+            .orElseThrow();
 
         assertEquals(NotificationStatus.FAILED, saved.getStatus());
         assertNull(saved.getSentAt());
@@ -192,49 +192,49 @@ class NotificationServiceRepositoryTest {
     @Test
     void shouldCountPendingNotifications() {
         notificationService.createNotification(
-                userId,
-                roomId,
-                NotificationType.VOTING_STARTED,
-                "Voting has started"
+            userId,
+            roomId,
+            NotificationType.VOTING_STARTED,
+            "Voting has started"
         );
 
         Notification second = notificationService.createNotification(
-                userId,
-                roomId,
-                NotificationType.VOTE_CAST,
-                "A vote was cast"
+            userId,
+            roomId,
+            NotificationType.VOTE_CAST,
+            "A vote was cast"
         );
 
         notificationService.markAsSent(second.getId());
 
         assertEquals(
-                1,
-                notificationService.countPendingNotifications(userId)
+            1,
+            notificationService.countPendingNotifications(userId)
         );
     }
 
     @Test
     void shouldReturnNotificationsForRoom() {
         notificationService.createNotification(
-                userId,
-                roomId,
-                NotificationType.VOTING_STARTED,
-                "Voting has started"
+            userId,
+            roomId,
+            NotificationType.VOTING_STARTED,
+            "Voting has started"
         );
 
         Room anotherRoom = roomRepository.save(
-                new Room("Another Notification Room", anotherUser)
+            new Room("Another Notification Room", anotherUser)
         );
 
         notificationService.createNotification(
-                anotherUser.getId(),
-                anotherRoom.getId(),
-                NotificationType.VOTING_ENDED,
-                "Another voting has ended"
+            anotherUser.getId(),
+            anotherRoom.getId(),
+            NotificationType.VOTING_ENDED,
+            "Another voting has ended"
         );
 
         var notifications =
-                notificationService.getRoomNotifications(roomId);
+            notificationService.getRoomNotifications(roomId);
 
         assertEquals(1, notifications.size());
         assertEquals(roomId, notifications.getFirst().getRoom().getId());
@@ -243,8 +243,8 @@ class NotificationServiceRepositoryTest {
     @Test
     void shouldThrowWhenNotificationDoesNotExist() {
         assertThrows(
-                IllegalArgumentException.class,
-                () -> notificationService.markAsSent(UUID.randomUUID())
+            IllegalArgumentException.class,
+            () -> notificationService.markAsSent(UUID.randomUUID())
         );
     }
 }

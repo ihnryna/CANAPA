@@ -13,29 +13,29 @@ import static org.spring.canapa.backend.recommendation.RecommendationTestData.*;
 class GenreFocusedStrategyTest {
 
     private final GenreFocusedStrategy strategy =
-            new GenreFocusedStrategy();
+        new GenreFocusedStrategy();
 
     @Test
     void shouldRankMoviesByGroupGenrePreferences() {
         var preferences = List.of(
-                preference(
-                        Set.of("Sci-Fi", "Drama"),
-                        Set.of(),
-                        null,
-                        null
-                ),
-                preference(
-                        Set.of("Drama"),
-                        Set.of("Horror"),
-                        null,
-                        null
-                )
+            preference(
+                Set.of("Sci-Fi", "Drama"),
+                Set.of(),
+                null,
+                null
+            ),
+            preference(
+                Set.of("Drama"),
+                Set.of("Horror"),
+                null,
+                null
+            )
         );
 
         var movies = List.of(
-                movie("The Martian", Set.of("Sci-Fi"), 8.0, 144),
-                movie("Horror Movie", Set.of("Horror"), 7.0, 100),
-                movie("Interstellar", Set.of("Sci-Fi", "Drama"), 8.7, 169)
+            movie("The Martian", Set.of("Sci-Fi"), 8.0, 144),
+            movie("Horror Movie", Set.of("Horror"), 7.0, 100),
+            movie("Interstellar", Set.of("Sci-Fi", "Drama"), 8.7, 169)
         );
 
         var result = strategy.recommend(movies, preferences);
@@ -55,11 +55,11 @@ class GenreFocusedStrategyTest {
     @Test
     void shouldIgnoreGenreCaseAndWhitespace() {
         var movies = List.of(
-                movie("Test Movie", Set.of(" SCI-FI "), 8.0, 120)
+            movie("Test Movie", Set.of(" SCI-FI "), 8.0, 120)
         );
 
         var preferences = List.of(
-                preference(Set.of("sci-fi"), Set.of(), null, null)
+            preference(Set.of("sci-fi"), Set.of(), null, null)
         );
 
         var result = strategy.recommend(movies, preferences);
@@ -71,11 +71,11 @@ class GenreFocusedStrategyTest {
     @Test
     void shouldReturnEmptyListWithoutGenrePreferences() {
         var movies = List.of(
-                movie("Interstellar", Set.of("Sci-Fi"), 8.7, 169)
+            movie("Interstellar", Set.of("Sci-Fi"), 8.7, 169)
         );
 
         var preferences = List.of(
-                preference(Set.of(), Set.of(), null, null)
+            preference(Set.of(), Set.of(), null, null)
         );
 
         var result = strategy.recommend(movies, preferences);

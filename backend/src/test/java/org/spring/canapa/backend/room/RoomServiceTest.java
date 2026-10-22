@@ -52,10 +52,10 @@ class RoomServiceTest {
         UUID roomId = UUID.randomUUID();
         when(userRepository.findById(creator.getId())).thenReturn(Optional.of(creator));
         when(roomRepository.saveAndFlush(any(Room.class)))
-                .thenAnswer(invocation -> persistedRoom(invocation.getArgument(0), roomId));
+            .thenAnswer(invocation -> persistedRoom(invocation.getArgument(0), roomId));
 
         RoomData result = roomService.createRoom(
-                new CreateRoomCommand("  Friday movies  ", creator.getId())
+            new CreateRoomCommand("  Friday movies  ", creator.getId())
         );
 
         assertThat(result.id()).isEqualTo(roomId);
@@ -69,9 +69,9 @@ class RoomServiceTest {
     @Test
     void rejectsInvalidRoomName() {
         assertThatThrownBy(() -> roomService.createRoom(
-                new CreateRoomCommand("   ", UUID.randomUUID())
+            new CreateRoomCommand("   ", UUID.randomUUID())
         )).isInstanceOf(InvalidRoomDataException.class)
-                .hasMessage("Invalid name: must not be blank");
+            .hasMessage("Invalid name: must not be blank");
 
         verify(roomRepository, never()).saveAndFlush(any());
         verify(userRepository, never()).findById(any());
@@ -83,9 +83,9 @@ class RoomServiceTest {
         when(userRepository.findById(creatorId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> roomService.createRoom(
-                new CreateRoomCommand("Friday movies", creatorId)
+            new CreateRoomCommand("Friday movies", creatorId)
         )).isInstanceOf(UserNotFoundException.class)
-                .hasMessage("User not found: " + creatorId);
+            .hasMessage("User not found: " + creatorId);
 
         verify(roomRepository, never()).saveAndFlush(any());
     }
@@ -96,14 +96,14 @@ class RoomServiceTest {
         User alice = persistedUser("alice", "alice@example.com");
         User otherAlice = persistedUser("Alice", "alice.two@example.com");
         ReflectionTestUtils.setField(
-                alice,
-                "id",
-                UUID.fromString("00000000-0000-0000-0000-000000000001")
+            alice,
+            "id",
+            UUID.fromString("00000000-0000-0000-0000-000000000001")
         );
         ReflectionTestUtils.setField(
-                otherAlice,
-                "id",
-                UUID.fromString("00000000-0000-0000-0000-000000000002")
+            otherAlice,
+            "id",
+            UUID.fromString("00000000-0000-0000-0000-000000000002")
         );
         Room room = persistedRoom(new Room("Friday movies", creator), UUID.randomUUID());
         room.addParticipant(alice);
@@ -113,8 +113,8 @@ class RoomServiceTest {
         RoomData result = roomService.getRoom(room.getId());
 
         assertThat(result.participants())
-                .extracting(participant -> participant.name())
-                .containsExactly("alice", "Alice", "Zoe");
+            .extracting(participant -> participant.name())
+            .containsExactly("alice", "Alice", "Zoe");
     }
 
     @Test
@@ -126,13 +126,13 @@ class RoomServiceTest {
         older.addParticipant(participant);
         when(userRepository.findById(participant.getId())).thenReturn(Optional.of(participant));
         when(roomRepository.findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(participant.getId()))
-                .thenReturn(List.of(newest, older));
+            .thenReturn(List.of(newest, older));
 
         List<RoomData> result = roomService.getRoomsForUser(participant.getId());
 
         assertThat(result).extracting(RoomData::name).containsExactly("Newest", "Older");
         verify(roomRepository)
-                .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(participant.getId());
+            .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(participant.getId());
     }
 
     @Test
@@ -141,11 +141,11 @@ class RoomServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> roomService.getRoomsForUser(userId))
-                .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("User not found: " + userId);
+            .isInstanceOf(UserNotFoundException.class)
+            .hasMessage("User not found: " + userId);
 
         verify(roomRepository, never())
-                .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(any());
+            .findDistinctByParticipants_IdOrderByCreatedAtDescIdDesc(any());
     }
 
     @Test
@@ -154,8 +154,8 @@ class RoomServiceTest {
         when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> roomService.getRoom(roomId))
-                .isInstanceOf(RoomNotFoundException.class)
-                .hasMessage("Room not found: " + roomId);
+            .isInstanceOf(RoomNotFoundException.class)
+            .hasMessage("Room not found: " + roomId);
     }
 
     @Test
@@ -170,8 +170,8 @@ class RoomServiceTest {
         RoomData result = roomService.joinRoom(room.getId(), participant.getId());
 
         assertThat(result.participants())
-                .extracting(member -> member.id())
-                .containsExactly(creator.getId(), participant.getId());
+            .extracting(member -> member.id())
+            .containsExactly(creator.getId(), participant.getId());
         verify(roomRepository).findByIdForUpdate(room.getId());
         verify(roomRepository).saveAndFlush(room);
     }
@@ -183,7 +183,7 @@ class RoomServiceTest {
         when(roomRepository.findByIdForUpdate(room.getId())).thenReturn(Optional.of(room));
 
         assertThatThrownBy(() -> roomService.joinRoom(room.getId(), creator.getId()))
-                .isInstanceOf(RoomParticipantAlreadyExistsException.class);
+            .isInstanceOf(RoomParticipantAlreadyExistsException.class);
 
         verify(userRepository, never()).findById(any());
         verify(roomRepository, never()).saveAndFlush(any());
@@ -197,8 +197,8 @@ class RoomServiceTest {
         when(roomRepository.findByIdForUpdate(room.getId())).thenReturn(Optional.of(room));
 
         assertThatThrownBy(() -> roomService.joinRoom(room.getId(), UUID.randomUUID()))
-                .isInstanceOf(RoomJoinNotAllowedException.class)
-                .hasMessageContaining("while it is VOTING");
+            .isInstanceOf(RoomJoinNotAllowedException.class)
+            .hasMessageContaining("while it is VOTING");
 
         verify(userRepository, never()).findById(any());
     }
@@ -212,8 +212,8 @@ class RoomServiceTest {
         when(userRepository.findById(participantId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> roomService.joinRoom(room.getId(), participantId))
-                .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("User not found: " + participantId);
+            .isInstanceOf(UserNotFoundException.class)
+            .hasMessage("User not found: " + participantId);
     }
 
     @Test
@@ -224,10 +224,10 @@ class RoomServiceTest {
         when(roomRepository.saveAndFlush(room)).thenReturn(room);
 
         RoomData voting = roomService.changeRoomStatus(
-                room.getId(), creator.getId(), RoomStatus.VOTING
+            room.getId(), creator.getId(), RoomStatus.VOTING
         );
         RoomData finished = roomService.changeRoomStatus(
-                room.getId(), creator.getId(), RoomStatus.FINISHED
+            room.getId(), creator.getId(), RoomStatus.FINISHED
         );
 
         assertThat(voting.status()).isEqualTo(RoomStatus.VOTING);
@@ -241,7 +241,7 @@ class RoomServiceTest {
         when(roomRepository.findByIdForUpdate(room.getId())).thenReturn(Optional.of(room));
 
         RoomData result = roomService.changeRoomStatus(
-                room.getId(), creator.getId(), RoomStatus.CREATED
+            room.getId(), creator.getId(), RoomStatus.CREATED
         );
 
         assertThat(result.status()).isEqualTo(RoomStatus.CREATED);
@@ -256,7 +256,7 @@ class RoomServiceTest {
         when(roomRepository.findByIdForUpdate(room.getId())).thenReturn(Optional.of(room));
 
         assertThatThrownBy(() -> roomService.changeRoomStatus(
-                room.getId(), actorId, RoomStatus.VOTING
+            room.getId(), actorId, RoomStatus.VOTING
         )).isInstanceOf(RoomActionNotAllowedException.class);
 
         verify(roomRepository, never()).saveAndFlush(any());
@@ -269,9 +269,9 @@ class RoomServiceTest {
         when(roomRepository.findByIdForUpdate(room.getId())).thenReturn(Optional.of(room));
 
         assertThatThrownBy(() -> roomService.changeRoomStatus(
-                room.getId(), creator.getId(), RoomStatus.FINISHED
+            room.getId(), creator.getId(), RoomStatus.FINISHED
         )).isInstanceOf(InvalidRoomStatusTransitionException.class)
-                .hasMessageContaining("from CREATED to FINISHED");
+            .hasMessageContaining("from CREATED to FINISHED");
 
         verify(roomRepository, never()).saveAndFlush(any());
     }

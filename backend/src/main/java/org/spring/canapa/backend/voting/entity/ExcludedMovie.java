@@ -14,11 +14,11 @@ import java.util.UUID;
 
 @Entity
 @Table(
-        name = "excluded_movies",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_excluded_movie_room_movie",
-                columnNames = {"room_id", "movie_id"}
-        )
+    name = "excluded_movies",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_excluded_movie_room_movie",
+        columnNames = {"room_id", "movie_id"}
+    )
 )
 @Getter
 @Setter

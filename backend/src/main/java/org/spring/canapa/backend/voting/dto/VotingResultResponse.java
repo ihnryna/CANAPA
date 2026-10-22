@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.UUID;
 
 public record VotingResultResponse(
-        Long id,
-        UUID roomId,
-        List<Long> winnerMovieIds,
-        int voteCount,
-        LocalDateTime finishedAt
+    Long id,
+    UUID roomId,
+    List<Long> winnerMovieIds,
+    int voteCount,
+    LocalDateTime finishedAt
 ) {
 }

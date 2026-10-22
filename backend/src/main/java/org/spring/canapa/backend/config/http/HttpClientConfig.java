@@ -13,13 +13,13 @@ public class HttpClientConfig {
     @Bean
     public RestClient movieRestClient(RestClient.Builder builder) {
         SimpleClientHttpRequestFactory requestFactory =
-                new SimpleClientHttpRequestFactory();
+            new SimpleClientHttpRequestFactory();
 
         requestFactory.setConnectTimeout(Duration.ofSeconds(5));
         requestFactory.setReadTimeout(Duration.ofSeconds(10));
 
         return builder
-                .requestFactory(requestFactory)
-                .build();
+            .requestFactory(requestFactory)
+            .build();
     }
 }

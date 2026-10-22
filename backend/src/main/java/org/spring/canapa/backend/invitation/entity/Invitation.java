@@ -40,13 +40,14 @@ public class Invitation {
     @Column(nullable = false, length = 20)
     private InvitationStatus status;
 
-    protected Invitation() {}
+    protected Invitation() {
+    }
 
     public Invitation(
-            Room room,
-            User createdBy,
-            String code,
-            Instant expiresAt
+        Room room,
+        User createdBy,
+        String code,
+        Instant expiresAt
     ) {
         this.room = Objects.requireNonNull(room);
         this.createdBy = Objects.requireNonNull(createdBy);
