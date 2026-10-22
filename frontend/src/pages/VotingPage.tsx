@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { searchMovies, type Movie } from '../api/movies'
 import { getRoomRecommendations } from '../api/recommendations'
 import {
@@ -23,8 +23,15 @@ import { PageFooter } from '../components/PageFooter'
 import { useRoomPolling } from '../hooks/useRoomPolling'
 // TEMP: FOR DEVELOPING
 import { MOCK_MOVIES } from '../mocks/votingMock'
+import { RoomPageHeader } from "../components/RoomPageHeader.tsx";
 
 const USE_MOCK_VOTING = false
+
+const STATUS_LABELS = {
+  CREATED: 'Підготовка',
+  VOTING: 'Голосування триває',
+  FINISHED: 'Завершено',
+} as const
 
 //
 
@@ -45,8 +52,11 @@ export function VotingPage() {
     room,
     loading: roomLoading,
     error: roomError,
+    lastUpdatedAt,
     refresh: refreshRoom,
   } = useRoomPolling(validRoomId)
+  const navigate = useNavigate()
+  const member = room?.participants.some((participant) => participant.id === user?.id) ?? false
 
   const [movies, setMovies] = useState<Movie[]>([])
   const [votes, setVotes] = useState<Vote[]>([])
@@ -171,6 +181,9 @@ export function VotingPage() {
       window.clearTimeout(timeoutId)
     }
   }, [loadData])
+
+  if (room === null)
+    return
 
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -379,6 +392,16 @@ export function VotingPage() {
     }
   }
 
+  async function copyRoomId() {
+    if (room === null) return
+    try {
+      await navigator.clipboard.writeText(room.id)
+      setNotice('ID кімнати скопійовано')
+    } catch {
+      setNotice('Не вдалося скопіювати ID')
+    }
+  }
+
   async function handleFinishVoting() {
     if (validRoomId === undefined || !organizer || !isVoting) {
       return
@@ -514,29 +537,17 @@ export function VotingPage() {
       <AppHeader/>
 
       <main className="main-content voting-page">
-        <Link className="back-link" to={`/rooms/${room.id}`}>
-          <Icon name="back" size={16}/>
-          Повернутися до кімнати
-        </Link>
-
-        <section className="voting-heading">
-          <div>
-            <div className="eyebrow">ЧАС ОБИРАТИ ФІЛЬМ</div>
-            <h1>{room.name}</h1>
-            <p>
-              Обирайте всі фільми, які хотіли б подивитися разом.
-              Свій голос можна скасувати до завершення голосування.
-            </p>
-          </div>
-
-          <span className={`status-badge status-${room.status.toLowerCase()}`}>
-                        {isFinished
-                          ? 'Завершено'
-                          : isVoting
-                            ? 'Голосування триває'
-                            : 'Ще не розпочато'}
-                    </span>
-        </section>
+        <RoomPageHeader
+          error={roomError}
+          refresh={refreshRoom}
+          member={member}
+          room={room}
+          STATUS_LABELS={STATUS_LABELS}
+          copyRoomId={copyRoomId}
+          lastUpdatedAt={lastUpdatedAt}
+          navigate={navigate}
+          currentIdx={2}
+        />
 
         {error !== null && (
           <div className="voting-alert" role="alert">
