@@ -7,6 +7,7 @@ import org.spring.canapa.backend.room.exception.RoomActionNotAllowedException;
 import org.spring.canapa.backend.room.exception.RoomJoinNotAllowedException;
 import org.spring.canapa.backend.room.exception.RoomNotFoundException;
 import org.spring.canapa.backend.room.exception.RoomParticipantAlreadyExistsException;
+import org.spring.canapa.backend.room.exception.RoomVotingRequiresPreferencesException;
 import org.spring.canapa.backend.user.exception.DuplicateUserEmailException;
 import org.spring.canapa.backend.user.exception.InvalidUserDataException;
 import org.spring.canapa.backend.user.exception.UserNotFoundException;
@@ -124,6 +125,19 @@ public class GlobalExceptionHandler {
     ) {
         return error(
             ApiErrorCode.INVALID_ROOM_STATUS_TRANSITION,
+            exception.getMessage(),
+            HttpStatus.CONFLICT,
+            request
+        );
+    }
+
+    @ExceptionHandler(RoomVotingRequiresPreferencesException.class)
+    public ResponseEntity<ApiErrorResponse> handleRoomVotingRequiresPreferences(
+        RoomVotingRequiresPreferencesException exception,
+        HttpServletRequest request
+    ) {
+        return error(
+            ApiErrorCode.ROOM_VOTING_REQUIRES_PREFERENCES,
             exception.getMessage(),
             HttpStatus.CONFLICT,
             request

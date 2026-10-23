@@ -121,7 +121,7 @@ export function RoomPage() {
   const [notice, setNotice] = useState<string | null>(initialNotice)
   const [showInvitation, setShowInvitation] = useState(false)
   const [startingVoting, setStartingVoting] = useState(false)
-  const [, setVotingError] = useState<string | null>(null)
+  const [votingError, setVotingError] = useState<string | null>(null)
   const [votingResult, setVotingResult] = useState<VotingResult | null>(null)
   const [resultError, setResultError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -162,6 +162,7 @@ export function RoomPage() {
   const organizer = room?.creator.id === user?.id
   const member = room?.participants.some((participant) => participant.id === user?.id) ?? false
   const readyCount = useMemo(() => room === null || readyUserIds === null ? null : room.participants.filter((participant) => readyUserIds.has(participant.id)).length, [readyUserIds, room])
+  const canStartVoting = readyCount !== null && readyCount > 0
 
   async function handleDeletingRoom() {
     if (validRoomId === undefined || !organizer || deleting) {
@@ -222,7 +223,7 @@ export function RoomPage() {
   }
 
   async function handleStartVoting() {
-    if (room === null || user === null || !organizer || room.status !== 'CREATED') return
+    if (room === null || user === null || !organizer || room.status !== 'CREATED' || !canStartVoting) return
 
     setStartingVoting(true)
     setVotingError(null)
@@ -253,11 +254,19 @@ export function RoomPage() {
 
         {organizer && member && room.status === 'CREATED' && (
           <div className="voting-entry">
-            <button className="btn primary" type="button" disabled={startingVoting}
+            <button className="btn primary" type="button" disabled={startingVoting || !canStartVoting}
                     onClick={() => void handleStartVoting()}>
               {startingVoting ? 'Розпочинаємо…' : 'Розпочати голосування'}
               {!startingVoting && <Icon name="arrow" size={17}/>}
             </button>
+            {!canStartVoting && (
+              <p className="subtle-note" role="status">
+                {readyUserIds === null
+                  ? 'Перевіряємо, чи хтось уже додав уподобання…'
+                  : 'Щоб розпочати голосування, принаймні один учасник має додати свої уподобання.'}
+              </p>
+            )}
+            {votingError !== null && <p className="form-error" role="alert">{votingError}</p>}
           </div>
         )}
 

@@ -118,6 +118,28 @@ class RoomApiIntegrationTest {
                 .content("""
                     {"status": "VOTING"}
                     """))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("ROOM_VOTING_REQUIRES_PREFERENCES"));
+
+        mockMvc.perform(put("/api/rooms/{roomId}/preferences/users/{userId}", roomId, creator.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "likedGenres": ["Comedy"],
+                      "dislikedGenres": [],
+                      "minRating": 6,
+                      "maxRuntime": 180,
+                      "preferredLanguage": "en"
+                    }
+                    """))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(put("/api/rooms/{roomId}/status", roomId)
+                .header(USER_ID_HEADER, creator.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"status": "VOTING"}
+                    """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("VOTING"));
 

@@ -9,6 +9,8 @@ import org.spring.canapa.backend.room.exception.RoomActionNotAllowedException;
 import org.spring.canapa.backend.room.exception.RoomJoinNotAllowedException;
 import org.spring.canapa.backend.room.exception.RoomNotFoundException;
 import org.spring.canapa.backend.room.exception.RoomParticipantAlreadyExistsException;
+import org.spring.canapa.backend.room.exception.RoomVotingRequiresPreferencesException;
+import org.spring.canapa.backend.preference.repository.UserPreferenceRepository;
 import org.spring.canapa.backend.user.User;
 import org.spring.canapa.backend.user.UserRepository;
 import org.spring.canapa.backend.user.exception.UserNotFoundException;
@@ -32,11 +34,18 @@ public class RoomService {
 
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+    private final UserPreferenceRepository userPreferenceRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    public RoomService(RoomRepository roomRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
+    public RoomService(
+        RoomRepository roomRepository,
+        UserRepository userRepository,
+        UserPreferenceRepository userPreferenceRepository,
+        ApplicationEventPublisher eventPublisher
+    ) {
         this.roomRepository = roomRepository;
         this.userRepository = userRepository;
+        this.userPreferenceRepository = userPreferenceRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -103,6 +112,13 @@ public class RoomService {
         }
         if (!isAllowedTransition(room.getStatus(), targetStatus)) {
             throw new InvalidRoomStatusTransitionException(room.getId(), room.getStatus(), targetStatus);
+        }
+        if (targetStatus == RoomStatus.VOTING
+            && !userPreferenceRepository.existsByRoomIdAndUserIdIn(
+                room.getId(),
+                room.getParticipants().stream().map(User::getId).toList()
+            )) {
+            throw new RoomVotingRequiresPreferencesException(room.getId());
         }
 
         room.changeStatus(targetStatus);

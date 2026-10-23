@@ -13,6 +13,8 @@ import org.spring.canapa.backend.room.exception.RoomActionNotAllowedException;
 import org.spring.canapa.backend.room.exception.RoomJoinNotAllowedException;
 import org.spring.canapa.backend.room.exception.RoomNotFoundException;
 import org.spring.canapa.backend.room.exception.RoomParticipantAlreadyExistsException;
+import org.spring.canapa.backend.room.exception.RoomVotingRequiresPreferencesException;
+import org.spring.canapa.backend.preference.repository.UserPreferenceRepository;
 import org.spring.canapa.backend.user.User;
 import org.spring.canapa.backend.user.UserRepository;
 import org.spring.canapa.backend.user.exception.UserNotFoundException;
@@ -39,6 +41,9 @@ class RoomServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserPreferenceRepository userPreferenceRepository;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -222,6 +227,9 @@ class RoomServiceTest {
         Room room = persistedRoom(new Room("Friday movies", creator), UUID.randomUUID());
         when(roomRepository.findByIdForUpdate(room.getId())).thenReturn(Optional.of(room));
         when(roomRepository.saveAndFlush(room)).thenReturn(room);
+        when(userPreferenceRepository.existsByRoomIdAndUserIdIn(
+            room.getId(), List.of(creator.getId())
+        )).thenReturn(true);
 
         RoomData voting = roomService.changeRoomStatus(
             room.getId(), creator.getId(), RoomStatus.VOTING
@@ -232,6 +240,25 @@ class RoomServiceTest {
 
         assertThat(voting.status()).isEqualTo(RoomStatus.VOTING);
         assertThat(finished.status()).isEqualTo(RoomStatus.FINISHED);
+    }
+
+    @Test
+    void rejectsVotingStartWhenNobodyAddedPreferences() {
+        User creator = persistedUser("Alice", "alice@example.com");
+        Room room = persistedRoom(new Room("Friday movies", creator), UUID.randomUUID());
+        when(roomRepository.findByIdForUpdate(room.getId())).thenReturn(Optional.of(room));
+        when(userPreferenceRepository.existsByRoomIdAndUserIdIn(
+            room.getId(), List.of(creator.getId())
+        )).thenReturn(false);
+
+        assertThatThrownBy(() -> roomService.changeRoomStatus(
+            room.getId(), creator.getId(), RoomStatus.VOTING
+        )).isInstanceOf(RoomVotingRequiresPreferencesException.class)
+            .hasMessageContaining("at least one participant adds preferences");
+
+        assertThat(room.getStatus()).isEqualTo(RoomStatus.CREATED);
+        verify(roomRepository, never()).saveAndFlush(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
