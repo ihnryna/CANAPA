@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { searchMovies, type Movie } from '../api/movies'
+import type { Movie } from '../api/movies'
 import { getRoomRecommendations } from '../api/recommendations'
 import {
   addVote,
@@ -66,8 +66,6 @@ export function VotingPage() {
   const [loadingMovies, setLoadingMovies] = useState(true)
   const [pendingMovieId, setPendingMovieId] = useState<number | null>(null)
   const [finishing, setFinishing] = useState(false)
-  const [query, setQuery] = useState('')
-  const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   // TEMP: FOR DEVELOPING
@@ -189,67 +187,6 @@ export function VotingPage() {
 
   if (room === null)
     return
-
-  async function handleSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const normalizedQuery = query.trim()
-
-    if (!normalizedQuery) {
-      await loadData()
-      return
-    }
-
-    // TEMP: FOR DEVELOPING
-    if (USE_MOCK_VOTING) {
-      const normalized = normalizedQuery.toLocaleLowerCase()
-
-      const filteredMovies = MOCK_MOVIES.filter((movie) => {
-        const searchableText = [
-          movie.title,
-          movie.description ?? '',
-          ...movie.genres,
-          String(movie.releaseYear ?? ''),
-        ]
-          .join(' ')
-          .toLocaleLowerCase()
-
-        return searchableText.includes(normalized)
-      })
-
-      setMovies(filteredMovies)
-      setNotice(
-        filteredMovies.length === 0
-          ? 'За цим запитом фільмів не знайдено.'
-          : null,
-      )
-      setError(null)
-      return
-    }
-    //
-
-    setSearching(true)
-    setError(null)
-
-    try {
-      const response = await searchMovies(normalizedQuery)
-      setMovies(response.results)
-
-      if (response.results.length === 0) {
-        setNotice('За цим запитом фільмів не знайдено.')
-      } else {
-        setNotice(null)
-      }
-    } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : 'Не вдалося знайти фільми.',
-      )
-    } finally {
-      setSearching(false)
-    }
-  }
 
   async function handleVote(movieId: number) {
     if (
@@ -632,39 +569,6 @@ export function VotingPage() {
         )}
 
         <section className="voting-toolbar">
-          <form className="movie-search" onSubmit={handleSearch}>
-            <label htmlFor="movie-search-input">
-              Знайти фільм
-            </label>
-            <div className="movie-search-row">
-              <input
-                id="movie-search-input"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Наприклад, Interstellar"
-                maxLength={150}
-              />
-              <button
-                className="btn primary"
-                disabled={searching}
-              >
-                {searching ? 'Шукаємо…' : 'Знайти'}
-              </button>
-              {query.trim() !== '' && (
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() => {
-                    setQuery('')
-                    void loadData()
-                  }}
-                >
-                  Усі фільми
-                </button>
-              )}
-            </div>
-          </form>
-
           <div className="voting-summary">
                         <span>
                             <strong>{ownVotes.size}</strong> ваших голосів
@@ -684,9 +588,7 @@ export function VotingPage() {
           <section className="voting-state-panel">
             <h2>Фільмів поки немає</h2>
             <p>
-              Спробуйте пошукати фільм за назвою. Результати пошуку
-              можуть бути завантажені з кінопровайдера та збережені
-              в базі CANAPA.
+              Перевірте вподобання учасників і оновіть список рекомендацій.
             </p>
           </section>
         ) : (
