@@ -365,7 +365,7 @@ export function RoomPage() {
               <span className="form-symbol"><Icon name="check" size={24}/></span>
               <h3>Ваші вподобання</h3>
               <p>{readyUserIds === null ? 'Статус уподобань недоступний' : readyUserIds.has(user?.id ?? '') ? 'Уподобання збережено' : 'Ви ще не заповнили вподобання'}</p>
-              <button className="btn primary" disabled={room.status === 'VOTING'} onClick={() => navigate(`/rooms/${room.id}/discover`)}>Додати уподобання</button>
+              <button className="btn primary" disabled={room.status !== 'CREATED'} onClick={() => navigate(`/rooms/${room.id}/discover`)}>Додати уподобання</button>
             </section>
             <section className="panel room-summary">
               <h3>Усе для кіновечора</h3>
