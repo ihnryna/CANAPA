@@ -14,7 +14,6 @@ interface RoomPageHeaderProps {
         readonly VOTING: string;
         readonly FINISHED: string;
     };
-    copyRoomId: () => Promise<void>;
     lastUpdatedAt: Date | null;
     navigate: NavigateFunction;
     currentIdx: number;
@@ -27,7 +26,6 @@ export function RoomPageHeader(
         member,
         room,
         STATUS_LABELS,
-        copyRoomId,
         lastUpdatedAt,
         navigate,
         currentIdx
@@ -50,12 +48,10 @@ export function RoomPageHeader(
                 <span className={`status-badge status-${room.status.toLowerCase()}`}>{STATUS_LABELS[room.status]}</span>
             </section>
             <div className="room-meta"><span>ID: <code>{room.id}</code></span>
-                <button className="text-button compact" onClick={copyRoomId}><Icon name="copy" size={15}/> Копіювати ID
-                </button>
                 <span
                     className="polling-note">{lastUpdatedAt === null ? 'Оновлюємо…' : 'Автоматично оновлюється'}</span>
             </div>
-            {room.status === 'VOTING' && (
+            {room.status === 'VOTING' && currentIdx === 0 && (
                 <div className="voting-entry">
                     <Link className="btn primary" to={`/rooms/${room.id}/voting`}>
                         Перейти до голосування

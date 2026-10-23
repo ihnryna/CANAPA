@@ -351,16 +351,6 @@ export function VotingPage() {
     }
   }
 
-  async function copyRoomId() {
-    if (room === null) return
-    try {
-      await navigator.clipboard.writeText(room.id)
-      setNotice('ID кімнати скопійовано')
-    } catch {
-      setNotice('Не вдалося скопіювати ID')
-    }
-  }
-
   async function handleFinishVoting() {
     if (
       validRoomId === undefined ||
@@ -501,7 +491,6 @@ export function VotingPage() {
           member={member}
           room={room}
           STATUS_LABELS={STATUS_LABELS}
-          copyRoomId={copyRoomId}
           lastUpdatedAt={lastUpdatedAt}
           navigate={navigate}
           currentIdx={2}

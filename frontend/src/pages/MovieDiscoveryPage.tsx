@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MoviePreferences } from '../components/MoviePreferences'
 import type { Movie } from '../api/movies'
 import './MovieDiscoveryPage.css'
@@ -26,10 +26,6 @@ export function MovieDiscoveryPage({ userId }: MovieDiscoveryPageProps) {
   const validRoomId = roomId !== undefined && isUuid(roomId) ? roomId : undefined
   const [selectedMovies, setSelectedMovies] = useState<Movie[]>([])
   const { room, error, lastUpdatedAt, refresh } = useRoomPolling(validRoomId)
-  const location = useLocation()
-  const routeState = location.state as { created?: boolean; joined?: boolean; alreadyMember?: boolean } | null
-  const initialNotice = routeState?.created ? 'Кімнату створено' : routeState?.joined ? 'Ви приєдналися до кімнати' : routeState?.alreadyMember ? 'Ви вже були учасником кімнати' : null
-  const [, setNotice] = useState<string | null>(initialNotice)
   const navigate = useNavigate()
   const member = room?.participants.some((participant) => participant.id === user?.id) ?? false
 
@@ -59,16 +55,6 @@ export function MovieDiscoveryPage({ userId }: MovieDiscoveryPageProps) {
     )
   }
 
-  async function copyRoomId() {
-    if (room === null) return
-    try {
-      await navigator.clipboard.writeText(room.id)
-      setNotice('ID кімнати скопійовано')
-    } catch {
-      setNotice('Не вдалося скопіювати ID')
-    }
-  }
-
   return (
     <>
       <AppHeader/>
@@ -79,7 +65,6 @@ export function MovieDiscoveryPage({ userId }: MovieDiscoveryPageProps) {
           member={member}
           room={room}
           STATUS_LABELS={STATUS_LABELS}
-          copyRoomId={copyRoomId}
           lastUpdatedAt={lastUpdatedAt}
           navigate={navigate}
           currentIdx={1}
