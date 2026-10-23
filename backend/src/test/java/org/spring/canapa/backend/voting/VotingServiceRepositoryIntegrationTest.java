@@ -7,6 +7,7 @@ import org.spring.canapa.backend.movie.entity.Movie;
 import org.spring.canapa.backend.movie.repository.MovieRepository;
 import org.spring.canapa.backend.room.Room;
 import org.spring.canapa.backend.room.RoomRepository;
+import org.spring.canapa.backend.room.RoomService;
 import org.spring.canapa.backend.user.User;
 import org.spring.canapa.backend.user.UserRepository;
 import org.spring.canapa.backend.voting.entity.ExcludedMovie;
@@ -73,6 +74,9 @@ class VotingServiceRepositoryIntegrationTest {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private RoomService roomService;
 
     @Autowired
     private MovieRepository movieRepository;
@@ -322,6 +326,8 @@ class VotingServiceRepositoryIntegrationTest {
 
     @Test
     void finishVoting_shouldSaveSingleWinner() {
+        roomService.joinRoom(roomId, user2Id);
+        roomService.joinRoom(roomId, user3Id);
         votingService.addVote(user1Id, roomId, movie1Id);
         votingService.addVote(user2Id, roomId, movie1Id);
         votingService.addVote(user3Id, roomId, movie2Id);
@@ -366,12 +372,28 @@ class VotingServiceRepositoryIntegrationTest {
     }
 
     @Test
-    void finishVoting_shouldSaveEmptyWinnersWhenThereAreNoVotes() {
-        VotingResult result = votingService.finishVoting(roomId);
+    void finishVoting_shouldRejectWhenNobodyVoted() {
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> votingService.finishVoting(roomId)
+        );
 
-        assertNotNull(result.getId());
-        assertEquals(List.of(), winnerIds(result));
-        assertEquals(0, result.getVoteCount());
+        assertTrue(exception.getMessage().contains("Missing votes: 1"));
+        assertTrue(votingResultRepository.findByRoom_Id(roomId).isEmpty());
+    }
+
+    @Test
+    void finishVoting_shouldRejectWhenParticipantHasNotVoted() {
+        roomService.joinRoom(roomId, user2Id);
+        votingService.addVote(user1Id, roomId, movie1Id);
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> votingService.finishVoting(roomId)
+        );
+
+        assertTrue(exception.getMessage().contains("Missing votes: 1"));
+        assertTrue(votingResultRepository.findByRoom_Id(roomId).isEmpty());
     }
 
     @Test
@@ -415,6 +437,7 @@ class VotingServiceRepositoryIntegrationTest {
 
     @Test
     void addVote_shouldRejectChangesAfterVotingIsFinished() {
+        votingService.addVote(user1Id, roomId, movie1Id);
         votingService.finishVoting(roomId);
 
         assertThrows(
@@ -436,6 +459,7 @@ class VotingServiceRepositoryIntegrationTest {
 
     @Test
     void excludeMovie_shouldRejectChangesAfterVotingIsFinished() {
+        votingService.addVote(user1Id, roomId, movie1Id);
         votingService.finishVoting(roomId);
 
         assertThrows(
@@ -446,6 +470,7 @@ class VotingServiceRepositoryIntegrationTest {
 
     @Test
     void restoreMovie_shouldRejectChangesAfterVotingIsFinished() {
+        votingService.addVote(user1Id, roomId, movie1Id);
         votingService.excludeMovie(user1Id, roomId, movie1Id);
         votingService.finishVoting(roomId);
 

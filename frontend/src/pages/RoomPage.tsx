@@ -163,16 +163,6 @@ export function RoomPage() {
   const member = room?.participants.some((participant) => participant.id === user?.id) ?? false
   const readyCount = useMemo(() => room === null || readyUserIds === null ? null : room.participants.filter((participant) => readyUserIds.has(participant.id)).length, [readyUserIds, room])
 
-  async function copyRoomId() {
-    if (room === null) return
-    try {
-      await navigator.clipboard.writeText(room.id)
-      setNotice('ID кімнати скопійовано')
-    } catch {
-      setNotice('Не вдалося скопіювати ID')
-    }
-  }
-
   async function handleDeletingRoom() {
     if (validRoomId === undefined || !organizer || deleting) {
       return
@@ -256,7 +246,6 @@ export function RoomPage() {
           member={member}
           room={room}
           STATUS_LABELS={STATUS_LABELS}
-          copyRoomId={copyRoomId}
           lastUpdatedAt={lastUpdatedAt}
           navigate={navigate}
           currentIdx={0}

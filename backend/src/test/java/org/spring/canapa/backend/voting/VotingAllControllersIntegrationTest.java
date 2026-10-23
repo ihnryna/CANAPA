@@ -298,8 +298,19 @@ class VotingAllControllersIntegrationTest {
     }
 
     @Test
+    void finishVoting_shouldReturnConflictUntilCreatorVotes()
+        throws Exception {
+        mockMvc.perform(post(
+                "/api/rooms/" + ROOM_11 + "/voting-result"))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.message")
+                .value("Cannot finish voting until all room participants have voted. Missing votes: 1"));
+    }
+
+    @Test
     void addVote_shouldReturnConflictAfterVotingIsFinished()
         throws Exception {
+        addVote(ROOM_12, USER_1, 15L);
         mockMvc.perform(post(
                 "/api/rooms/" + ROOM_12 + "/voting-result"))
             .andExpect(status().isOk());

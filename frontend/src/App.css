@@ -1515,44 +1515,9 @@
 .voting-toolbar {
     display: flex;
     align-items: flex-end;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 24px;
     margin: 28px 0;
-}
-
-.movie-search {
-    flex: 1;
-    min-width: 0;
-}
-
-.movie-search label {
-    display: block;
-    margin-bottom: 8px;
-    color: var(--navy);
-    font-weight: 700;
-}
-
-.movie-search-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.movie-search-row input {
-    flex: 1;
-    min-width: 180px;
-    min-height: 44px;
-    padding: 10px 14px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--white);
-    color: var(--navy-deep);
-    font: inherit;
-}
-
-.movie-search-row input:focus {
-    border-color: var(--pink);
-    outline: 2px solid var(--pink-soft);
 }
 
 .voting-summary {
@@ -1913,15 +1878,6 @@
         max-width: calc(100% - 12px);
         padding: 5px;
         font-size: 10px;
-    }
-
-    .movie-search-row {
-        flex-direction: column;
-    }
-
-    .movie-search-row input {
-        width: 100%;
-        box-sizing: border-box;
     }
 
     .finish-voting-panel {

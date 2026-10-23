@@ -45,16 +45,6 @@ export function VotingResultsPage() {
     ) ?? false
 
 
-  const copyRoomId = useCallback(async () => {
-    if (!room) return
-
-    try {
-      await navigator.clipboard.writeText(room.id)
-    } catch {
-      setError('Не вдалося скопіювати ID кімнати.')
-    }
-  }, [room])
-
   const loadResult = useCallback(async () => {
     if (!validRoomId || !user || !isUuid(user.id)) {
       setLoadingResult(false)
@@ -161,7 +151,6 @@ export function VotingResultsPage() {
           member={member}
           room={room}
           STATUS_LABELS={STATUS_LABELS}
-          copyRoomId={copyRoomId}
           lastUpdatedAt={lastUpdatedAt}
           navigate={navigate}
           currentIdx={3}
