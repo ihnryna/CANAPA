@@ -5,6 +5,8 @@ import org.spring.canapa.backend.room.dto.CreateRoomCommand;
 import org.spring.canapa.backend.room.dto.RoomData;
 import org.spring.canapa.backend.room.exception.RoomJoinNotAllowedException;
 import org.spring.canapa.backend.room.exception.RoomParticipantAlreadyExistsException;
+import org.spring.canapa.backend.preference.dto.UserPreferenceRequest;
+import org.spring.canapa.backend.preference.service.UserPreferenceService;
 import org.spring.canapa.backend.user.UserService;
 import org.spring.canapa.backend.user.dto.CreateUserCommand;
 import org.spring.canapa.backend.user.dto.UserData;
@@ -17,6 +19,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,6 +54,9 @@ class RoomServiceIntegrationTest {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserPreferenceService userPreferenceService;
+
     @Test
     void createsRetrievesJoinsAndAdvancesPersistedRoom() {
         UserData creator = userService.createUser(
@@ -63,6 +70,13 @@ class RoomServiceIntegrationTest {
             new CreateRoomCommand("  Friday movies  ", creator.id())
         );
         RoomData joined = roomService.joinRoom(created.id(), participant.id());
+        userPreferenceService.createOrUpdatePreference(
+            creator.id(),
+            created.id(),
+            new UserPreferenceRequest(
+                Set.of("Comedy"), Set.of(), 6.0, 180, "en", null
+            )
+        );
         RoomData voting = roomService.changeRoomStatus(
             created.id(), creator.id(), RoomStatus.VOTING
         );
@@ -95,6 +109,13 @@ class RoomServiceIntegrationTest {
         assertThatThrownBy(() -> roomService.joinRoom(room.id(), creator.id()))
             .isInstanceOf(RoomParticipantAlreadyExistsException.class);
 
+        userPreferenceService.createOrUpdatePreference(
+            creator.id(),
+            room.id(),
+            new UserPreferenceRequest(
+                Set.of("Drama"), Set.of(), 6.0, 180, "en", null
+            )
+        );
         roomService.changeRoomStatus(room.id(), creator.id(), RoomStatus.VOTING);
 
         assertThatThrownBy(() -> roomService.joinRoom(room.id(), participant.id()))
