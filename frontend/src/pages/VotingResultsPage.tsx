@@ -44,7 +44,6 @@ export function VotingResultsPage() {
       (participant) => participant.id === user?.id,
     ) ?? false
 
-  const organizer = room?.creator.id === user?.id
 
   const copyRoomId = useCallback(async () => {
     if (!room) return

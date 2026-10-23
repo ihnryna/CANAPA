@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.net.URI;
 import java.util.List;
@@ -81,6 +82,15 @@ public class RoomController {
             actorUserId,
             request.status()
         ));
+    }
+
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<Void> deleteRoom(
+            @PathVariable UUID roomId,
+            @RequestHeader(USER_ID_HEADER) UUID actorUserId
+    ) {
+        roomService.deleteRoom(roomId, actorUserId);
+        return ResponseEntity.noContent().build();
     }
 
     private RoomResponse toResponse(RoomData room) {

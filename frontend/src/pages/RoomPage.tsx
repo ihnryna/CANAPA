@@ -9,7 +9,7 @@ import { Icon } from '../components/Icon'
 import { PageFooter } from '../components/PageFooter'
 import { useRoomPolling } from '../hooks/useRoomPolling'
 import { RoomPageHeader } from "../components/RoomPageHeader.tsx";
-import { changeRoomStatus } from "../api/rooms.ts";
+import { changeRoomStatus, deleteRoom } from '../api/rooms.ts'
 
 const STATUS_LABELS = {
   CREATED: 'Підготовка',
@@ -124,6 +124,8 @@ export function RoomPage() {
   const [, setVotingError] = useState<string | null>(null)
   const [votingResult, setVotingResult] = useState<VotingResult | null>(null)
   const [resultError, setResultError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const { room, readyUserIds, loading, error, preferencesError, lastUpdatedAt, refresh } = useRoomPolling(validRoomId)
 
   useEffect(() => {
@@ -168,6 +170,39 @@ export function RoomPage() {
       setNotice('ID кімнати скопійовано')
     } catch {
       setNotice('Не вдалося скопіювати ID')
+    }
+  }
+
+  async function handleDeletingRoom() {
+    if (validRoomId === undefined || !organizer || deleting) {
+      return
+    }
+
+    const confirmed = window.confirm(
+        'Видалити кімнату? Скасувати видалення не вийде.',
+    )
+
+    if (!confirmed) return
+
+    setDeleting(true)
+    setDeleteError(null)
+    setNotice(null)
+
+    try {
+      await deleteRoom(validRoomId, user.id)
+
+      navigate('/rooms', {
+        state: { deleted: true },
+        replace: true,
+      })
+    } catch (caught) {
+      setDeleteError(
+          caught instanceof Error
+              ? caught.message
+              : 'Не вдалося видалити кімнату.',
+      )
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -343,6 +378,28 @@ export function RoomPage() {
             </section>
           </div>
         </div>
+
+        {organizer && (
+            <section className="finish-voting-panel">
+              <div>
+                <h3>Кімната більше не потрібна?</h3>
+                <p>
+                  {deleteError !== null && (
+                      <p role="alert" className="form-error">
+                        {deleteError}
+                      </p>
+                  )}
+                </p>
+              </div>
+              <button
+                  className="btn primary"
+                  disabled={deleting}
+                  onClick={() => void handleDeletingRoom()}
+              >
+                {deleting ? 'Видаляємо…' : 'Видалити кімнату'}
+              </button>
+            </section>
+        )}
 
         <div className="bottom-bar">
           <p>{room.status === 'CREATED' ? 'Кімната відкрита для нових учасників.' : room.status === 'VOTING' ? 'Голосування вже почалося. Екран голосування буде додано окремо.' : 'Кіновечір завершено. Екран результату буде додано окремо.'}</p>
