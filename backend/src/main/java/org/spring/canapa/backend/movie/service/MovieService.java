@@ -123,6 +123,9 @@ public class MovieService {
         if (criteria == null) {
             throw new IllegalArgumentException("Discovery criteria are required");
         }
+        if (criteria.preferredLanguages().stream().findFirst().isEmpty()) {
+            throw new IllegalArgumentException("At least one preferred language must be specified");
+        }
         if (limit < 1 || limit > 100) {
             throw new IllegalArgumentException("Limit must be between 1 and 100");
         }
@@ -138,7 +141,7 @@ public class MovieService {
             MovieSearchResult result = tmdbProvider.discoverMovies(
                 criteria,
                 page,
-                "uk-UA"
+                criteria.preferredLanguages().stream().findFirst().get()
             );
             totalPages = result.totalPages();
 

@@ -52,7 +52,6 @@ public class UserPreferenceService {
 
         Set<String> liked = new HashSet<>(preference.getLikedGenres());
         liked.retainAll(preference.getDislikedGenres());
-
         if (!liked.isEmpty()) {
             throw new IllegalArgumentException(
                 "A genre cannot be both liked and disliked: " + liked

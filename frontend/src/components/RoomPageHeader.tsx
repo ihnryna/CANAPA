@@ -74,7 +74,12 @@ export function RoomPageHeader(
                         key={step}
                         type="button"
                         className={index === currentIdx ? 'active' : ''}
-                        disabled={!member}
+                        disabled={
+                          !member
+                          || (index === 1 && room.status !== 'CREATED')
+                          || (index === 2 && room.status === 'CREATED')
+                          || (index === 3 && room.status === 'CREATED')
+                        }
                         onClick={() => {
                             if (index === 0) {
                                 navigate(`/rooms/${room.id}`)
