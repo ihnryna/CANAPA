@@ -5,6 +5,9 @@ import {
   type UserPreference,
 } from '../api/preferences'
 import './MoviePreferences.css'
+import { useNavigate } from "react-router-dom";
+import { useRoomPolling } from "../hooks/useRoomPolling.ts";
+import { isUuid } from "../auth/user-id.ts";
 
 interface MoviePreferencesProps {
   roomId: string
@@ -85,6 +88,10 @@ export function MoviePreferences(
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const navigate = useNavigate()
+  const validRoomId =
+    roomId !== undefined && isUuid(roomId) ? roomId : undefined
+  const { room } = useRoomPolling(validRoomId)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -177,6 +184,15 @@ export function MoviePreferences(
     }
   }
 
+  const handleSubmitAndNavigate = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    await handleSubmit(event)
+    if (!error && room) {
+      navigate(`/rooms/${room.id}`)
+    }
+  }
+
   if (loading) {
     return (
       <section className="preferences-panel">
@@ -199,7 +215,7 @@ export function MoviePreferences(
         </p>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmitAndNavigate}>
         <fieldset className="preference-fieldset">
           <legend>Які жанри вам подобаються?</legend>
           <p className="preference-hint">
