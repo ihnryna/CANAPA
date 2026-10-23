@@ -129,7 +129,12 @@ export function VotingPage() {
     }
     //
 
-    if (validRoomId === undefined || user === null || !isUuid(user.id)) {
+    if (
+      validRoomId === undefined ||
+      user === null ||
+      !isUuid(user.id) ||
+      room === null
+    ) {
       setLoadingMovies(false)
       return
     }

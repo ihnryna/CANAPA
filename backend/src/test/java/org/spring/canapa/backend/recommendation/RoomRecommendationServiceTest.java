@@ -136,6 +136,20 @@ class RoomRecommendationServiceTest {
     }
 
     @Test
+    void shouldLockRoomBeforeLoadingRoomData() {
+        when(preferenceService.getRoomPreferences(roomId))
+            .thenReturn(List.of());
+
+        service.recommend(
+            roomId, memberId, RecommendationType.CONSENSUS, 40
+        );
+
+        var order = inOrder(roomRepository, roomService);
+        order.verify(roomRepository).findByIdForUpdate(roomId);
+        order.verify(roomService).getRoom(roomId);
+    }
+
+    @Test
     void shouldRejectInvalidLimit() {
         assertThrows(IllegalArgumentException.class, () ->
             service.recommend(

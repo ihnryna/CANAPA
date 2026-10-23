@@ -76,6 +76,16 @@ public class RoomRecommendationService {
             );
         }
 
+        // Lock the room before it is loaded into the current persistence
+        // context by another query. Otherwise concurrent recommendation
+        // requests can both retain a stale, uncached Room instance and try to
+        // insert the same room_movie_candidates rows.
+        Room lockedRoom = roomRepository
+            .findByIdForUpdate(roomId)
+            .orElseThrow(() -> new IllegalStateException(
+                "Room disappeared while loading recommendations: " + roomId
+            ));
+
         RoomData room = roomService.getRoom(roomId);
 
         Set<UUID> participantIds = room.participants().stream()
@@ -101,12 +111,6 @@ public class RoomRecommendationService {
         if (preferences.isEmpty()) {
             return List.of();
         }
-
-        Room lockedRoom = roomRepository
-            .findByIdForUpdate(roomId)
-            .orElseThrow(() -> new IllegalStateException(
-                "Room disappeared while loading recommendations: " + roomId
-            ));
 
         List<MovieResponse> movies;
 
