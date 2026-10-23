@@ -26,6 +26,7 @@ import { MOCK_MOVIES } from '../mocks/votingMock'
 import { RoomPageHeader } from "../components/RoomPageHeader.tsx";
 
 const USE_MOCK_VOTING = false
+const VOTING_MOVIE_LIMIT = 15
 
 const STATUS_LABELS = {
   CREATED: 'Підготовка',
@@ -147,7 +148,7 @@ export function VotingPage() {
             validRoomId,
             user.id,
             'CONSENSUS',
-            40,
+            VOTING_MOVIE_LIMIT,
           ).then((recommendations) =>
             recommendations.map((recommendation) => recommendation.movie),
           ),

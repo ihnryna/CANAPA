@@ -81,7 +81,7 @@ class RoomRecommendationServiceTest {
 
     @Test
     void shouldReturnMovieWithScore() {
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
             .thenReturn(List.of(movie(7L, "Dune")));
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -174,7 +174,7 @@ class RoomRecommendationServiceTest {
             103L, "Horror Story", Set.of("Horror"), 7.9, 185
         );
 
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
             .thenReturn(List.of(space, drama, horror));
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -227,7 +227,7 @@ class RoomRecommendationServiceTest {
     void shouldIgnorePreferencesOfNonParticipants() {
         UUID outsiderId = UUID.randomUUID();
 
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
             .thenReturn(List.of(
                 testMovie(101L, "Space", Set.of("Sci-Fi"), 8.7, 135)
             ));
@@ -256,7 +256,7 @@ class RoomRecommendationServiceTest {
 
     @Test
     void shouldReturnEmptyResultsForEmptyMovieCatalog() {
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
             .thenReturn(List.of());
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -300,7 +300,7 @@ class RoomRecommendationServiceTest {
                 7.5, 140, "en", null
             )
         ));
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(40)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
             .thenReturn(List.of());
 
         service.recommend(
@@ -309,7 +309,7 @@ class RoomRecommendationServiceTest {
 
         var criteriaCaptor = org.mockito.ArgumentCaptor
             .forClass(MovieDiscoveryCriteria.class);
-        verify(movieService).discoverMovies(criteriaCaptor.capture(), eq(40));
+        verify(movieService).discoverMovies(criteriaCaptor.capture(), eq(15));
 
         MovieDiscoveryCriteria criteria = criteriaCaptor.getValue();
         assertEquals(Set.of("Science Fiction", "Drama"), criteria.likedGenres());
@@ -357,7 +357,7 @@ class RoomRecommendationServiceTest {
                 Set.of("Documentary"), Set.of(), 10.0, 1, "uk", null
             )));
         when(movieService.discoverMovies(
-            any(MovieDiscoveryCriteria.class), eq(40)
+            any(MovieDiscoveryCriteria.class), eq(15)
         )).thenReturn(List.of());
 
         service.recommend(
@@ -368,7 +368,7 @@ class RoomRecommendationServiceTest {
         );
 
         verify(movieService, times(1)).discoverMovies(
-            any(MovieDiscoveryCriteria.class), eq(40)
+            any(MovieDiscoveryCriteria.class), eq(15)
         );
         verify(lockedRoom).cacheMovieCandidates(List.of());
     }

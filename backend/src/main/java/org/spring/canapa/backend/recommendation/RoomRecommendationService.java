@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Service
 public class RoomRecommendationService {
 
-    private static final int ROOM_MOVIE_CACHE_SIZE = 40;
+    private static final int ROOM_MOVIE_CACHE_SIZE = 15;
 
     private final RoomService roomService;
     private final RoomRepository roomRepository;
