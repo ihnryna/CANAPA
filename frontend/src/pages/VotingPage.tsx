@@ -117,6 +117,22 @@ export function VotingPage() {
     [movies],
   )
 
+  const participantsWithoutVotes = useMemo(() => {
+    if (room === null) return []
+
+    const voterIds = new Set(votes.map((vote) => vote.userId))
+    const requiredParticipants = new Map(
+      room.participants.map((participant) => [participant.id, participant]),
+    )
+    requiredParticipants.set(room.creator.id, room.creator)
+
+    return [...requiredParticipants.values()].filter(
+      (participant) => !voterIds.has(participant.id),
+    )
+  }, [room, votes])
+
+  const allParticipantsVoted = participantsWithoutVotes.length === 0
+
   const loadData = useCallback(async () => {
     await Promise.resolve()
     // TEMP: FOR DEVELOPING
@@ -346,7 +362,12 @@ export function VotingPage() {
   }
 
   async function handleFinishVoting() {
-    if (validRoomId === undefined || !organizer || !isVoting) {
+    if (
+      validRoomId === undefined ||
+      !organizer ||
+      !isVoting ||
+      !allParticipantsVoted
+    ) {
       return
     }
 
@@ -396,14 +417,8 @@ export function VotingPage() {
     setNotice(null)
 
     try {
-      const votingResult = await finishVoting(validRoomId)
-
-      await refreshRoom()
-      await loadData()
-
-      // Зберігаємо результат після повторного завантаження даних.
-      setResult(votingResult)
-      setNotice('Голосування завершено.')
+      await finishVoting(validRoomId)
+      navigate(`/rooms/${validRoomId}/results`, { replace: true })
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -723,14 +738,22 @@ export function VotingPage() {
           <section className="finish-voting-panel">
             <div>
               <h2>Усі вже визначилися?</h2>
-              <p>
-                Завершення зафіксує результат. Перевірте голоси
-                учасників перед продовженням.
-              </p>
+              {allParticipantsVoted ? (
+                <p>
+                  Усі учасники проголосували. Завершення зафіксує результат.
+                </p>
+              ) : (
+                <p>
+                  Ще не проголосували: {' '}
+                  {participantsWithoutVotes
+                    .map((participant) => participant.name)
+                    .join(', ')}.
+                </p>
+              )}
             </div>
             <button
               className="btn primary"
-              disabled={finishing}
+              disabled={finishing || !allParticipantsVoted}
               onClick={() => void handleFinishVoting()}
             >
               {finishing ? 'Завершуємо…' : 'Завершити голосування'}

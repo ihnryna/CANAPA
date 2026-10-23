@@ -18,8 +18,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -162,15 +164,35 @@ public class VotingService {
             );
         }
 
+        List<Vote> roomVotes = voteRepository.findAllByRoom_Id(roomId);
+        Set<UUID> voterIds = roomVotes.stream()
+            .map(vote -> vote.getUser().getId())
+            .collect(Collectors.toSet());
+        Set<UUID> requiredVoterIds = new HashSet<>(
+            room.getParticipants().stream()
+                .map(User::getId)
+                .collect(Collectors.toSet())
+        );
+        requiredVoterIds.add(room.getCreator().getId());
+
+        long missingVoteCount = requiredVoterIds.stream()
+            .filter(participantId -> !voterIds.contains(participantId))
+            .count();
+
+        if (missingVoteCount > 0) {
+            throw new IllegalStateException(
+                "Cannot finish voting until all room participants have voted. "
+                    + "Missing votes: " + missingVoteCount
+            );
+        }
+
         List<Long> excludedMovieIds = excludedMovieRepository
             .findAllByRoom_Id(roomId)
             .stream()
             .map(excluded -> excluded.getMovie().getId())
             .toList();
 
-        Map<Long, Long> votesByMovie = voteRepository
-            .findAllByRoom_Id(roomId)
-            .stream()
+        Map<Long, Long> votesByMovie = roomVotes.stream()
             .filter(vote ->
                 !excludedMovieIds.contains(vote.getMovie().getId())
             )
