@@ -145,10 +145,10 @@ public class TmdbMovieProvider implements MovieProvider {
             .queryParam("page", page)
             .queryParamIfPresent("language", Optional.ofNullable(language));
 
-        genreIds(criteria.likedGenres()).ifPresent(ids ->
-            uriBuilder.queryParam("with_genres", ids));
-        genreIds(criteria.dislikedGenres()).ifPresent(ids ->
-            uriBuilder.queryParam("without_genres", ids));
+        genreIds(criteria.likedGenres())
+            .ifPresent(ids -> uriBuilder.queryParam("with_genres", ids));
+        genreIds(criteria.dislikedGenres())
+            .ifPresent(ids -> uriBuilder.queryParam("without_genres", ids));
 
         if (criteria.minimumRating() != null) {
             uriBuilder.queryParam("vote_average.gte", criteria.minimumRating());
@@ -306,7 +306,7 @@ public class TmdbMovieProvider implements MovieProvider {
             .filter(Objects::nonNull)
             .sorted()
             .map(String::valueOf)
-            .collect(Collectors.joining("|"));
+            .collect(Collectors.joining(","));
 
         return value.isBlank() ? Optional.empty() : Optional.of(value);
     }
