@@ -28,6 +28,13 @@ export function createRoom(name: string, userId: string): Promise<Room> {
   })
 }
 
+export function deleteRoom(roomId: string, userId: string): Promise<void> {
+  return apiRequest<void>(`/api/rooms/${roomId}`, {
+    method: 'DELETE',
+    headers: userHeaders(userId),
+  })
+}
+
 export function getRoom(roomId: string, signal?: AbortSignal): Promise<Room> {
   return apiRequest<Room>(`/api/rooms/${encodeURIComponent(roomId)}`, { signal })
 }

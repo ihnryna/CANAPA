@@ -64,11 +64,6 @@ public class RoomRecommendationService {
         RecommendationType strategy,
         int limit
     ) {
-        System.out.println("roomId" + roomId);
-        System.out.println("userId" + userId);
-        System.out.println("strategy" + strategy);
-        System.out.println("limit" + limit);
-
         if (strategy == null) {
             throw new IllegalArgumentException(
                 "Recommendation strategy is required"

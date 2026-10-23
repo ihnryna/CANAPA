@@ -28,7 +28,6 @@ public class RoomRecommendationController {
         RecommendationType strategy,
         @RequestParam(defaultValue = "40") int limit
     ) {
-        System.out.println("got here");
         return recommendationService.recommend(
             roomId,
             userId,

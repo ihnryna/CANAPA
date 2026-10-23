@@ -116,6 +116,20 @@ public class RoomService {
         return toData(savedRoom);
     }
 
+    @Transactional
+    public void deleteRoom(UUID roomId, UUID actorUserId) {
+        validateId(actorUserId, "actorUserId");
+
+        Room room = findRoomForUpdate(roomId);
+
+        if (!room.getCreator().getId().equals(actorUserId)) {
+            throw new RoomActionNotAllowedException(room.getId(), actorUserId);
+        }
+
+        roomRepository.delete(room);
+        roomRepository.flush();
+    }
+
     private Room findRoom(UUID roomId) {
         validateId(roomId, "roomId");
         return roomRepository.findById(roomId)

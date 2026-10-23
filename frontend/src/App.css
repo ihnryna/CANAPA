@@ -233,8 +233,9 @@
 }
 
 .welcome {
-    padding: 64px max(45px, calc((100vw - 1212px) / 2));
+    padding: 64px clamp(32px, 5vw, 88px);
     border-right: 1px solid var(--border);
+    min-width: 0;
 }
 
 .welcome h1 {
@@ -315,7 +316,8 @@
 }
 
 .profile-side {
-    padding: 58px max(42px, calc((100vw - 1212px) / 2));
+    padding: 58px clamp(32px, 5vw, 88px);
+    min-width: 0;
 }
 
 .onboard-steps {
