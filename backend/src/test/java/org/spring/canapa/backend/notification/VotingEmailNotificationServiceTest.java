@@ -4,6 +4,8 @@ package org.spring.canapa.backend.notification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.spring.canapa.backend.movie.repository.MovieRepository;
 import org.spring.canapa.backend.notification.entity.Notification;
 import org.spring.canapa.backend.notification.entity.NotificationType;
 import org.spring.canapa.backend.notification.event.VotingResultsReadyEvent;
@@ -40,6 +42,9 @@ class VotingEmailNotificationServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private MovieRepository movieRepository;
+
     private VotingEmailNotificationService notificationListener;
 
     private UUID roomId;
@@ -52,7 +57,8 @@ class VotingEmailNotificationServiceTest {
         notificationListener = new VotingEmailNotificationService(
             roomRepository,
             emailService,
-            notificationService
+            notificationService,
+            movieRepository
         );
 
         roomId = UUID.randomUUID();
@@ -156,17 +162,15 @@ class VotingEmailNotificationServiceTest {
 
         verify(emailService, times(2)).sendTextEmail(
             anyString(),
-            eq("CANAPA — результати голосування"),
+            eq("CANAPA: результати голосування"),
             bodyCaptor.capture()
         );
-
         assertEquals(2, bodyCaptor.getAllValues().size());
 
         for (String body : bodyCaptor.getAllValues()) {
             assertTrue(body.contains("Friday movies"));
             assertTrue(body.contains("Нічия"));
-            assertTrue(body.contains("11"));
-            assertTrue(body.contains("22"));
+            assertTrue(body.contains("Невідомий фільм"));
             assertTrue(body.contains("3"));
         }
 

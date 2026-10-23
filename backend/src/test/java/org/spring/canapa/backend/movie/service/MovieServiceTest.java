@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -131,10 +130,11 @@ class MovieServiceTest {
             160,
             Set.of("en")
         );
+        assertFalse(criteria.preferredLanguages().stream().findFirst().isEmpty());
 
         when(tmdbProvider.isConfigured()).thenReturn(true);
         when(omdbProvider.isConfigured()).thenReturn(true);
-        when(tmdbProvider.discoverMovies(criteria, 1, "uk-UA"))
+        when(tmdbProvider.discoverMovies(criteria, 1, criteria.preferredLanguages().stream().findFirst().get()))
             .thenReturn(new MovieSearchResult(
                 1,
                 1,
@@ -188,9 +188,11 @@ class MovieServiceTest {
         var criteria = new MovieDiscoveryCriteria(
             Set.of("Drama"), Set.of(), 6.0, 180, Set.of("en")
         );
+        assertFalse(criteria.preferredLanguages().stream().findFirst().isEmpty());
+
         when(tmdbProvider.isConfigured()).thenReturn(true);
         when(omdbProvider.isConfigured()).thenReturn(true);
-        when(tmdbProvider.discoverMovies(criteria, 1, "uk-UA"))
+        when(tmdbProvider.discoverMovies(criteria, 1, criteria.preferredLanguages().stream().findFirst().get()))
             .thenReturn(new MovieSearchResult(
                 1, 1, 1,
                 List.of(new MovieSearchResult.MovieSearchItem(
