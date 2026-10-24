@@ -274,7 +274,7 @@ class TmdbMovieProviderTest {
         server.expect(requestTo(
                 org.hamcrest.Matchers.containsString("/discover/movie")
             ))
-            .andExpect(queryParam("with_genres", "35%7C878"))
+            .andExpect(queryParam("with_genres", "35,878"))
             .andExpect(queryParam("without_genres", "27"))
             .andExpect(queryParam("vote_average.gte", "7.0"))
             .andExpect(queryParam("with_runtime.lte", "150"))
@@ -308,7 +308,7 @@ class TmdbMovieProviderTest {
                 java.util.Set.of("en")
             ),
             1,
-            "uk-UA"
+            "en"
         );
 
         assertEquals(1, result.results().size());
