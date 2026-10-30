@@ -309,7 +309,7 @@ public class TmdbMovieProvider implements MovieProvider {
             .filter(Objects::nonNull)
             .sorted()
             .map(String::valueOf)
-            .collect(Collectors.joining(","));
+            .collect(Collectors.joining("|"));
 
         return value.isBlank() ? Optional.empty() : Optional.of(value);
     }
