@@ -203,7 +203,7 @@ public class MovieService {
             return false;
         }
 
-        Set<String> preferredLanguages = criteria.preferredLanguages().stream()
+        /*Set<String> preferredLanguages = criteria.preferredLanguages().stream()
             .filter(StringUtils::hasText)
             .map(this::normalizeOriginalLanguage)
             .collect(Collectors.toSet());
@@ -211,7 +211,8 @@ public class MovieService {
         return preferredLanguages.isEmpty()
             || preferredLanguages.contains(
                 normalizeOriginalLanguage(movie.originalLanguage())
-            );
+            );*/
+        return true;
     }
 
     private boolean matchesLikedGenreGroups(
