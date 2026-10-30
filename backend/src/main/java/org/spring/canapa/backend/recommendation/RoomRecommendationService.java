@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,8 @@ import java.util.stream.Collectors;
 @Service
 public class RoomRecommendationService {
 
-    private static final int ROOM_MOVIE_CACHE_SIZE = 15;
+    private static final int ROOM_MOVIE_CACHE_SIZE = 100;
+    private static final int MAX_RECOMMENDATION_LIMIT = 15;
 
     private final RoomService roomService;
     private final RoomRepository roomRepository;
@@ -70,9 +72,9 @@ public class RoomRecommendationService {
             );
         }
 
-        if (limit < 1 || limit > 100) {
+        if (limit < 1 || limit > MAX_RECOMMENDATION_LIMIT) {
             throw new IllegalArgumentException(
-                "Limit must be between 1 and 100"
+                "Limit must be between 1 and " + MAX_RECOMMENDATION_LIMIT
             );
         }
 
@@ -197,11 +199,11 @@ public class RoomRecommendationService {
         Set<String> likedGenres = new HashSet<>();
         Set<String> dislikedGenres = new HashSet<>();
         Set<String> languages = new HashSet<>();
+        List<Set<String>> likedGenreGroups = new ArrayList<>();
         Double minimumRating = null;
         Integer maximumRuntime = null;
 
         for (PreferenceSnapshot preference : preferences) {
-            likedGenres.addAll(preference.likedGenres());
             dislikedGenres.addAll(preference.dislikedGenres());
 
             if (preference.preferredLanguage() != null
@@ -220,14 +222,27 @@ public class RoomRecommendationService {
             }
         }
 
-        likedGenres.removeAll(dislikedGenres);
+        for (PreferenceSnapshot preference : preferences) {
+            if (preference.likedGenres().isEmpty()) {
+                continue;
+            }
+
+            Set<String> userLikedGenres = new HashSet<>(
+                preference.likedGenres()
+            );
+            userLikedGenres.removeAll(dislikedGenres);
+            Set<String> group = Set.copyOf(userLikedGenres);
+            likedGenreGroups.add(group);
+            likedGenres.addAll(group);
+        }
 
         return new MovieDiscoveryCriteria(
             likedGenres,
             dislikedGenres,
             minimumRating,
             maximumRuntime,
-            languages
+            languages,
+            likedGenreGroups
         );
     }
 

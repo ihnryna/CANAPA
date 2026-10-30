@@ -26,7 +26,7 @@ public class RoomRecommendationController {
         @RequestHeader("X-User-Id") UUID userId,
         @RequestParam(defaultValue = "CONSENSUS")
         RecommendationType strategy,
-        @RequestParam(defaultValue = "40") int limit
+        @RequestParam(defaultValue = "15") int limit
     ) {
         return recommendationService.recommend(
             roomId,

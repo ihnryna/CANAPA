@@ -15,7 +15,7 @@ export function getRoomRecommendations(
   roomId: string,
   userId: string,
   strategy: RecommendationType = 'CONSENSUS',
-  limit = 40,
+  limit = 15,
   signal?: AbortSignal,
 ): Promise<RoomRecommendedMovie[]> {
   const params = new URLSearchParams({

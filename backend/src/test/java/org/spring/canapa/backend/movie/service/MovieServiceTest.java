@@ -128,7 +128,7 @@ class MovieServiceTest {
             Set.of("Science Fiction"),
             Set.of("Horror"),
             7.0,
-            160,
+            180,
             Set.of("en")
         );
 
@@ -210,6 +210,7 @@ class MovieServiceTest {
         tmdbDetails.setTmdbId(99L);
         tmdbDetails.setTitle("New Movie");
         tmdbDetails.setReleaseYear(2026);
+        tmdbDetails.setRuntime(120);
         when(tmdbProvider.getMovieDetails(99L))
             .thenReturn(Optional.of(tmdbDetails));
 
@@ -225,5 +226,85 @@ class MovieServiceTest {
         assertEquals("Expanded title-match plot", result.getFirst().description());
         assertEquals("tt9999999", result.getFirst().imdbId());
         verify(omdbProvider).getMovieDetailsByTitle("New Movie", 2026);
+    }
+
+    @Test
+    void requiresAtLeastOneLikedGenreFromEveryUserGroup() {
+        var criteria = new MovieDiscoveryCriteria(
+            Set.of("Comedy", "Science Fiction", "Drama", "Horror"),
+            Set.of(),
+            null,
+            null,
+            Set.of("en"),
+            List.of(
+                Set.of("Comedy", "Science Fiction"),
+                Set.of("Drama", "Horror")
+            )
+        );
+
+        when(tmdbProvider.isConfigured()).thenReturn(true);
+        when(tmdbProvider.discoverMovies(criteria, 1, "uk-UA"))
+            .thenReturn(new MovieSearchResult(
+                1, 1, 4, List.of(
+                    searchItem(1L, "Only first user", List.of("Comedy")),
+                    searchItem(2L, "Comedy Drama", List.of("Comedy", "Drama")),
+                    searchItem(3L, "Sci-Fi Horror", List.of("Science Fiction", "Horror")),
+                    searchItem(4L, "Only second user", List.of("Drama"))
+                )
+            ));
+        when(movieRepository.findByTmdbId(any(Long.class)))
+            .thenReturn(Optional.empty());
+        when(movieRepository.save(any(Movie.class)))
+            .thenAnswer(invocation -> {
+                Movie movie = invocation.getArgument(0);
+                movie.setId(movie.getTmdbId());
+                return movie;
+            });
+        when(tmdbProvider.getMovieDetails(any(Long.class)))
+            .thenReturn(Optional.empty());
+
+        var result = movieService.discoverMovies(criteria, 10);
+
+        assertEquals(2, result.size());
+        assertEquals(
+            Set.of("Comedy Drama", "Sci-Fi Horror"),
+            result.stream()
+                .map(movie -> movie.title())
+                .collect(java.util.stream.Collectors.toSet())
+        );
+        verify(tmdbProvider).discoverMovies(criteria, 1, "uk-UA");
+    }
+
+    @Test
+    void discoversWithoutOriginalLanguageFilterWhenNoneWasSelected() {
+        var criteria = new MovieDiscoveryCriteria(
+            Set.of("Drama"), Set.of(), null, null, Set.of()
+        );
+
+        when(tmdbProvider.isConfigured()).thenReturn(true);
+        when(tmdbProvider.discoverMovies(criteria, 1, "uk-UA"))
+            .thenReturn(new MovieSearchResult(1, 0, 0, List.of()));
+
+        var result = movieService.discoverMovies(criteria, 10);
+
+        assertEquals(List.of(), result);
+        verify(tmdbProvider).discoverMovies(criteria, 1, "uk-UA");
+    }
+
+    private MovieSearchResult.MovieSearchItem searchItem(
+        long id,
+        String title,
+        List<String> genres
+    ) {
+        return new MovieSearchResult.MovieSearchItem(
+            id,
+            title,
+            null,
+            null,
+            "2025-01-01",
+            7.5,
+            "en",
+            genres
+        );
     }
 }

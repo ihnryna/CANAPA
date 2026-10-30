@@ -81,7 +81,7 @@ class RoomRecommendationServiceTest {
 
     @Test
     void shouldReturnMovieWithScore() {
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(100)))
             .thenReturn(List.of(movie(7L, "Dune")));
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -98,12 +98,40 @@ class RoomRecommendationServiceTest {
             )));
 
         var result = service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
 
         assertEquals(1, result.size());
         assertEquals(7L, result.getFirst().movie().id());
         assertEquals(1.0, result.getFirst().score(), 0.00001);
+    }
+
+    @Test
+    void shouldReturnAtMostFifteenMoviesForVoting() {
+        List<MovieResponse> movies = java.util.stream.LongStream.rangeClosed(1, 20)
+            .mapToObj(id -> movie(id, "Movie " + id))
+            .toList();
+        when(movieService.discoverMovies(
+            any(MovieDiscoveryCriteria.class), eq(100)
+        )).thenReturn(movies);
+        when(preferenceService.getRoomPreferences(roomId))
+            .thenReturn(List.of(new UserPreferenceResponse(
+                1L,
+                memberId,
+                roomId,
+                Set.of("Sci-Fi"),
+                Set.of(),
+                null,
+                null,
+                null,
+                null
+            )));
+
+        var result = service.recommend(
+            roomId, memberId, RecommendationType.CONSENSUS, 15
+        );
+
+        assertEquals(15, result.size());
     }
 
     @Test
@@ -114,7 +142,7 @@ class RoomRecommendationServiceTest {
                 roomId,
                 UUID.randomUUID(),
                 RecommendationType.CONSENSUS,
-                40
+                15
             )
         );
 
@@ -129,7 +157,7 @@ class RoomRecommendationServiceTest {
             .thenReturn(List.of());
 
         var result = service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
 
         assertTrue(result.isEmpty());
@@ -141,7 +169,7 @@ class RoomRecommendationServiceTest {
             .thenReturn(List.of());
 
         service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
 
         var order = inOrder(roomRepository, roomService);
@@ -156,7 +184,7 @@ class RoomRecommendationServiceTest {
                 roomId,
                 memberId,
                 RecommendationType.AVERAGE_RATING,
-                101
+                16
             )
         );
     }
@@ -174,7 +202,7 @@ class RoomRecommendationServiceTest {
             103L, "Horror Story", Set.of("Horror"), 7.9, 185
         );
 
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(100)))
             .thenReturn(List.of(space, drama, horror));
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -191,7 +219,7 @@ class RoomRecommendationServiceTest {
             )));
 
         var consensus = service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
 
         assertEquals(2, consensus.size());
@@ -201,7 +229,7 @@ class RoomRecommendationServiceTest {
         assertEquals(0.0, consensus.get(1).score(), 0.00001);
 
         var average = service.recommend(
-            roomId, memberId, RecommendationType.AVERAGE_RATING, 40
+            roomId, memberId, RecommendationType.AVERAGE_RATING, 15
         );
 
         assertEquals(3, average.size());
@@ -213,7 +241,7 @@ class RoomRecommendationServiceTest {
         assertEquals(0.79, average.get(2).score(), 0.00001);
 
         var genre = service.recommend(
-            roomId, memberId, RecommendationType.GENRE_FOCUSED, 40
+            roomId, memberId, RecommendationType.GENRE_FOCUSED, 15
         );
 
         assertEquals(3, genre.size());
@@ -227,7 +255,7 @@ class RoomRecommendationServiceTest {
     void shouldIgnorePreferencesOfNonParticipants() {
         UUID outsiderId = UUID.randomUUID();
 
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(100)))
             .thenReturn(List.of(
                 testMovie(101L, "Space", Set.of("Sci-Fi"), 8.7, 135)
             ));
@@ -247,7 +275,7 @@ class RoomRecommendationServiceTest {
             ));
 
         var result = service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
 
         assertEquals(1, result.size());
@@ -256,7 +284,7 @@ class RoomRecommendationServiceTest {
 
     @Test
     void shouldReturnEmptyResultsForEmptyMovieCatalog() {
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(100)))
             .thenReturn(List.of());
 
         when(preferenceService.getRoomPreferences(roomId))
@@ -264,7 +292,7 @@ class RoomRecommendationServiceTest {
 
         for (RecommendationType type : RecommendationType.values()) {
             var result = service.recommend(
-                roomId, memberId, type, 40
+                roomId, memberId, type, 15
             );
 
             assertTrue(result.isEmpty());
@@ -300,16 +328,16 @@ class RoomRecommendationServiceTest {
                 7.5, 140, "en", null
             )
         ));
-        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(15)))
+        when(movieService.discoverMovies(any(MovieDiscoveryCriteria.class), eq(100)))
             .thenReturn(List.of());
 
         service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 20
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
 
         var criteriaCaptor = org.mockito.ArgumentCaptor
             .forClass(MovieDiscoveryCriteria.class);
-        verify(movieService).discoverMovies(criteriaCaptor.capture(), eq(15));
+        verify(movieService).discoverMovies(criteriaCaptor.capture(), eq(100));
 
         MovieDiscoveryCriteria criteria = criteriaCaptor.getValue();
         assertEquals(Set.of("Science Fiction", "Drama"), criteria.likedGenres());
@@ -317,6 +345,10 @@ class RoomRecommendationServiceTest {
         assertEquals(7.5, criteria.minimumRating());
         assertEquals(140, criteria.maximumRuntime());
         assertEquals(Set.of("en"), criteria.preferredLanguages());
+        assertEquals(
+            List.of(Set.of("Science Fiction"), Set.of("Drama")),
+            criteria.likedGenreGroups()
+        );
     }
 
     @Test
@@ -338,7 +370,7 @@ class RoomRecommendationServiceTest {
             )));
 
         var result = service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
 
         assertEquals(1, result.size());
@@ -357,18 +389,18 @@ class RoomRecommendationServiceTest {
                 Set.of("Documentary"), Set.of(), 10.0, 1, "uk", null
             )));
         when(movieService.discoverMovies(
-            any(MovieDiscoveryCriteria.class), eq(15)
+            any(MovieDiscoveryCriteria.class), eq(100)
         )).thenReturn(List.of());
 
         service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
         service.recommend(
-            roomId, memberId, RecommendationType.CONSENSUS, 40
+            roomId, memberId, RecommendationType.CONSENSUS, 15
         );
 
         verify(movieService, times(1)).discoverMovies(
-            any(MovieDiscoveryCriteria.class), eq(15)
+            any(MovieDiscoveryCriteria.class), eq(100)
         );
         verify(lockedRoom).cacheMovieCandidates(List.of());
     }
