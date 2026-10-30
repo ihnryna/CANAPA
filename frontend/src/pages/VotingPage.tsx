@@ -653,7 +653,7 @@ export function VotingPage() {
 
                     {movie.genres.length > 0 && (
                       <div className="movie-genres">
-                        {movie.genres.slice(0, 3).map((genre) => (
+                        {movie.genres.map((genre) => (
                           <span key={genre}>{genre}</span>
                         ))}
                       </div>

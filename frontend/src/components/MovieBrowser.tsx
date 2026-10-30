@@ -83,7 +83,7 @@ function MovieCard({
 
         {movie.genres?.length > 0 && (
           <div className="browser-movie-genres">
-            {movie.genres.slice(0, 3).map((genre) => (
+            {movie.genres.map((genre) => (
               <span key={genre}>{genre}</span>
             ))}
           </div>
