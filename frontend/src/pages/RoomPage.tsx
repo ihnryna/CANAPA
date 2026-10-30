@@ -223,6 +223,12 @@ export function RoomPage() {
   }
 
   async function handleStartVoting() {
+    const confirmed = window.confirm(
+        'Розпочати голосування? Після цього учасники більше не зможуть редагувати свої вподобання.'
+    )
+
+    if (!confirmed) return
+
     if (room === null || user === null || !organizer || room.status !== 'CREATED' || !canStartVoting) return
 
     setStartingVoting(true)
