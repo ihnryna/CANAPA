@@ -213,7 +213,7 @@ function RecommendationResults({ roomId, userId }: { roomId: string; userId: str
 
   useEffect(() => {
     const controller = new AbortController()
-    getRoomRecommendations(roomId, userId, strategy, 40, controller.signal)
+    getRoomRecommendations(roomId, userId, strategy, 15, controller.signal)
       .then((movies) => {
         if (!controller.signal.aborted) setResult({ key: requestKey, movies, error: null })
       })

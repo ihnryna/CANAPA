@@ -17,12 +17,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class MovieService {
+
+    private static final String DISCOVERY_RESPONSE_LANGUAGE = "uk-UA";
+    private static final int MAX_DISCOVERY_PAGES = 25;
 
     private final MovieRepository movieRepository;
     private final TmdbMovieProvider tmdbProvider;
@@ -123,9 +130,6 @@ public class MovieService {
         if (criteria == null) {
             throw new IllegalArgumentException("Discovery criteria are required");
         }
-        if (criteria.preferredLanguages().stream().findFirst().isEmpty()) {
-            throw new IllegalArgumentException("At least one preferred language must be specified");
-        }
         if (limit < 1 || limit > 100) {
             throw new IllegalArgumentException("Limit must be between 1 and 100");
         }
@@ -133,27 +137,117 @@ public class MovieService {
             throw new MovieProviderException("TMDB is not configured");
         }
 
+        if (criteria.likedGenreGroups().stream().anyMatch(Set::isEmpty)) {
+            return List.of();
+        }
+
         List<MovieResponse> movies = new ArrayList<>();
+        Set<Long> seenProviderIds = new HashSet<>();
         int page = 1;
         int totalPages = 1;
 
-        while (movies.size() < limit && page <= totalPages) {
+        while (movies.size() < limit
+            && page <= totalPages
+            && page <= MAX_DISCOVERY_PAGES) {
             MovieSearchResult result = tmdbProvider.discoverMovies(
                 criteria,
                 page,
-                criteria.preferredLanguages().stream().findFirst().get()
+                DISCOVERY_RESPONSE_LANGUAGE
             );
             totalPages = result.totalPages();
 
             for (MovieSearchResult.MovieSearchItem item : result.results()) {
-                if (movies.size() >= limit) break;
+                if (movies.size() >= limit) {
+                    break;
+                }
+                if (item.providerId() == null
+                    || !seenProviderIds.add(item.providerId())
+                    || !matchesLikedGenreGroups(item.genres(), criteria)) {
+                    continue;
+                }
+
                 Movie saved = saveSearchResult(item);
-                movies.add(MovieResponse.from(enrichMovie(saved)));
+                MovieResponse movie = MovieResponse.from(enrichMovie(saved));
+
+                if (matchesCriteria(movie, criteria)) {
+                    movies.add(movie);
+                }
             }
             page++;
         }
 
         return movies;
+    }
+
+    private boolean matchesCriteria(
+        MovieResponse movie,
+        MovieDiscoveryCriteria criteria
+    ) {
+        Set<String> movieGenres = normalizeGenres(movie.genres());
+        Set<String> dislikedGenres = normalizeGenres(criteria.dislikedGenres());
+
+        if (!matchesLikedGenreGroups(movieGenres, criteria)) {
+            return false;
+        }
+        if (dislikedGenres.stream().anyMatch(movieGenres::contains)) {
+            return false;
+        }
+        if (criteria.minimumRating() != null
+            && (movie.rating() == null
+                || movie.rating() < criteria.minimumRating())) {
+            return false;
+        }
+        if (criteria.maximumRuntime() != null
+            && (movie.runtime() == null
+                || movie.runtime() > criteria.maximumRuntime())) {
+            return false;
+        }
+
+        Set<String> preferredLanguages = criteria.preferredLanguages().stream()
+            .filter(StringUtils::hasText)
+            .map(this::normalizeOriginalLanguage)
+            .collect(Collectors.toSet());
+
+        return preferredLanguages.isEmpty()
+            || preferredLanguages.contains(
+                normalizeOriginalLanguage(movie.originalLanguage())
+            );
+    }
+
+    private boolean matchesLikedGenreGroups(
+        Collection<String> movieGenres,
+        MovieDiscoveryCriteria criteria
+    ) {
+        Set<String> normalizedMovieGenres = normalizeGenres(movieGenres);
+
+        return criteria.likedGenreGroups().stream().allMatch(group -> {
+            Set<String> normalizedGroup = normalizeGenres(group);
+            return !normalizedGroup.isEmpty()
+                && normalizedGroup.stream().anyMatch(
+                    normalizedMovieGenres::contains
+                );
+        });
+    }
+
+    private Set<String> normalizeGenres(Collection<String> genres) {
+        if (genres == null) {
+            return Set.of();
+        }
+
+        return genres.stream()
+            .filter(StringUtils::hasText)
+            .map(genre -> genre.trim().toLowerCase(Locale.ROOT))
+            .collect(Collectors.toSet());
+    }
+
+    private String normalizeOriginalLanguage(String language) {
+        if (!StringUtils.hasText(language)) {
+            return "";
+        }
+
+        return language.trim()
+            .toLowerCase(Locale.ROOT)
+            .split("[-_]", 2)[0];
     }
 
     @Transactional

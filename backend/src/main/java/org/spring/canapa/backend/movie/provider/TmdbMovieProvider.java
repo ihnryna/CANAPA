@@ -131,7 +131,7 @@ public class TmdbMovieProvider implements MovieProvider {
     public MovieSearchResult discoverMovies(
         MovieDiscoveryCriteria criteria,
         int page,
-        String language
+        String responseLanguage
     ) {
         requireConfigured();
         Objects.requireNonNull(criteria, "Discovery criteria must not be null");
@@ -143,7 +143,10 @@ public class TmdbMovieProvider implements MovieProvider {
             .queryParam("include_video", false)
             .queryParam("sort_by", "popularity.desc")
             .queryParam("page", page)
-            .queryParamIfPresent("language", Optional.ofNullable(language));
+            .queryParamIfPresent(
+                "language",
+                Optional.ofNullable(responseLanguage)
+            );
 
         genreIds(criteria.likedGenres())
             .ifPresent(ids -> uriBuilder.queryParam("with_genres", ids));
