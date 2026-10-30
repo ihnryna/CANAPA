@@ -270,11 +270,11 @@ class TmdbMovieProviderTest {
     }
 
     @Test
-    void discoversMoviesUsingGroupPreferences() {
+    void discoversMoviesUsingOrAcrossLikedGenres() {
         server.expect(requestTo(
                 org.hamcrest.Matchers.containsString("/discover/movie")
             ))
-            .andExpect(queryParam("with_genres", "35,878"))
+            .andExpect(queryParam("with_genres", "35%7C878"))
             .andExpect(queryParam("without_genres", "27"))
             .andExpect(queryParam("vote_average.gte", "7.0"))
             .andExpect(queryParam("with_runtime.lte", "150"))
