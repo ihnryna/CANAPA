@@ -159,12 +159,12 @@ public class TmdbMovieProvider implements MovieProvider {
         if (criteria.maximumRuntime() != null) {
             uriBuilder.queryParam("with_runtime.lte", criteria.maximumRuntime());
         }
-        if (criteria.preferredLanguages().size() == 1) {
+        /*if (criteria.preferredLanguages().size() == 1) {
             uriBuilder.queryParam(
                 "with_original_language",
                 criteria.preferredLanguages().iterator().next()
             );
-        }
+        }*/
 
         URI uri = uriBuilder.build().encode().toUri();
 
@@ -324,7 +324,7 @@ public class TmdbMovieProvider implements MovieProvider {
         movie.setRuntime(positiveRuntime(response.runtime()));
         movie.setReleaseYear(parseYear(response.releaseDate()));
         movie.setPosterUrl(posterUrl(response.posterPath()));
-        movie.setOriginalLanguage(response.originalLanguage());
+        //movie.setOriginalLanguage(response.originalLanguage());
 
         if (response.externalIds() != null) {
             movie.setImdbId(response.externalIds().imdbId());
