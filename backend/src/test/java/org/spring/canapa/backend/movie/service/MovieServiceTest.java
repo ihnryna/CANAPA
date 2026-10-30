@@ -134,7 +134,7 @@ class MovieServiceTest {
 
         when(tmdbProvider.isConfigured()).thenReturn(true);
         when(omdbProvider.isConfigured()).thenReturn(true);
-        when(tmdbProvider.discoverMovies(criteria, 1, criteria.preferredLanguages().stream().findFirst().get()))
+        when(tmdbProvider.discoverMovies(criteria, 1, "uk-UA"))
             .thenReturn(new MovieSearchResult(
                 1,
                 1,
@@ -192,7 +192,7 @@ class MovieServiceTest {
 
         when(tmdbProvider.isConfigured()).thenReturn(true);
         when(omdbProvider.isConfigured()).thenReturn(true);
-        when(tmdbProvider.discoverMovies(criteria, 1, criteria.preferredLanguages().stream().findFirst().get()))
+        when(tmdbProvider.discoverMovies(criteria, 1, "uk-UA"))
             .thenReturn(new MovieSearchResult(
                 1, 1, 1,
                 List.of(new MovieSearchResult.MovieSearchItem(
